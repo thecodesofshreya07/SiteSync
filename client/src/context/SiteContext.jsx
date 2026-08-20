@@ -4,8 +4,8 @@ import { useAuth } from '../hooks/useAuth'
 
 export const SiteContext = createContext(null)
 
-const API_BASE_5000 = 'http://127.0.0.1:5000/api'
 const API_BASE_4000 = 'http://127.0.0.1:4000/api'
+const API_BASE_5000 = 'http://127.0.0.1:5000/api'
 
 export function SiteProvider({ children }) {
   const { user } = useAuth()
@@ -18,9 +18,9 @@ export function SiteProvider({ children }) {
 
     async function loadSites() {
       try {
-        let res = await fetch(`${API_BASE_5000}/sites`).catch(() => null)
+        let res = await fetch(`${API_BASE_4000}/sites`).catch(() => null)
         if (!res || !res.ok) {
-          res = await fetch(`${API_BASE_4000}/sites`).catch(() => null)
+          res = await fetch(`${API_BASE_5000}/sites`).catch(() => null)
         }
 
         if (res && res.ok) {
@@ -41,7 +41,7 @@ export function SiteProvider({ children }) {
     }
   }, [])
 
-  // Lock site selection for Contractor or PM
+  // Lock site selection specifically for Contractor role
   useEffect(() => {
     if (user?.role === 'Contractor' && user?.siteId && user.siteId !== 'NA') {
       setSelectedSiteId(user.siteId)
@@ -65,10 +65,10 @@ export function SiteProvider({ children }) {
     selectedSiteId: activeSiteId,
     selectedSite,
     setSelectedSiteId: (newId) => {
-      if (user?.role === 'Admin') {
+      if (user?.role !== 'Contractor') {
         setSelectedSiteId(newId)
       } else {
-        console.warn('Site selection is restricted for your authenticated role.')
+        console.warn('Site selection is restricted for Contractor role.')
       }
     },
     loading,

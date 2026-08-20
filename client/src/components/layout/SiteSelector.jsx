@@ -18,7 +18,7 @@ export default function SiteSelector() {
   const ref = useRef(null)
 
   const activeSites = Array.isArray(sites) && sites.length > 0 ? sites : defaultMockSites
-  const isAdmin = user?.role === 'Admin'
+  const isContractor = user?.role === 'Contractor'
 
   useEffect(() => {
     function onClick(e) {
@@ -28,7 +28,7 @@ export default function SiteSelector() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
-  if (!isAdmin) {
+  if (isContractor) {
     return (
       <div className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-slate-50 px-2.5 sm:px-3 py-1.5 text-left max-w-[200px] sm:max-w-xs shadow-xs">
         <MapPin size={15} className="shrink-0 text-teal-600" />

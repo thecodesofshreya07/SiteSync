@@ -27,6 +27,9 @@ const SHORTHAND_MAP = {
   admin: 'admin@sitesync.com',
   pm: 'pm@sitesync.com',
   contractor: 'contractor@sitesync.com',
+  contractor1: 'contractor1@sitesync.com',
+  contractor2: 'contractor@sitesync.com',
+  contractor3: 'contractor3@sitesync.com',
   finance: 'finance@sitesync.com',
 }
 

@@ -13,19 +13,31 @@ const DEMO_ACCOUNTS = [
   {
     role: 'Project Manager',
     email: 'pm@sitesync.com',
-    desc: 'Assigned to PROJECT-001. PM validations & vendor recommendations',
+    desc: 'Assigned to Project ID 1 (Views all 3 sites: Riverside, Warehouse, Metro)',
     badgeTone: 'bg-teal-100 text-teal-800 border-teal-200',
   },
   {
-    role: 'Contractor',
+    role: 'Contractor 1',
+    email: 'contractor1@sitesync.com',
+    desc: 'Restricted strictly to SITE-001 (Riverside Tower)',
+    badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
+  },
+  {
+    role: 'Contractor 2',
     email: 'contractor@sitesync.com',
-    desc: 'Restricted to SITE-002 (Warehouse Expansion). Material Requests',
+    desc: 'Restricted strictly to SITE-002 (Warehouse Expansion)',
+    badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
+  },
+  {
+    role: 'Contractor 3',
+    email: 'contractor3@sitesync.com',
+    desc: 'Restricted strictly to SITE-003 (Metro Heights)',
     badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
   },
   {
     role: 'Finance',
     email: 'finance@sitesync.com',
-    desc: 'Financial approvals, budget checking & payment status management',
+    desc: 'Global financial approvals, budget checking & payment management',
     badgeTone: 'bg-indigo-100 text-indigo-800 border-indigo-200',
   },
 ]
@@ -81,7 +93,7 @@ export default function Login() {
           <div className="border-b border-slate-800 pb-4">
             <h2 className="text-lg font-bold text-slate-100">Sign In to Your Account</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Enter your credentials to receive a signed JWT session.
+              Enter credentials to receive a signed JWT session.
             </p>
           </div>
 
@@ -144,10 +156,10 @@ export default function Login() {
           <div className="grid grid-cols-1 gap-2">
             {DEMO_ACCOUNTS.map((acc) => (
               <button
-                key={acc.role}
+                key={acc.email}
                 type="button"
                 onClick={() => handleSelectDemoAccount(acc.email)}
-                className="flex items-start justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-3 text-left hover:border-teal-500/50 hover:bg-slate-900 transition-all cursor-pointer group"
+                className="flex items-start justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-2.5 text-left hover:border-teal-500/50 hover:bg-slate-900 transition-all cursor-pointer group"
               >
                 <div className="space-y-0.5 min-w-0 pr-2">
                   <div className="flex items-center gap-2">
