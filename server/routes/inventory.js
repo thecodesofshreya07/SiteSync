@@ -1,5 +1,4 @@
 import { Router } from 'express'
-<<<<<<< HEAD
 import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
 
 const router = Router()
@@ -50,28 +49,9 @@ router.get('/', async (req, res) => {
   const inventory = getCollection('inventory') || []
   if (siteId) {
     return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
-=======
-import { getCollectionDirect, updateByIdDirect } from '../db.js'
-
-const router = Router()
-
-// GET /api/inventory - List inventory items (optionally filter by ?siteId=...)
-router.get('/', async (req, res) => {
-  try {
-    const { siteId } = req.query
-    const inventory = await getCollectionDirect('inventory')
-    if (siteId) {
-      return res.json(inventory.filter((item) => item.siteId === siteId))
-    }
-    return res.json(inventory)
-  } catch (err) {
-    console.error('Error in GET /api/inventory:', err)
-    return res.status(500).json({ error: 'Failed to retrieve inventory' })
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
   }
 })
 
-<<<<<<< HEAD
 // GET /api/inventory/:id - Single inventory item
 router.get('/:id', async (req, res) => {
   const { id } = req.params
@@ -91,30 +71,6 @@ router.get('/:id', async (req, res) => {
   const item = findById('inventory', id)
   if (!item) {
     return res.status(404).json({ error: 'Inventory item not found' })
-=======
-// GET /api/inventory/:idOrSiteId - Single item by ID OR list of items for a siteId
-router.get('/:idOrSiteId', async (req, res) => {
-  try {
-    const { idOrSiteId } = req.params
-    const inventory = await getCollectionDirect('inventory')
-
-    // First check if it matches a single item ID (e.g. INV-018)
-    const item = inventory.find((i) => i.id === idOrSiteId)
-    if (item) {
-      return res.json(item)
-    }
-
-    // Next check if it matches a site ID (e.g. SITE-001)
-    const siteItems = inventory.filter((i) => i.siteId === idOrSiteId)
-    if (siteItems.length > 0) {
-      return res.json(siteItems)
-    }
-
-    return res.status(404).json({ error: `Inventory item or site '${idOrSiteId}' not found` })
-  } catch (err) {
-    console.error(`Error in GET /api/inventory/${req.params.idOrSiteId}:`, err)
-    return res.status(500).json({ error: 'Failed to retrieve inventory data' })
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
   }
 })
 
@@ -200,7 +156,6 @@ router.post('/', async (req, res) => {
 
 // POST /api/inventory/:id/transaction - Log a stock transaction (Stock In, Stock Out, Transfer)
 router.post('/:id/transaction', async (req, res) => {
-<<<<<<< HEAD
   const { id } = req.params
   const { type = 'Stock In', quantity, note } = req.body
 
@@ -427,57 +382,6 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting inventory item:', err)
     res.status(500).json({ error: 'Failed to delete inventory item' })
-=======
-  try {
-    const { id } = req.params
-    const { type = 'Stock In', quantity, note } = req.body
-
-    const inventory = await getCollectionDirect('inventory')
-    const item = inventory.find((i) => i.id === id)
-    if (!item) {
-      return res.status(404).json({ error: 'Inventory item not found' })
-    }
-
-    const qty = Number(quantity)
-    if (!qty || qty <= 0 || isNaN(qty)) {
-      return res.status(400).json({ error: 'Invalid transaction quantity' })
-    }
-
-    let newQuantity = Number(item.quantity)
-    if (type === 'Stock In') {
-      newQuantity += qty
-    } else if (type === 'Stock Out' || type === 'Transfer') {
-      newQuantity -= qty
-    }
-    newQuantity = Math.max(0, Math.round(newQuantity * 100) / 100)
-
-    // Status calculation based on reorder threshold
-    const threshold = Number(item.reorderThreshold) || 0
-    let newStatus = 'OK'
-    if (newQuantity <= threshold * 0.5) {
-      newStatus = 'CRITICAL'
-    } else if (newQuantity <= threshold) {
-      newStatus = 'LOW'
-    }
-
-    const transactionRecord = {
-      type,
-      quantity: qty,
-      date: new Date().toISOString().split('T')[0],
-      note: note || `${type} of ${qty} ${item.unit}`,
-    }
-
-    const updated = await updateByIdDirect('inventory', id, {
-      quantity: newQuantity,
-      status: newStatus,
-      lastTransaction: transactionRecord,
-    })
-
-    return res.json(updated)
-  } catch (err) {
-    console.error(`Error in POST /api/inventory/${req.params.id}/transaction:`, err)
-    return res.status(500).json({ error: 'Failed to process transaction' })
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
   }
 })
 
