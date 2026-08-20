@@ -1,5 +1,5 @@
-const API_BASE = 'http://127.0.0.1:5000/api'
-const API_FALLBACK = 'http://127.0.0.1:4000/api'
+const API_BASE = 'http://127.0.0.1:4000/api'
+const API_FALLBACK = 'http://127.0.0.1:5000/api'
 
 export function getToken() {
   return localStorage.getItem('sitesync_token') || ''
@@ -35,9 +35,12 @@ export async function apiRequest(endpoint, options = {}) {
   try {
     let response = await fetch(url, config).catch(() => null)
 
-    if (!response || (!response.ok && response.status === 404)) {
+    if (!response || (!response.ok && (response.status === 404 || response.status >= 500))) {
       const fallbackUrl = `${API_FALLBACK}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
-      response = await fetch(fallbackUrl, config).catch(() => null)
+      const fallbackRes = await fetch(fallbackUrl, config).catch(() => null)
+      if (fallbackRes) {
+        response = fallbackRes
+      }
     }
 
     if (!response) {
