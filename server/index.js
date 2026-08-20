@@ -7,6 +7,8 @@ import tasksRouter from './routes/tasks.js'
 import equipmentRouter from './routes/equipment.js'
 import inventoryRouter from './routes/inventory.js'
 import procurementRouter from './routes/procurement.js'
+import vendorsRouter from './routes/vendors.js'
+import deliveriesRouter from './routes/deliveries.js'
 import alertsRouter from './routes/alerts.js'
 import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
@@ -33,6 +35,8 @@ app.use('/api/tasks', tasksRouter)
 app.use('/api/equipment', equipmentRouter)
 app.use('/api/inventory', inventoryRouter)
 app.use('/api/procurement', procurementRouter)
+app.use('/api/vendors', vendorsRouter)
+app.use('/api/deliveries', deliveriesRouter)
 app.use('/api/alerts', alertsRouter)
 app.use('/api/assistant', assistantRouter)
 app.use('/api/timeline', timelineRouter)
