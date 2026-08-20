@@ -59,7 +59,7 @@ export default function VendorIntelligence() {
             Vendor Intelligence & SLA Scorecard
           </h3>
           <p className="text-xs font-medium text-slate-600 font-ibm">
-            Aggregated delivery reliability, on-time rate %, average delay days & volume tier pricing
+            Aggregated delivery reliability, on-time rate %, average delay days & total order volume
           </p>
         </div>
 
@@ -116,7 +116,6 @@ export default function VendorIntelligence() {
                   <ArrowUpDown size={12} />
                 </div>
               </th>
-              <th className="px-4 py-3">Pricing Tier</th>
             </tr>
           </thead>
           <tbody>
@@ -153,11 +152,6 @@ export default function VendorIntelligence() {
                 <td className="px-4 py-3.5">
                   <p className="font-bold text-slate-900">{formatINR(v.totalSpend || 0)}</p>
                   <p className="text-xs text-slate-500">{v.totalOrders} purchase orders</p>
-                </td>
-                <td className="px-4 py-3.5">
-                  <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">
-                    {v.pricingScore}
-                  </span>
                 </td>
               </tr>
             ))}

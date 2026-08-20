@@ -5,6 +5,7 @@ import BudgetOverview from '../components/dashboard/BudgetOverview'
 import AgentActivity from '../components/dashboard/AgentActivity'
 import AlertList from '../components/dashboard/AlertList'
 import ProjectTimeline from '../components/dashboard/ProjectTimeline'
+import WeatherStrip from '../components/weather/WeatherStrip'
 import Badge from '../components/common/Badge'
 import { useSite } from '../hooks/useSite'
 import { useRole } from '../hooks/useRole'
@@ -108,6 +109,11 @@ export default function Dashboard() {
             </p>
           </div>
         )}
+      </div>
+
+      {/* 7-Day Live Open-Meteo Weather Strip */}
+      <div className="mb-5">
+        <WeatherStrip siteId={selectedSite.id} />
       </div>
 
       {/* Top stats */}

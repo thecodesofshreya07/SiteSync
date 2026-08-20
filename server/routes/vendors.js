@@ -57,7 +57,8 @@ router.get('/analytics', async (req, res) => {
       const avgDelay = delays.length > 0 ? Math.round((delays.reduce((a, b) => a + b, 0) / delays.length) * 10) / 10 : Number(v.avgDelayDays || 0)
       
       const onTimeOrders = vendorOrders.filter((o) => !o.delayDays || Number(o.delayDays) === 0).length
-      const onTimePct = totalOrders > 0 ? Math.round((onTimeOrders / totalOrders) * 100) : v.reliability === 'High' ? 95 : 82
+      const onTimePct = totalOrders > 0 ? Math.round((onTimeOrders / totalOrders) * 100) : v.avgDelayDays <= 1 ? 95 : 75
+      const calculatedReliability = onTimePct >= 90 && avgDelay <= 1.5 ? 'High' : onTimePct >= 70 ? 'Moderate' : 'Low'
 
       return {
         id: v.id,
@@ -68,7 +69,7 @@ router.get('/analytics', async (req, res) => {
         totalSpend,
         avgDelayDays: avgDelay,
         onTimeDeliveryPct: onTimePct,
-        reliability: v.reliability || (onTimePct >= 90 ? 'High' : onTimePct >= 75 ? 'Moderate' : 'Low'),
+        reliability: calculatedReliability,
         pricingScore: totalSpend > 5000000 ? 'A+ (Volume Discounted)' : 'A (Market Standard)',
         leadTimeDays: avgDelay <= 1 ? '2-3 days (Fast)' : `${Math.round(avgDelay + 3)} days (Standard)`,
       }

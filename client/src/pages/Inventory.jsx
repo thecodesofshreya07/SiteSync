@@ -7,6 +7,7 @@ import InventoryFilters from '../components/inventory/InventoryFilters'
 import InventoryTable from '../components/inventory/InventoryTable'
 import StockTransactionModal from '../components/inventory/StockTransactionModal'
 import CreateItemModal from '../components/inventory/CreateItemModal'
+import CreatePOModal from '../components/procurement/CreatePOModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
 import { useAuth } from '../hooks/useAuth'
@@ -32,6 +33,8 @@ export default function Inventory() {
   const [txnItem, setTxnItem] = useState(null)
   const [txnModalOpen, setTxnModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [poModalOpen, setPoModalOpen] = useState(false)
+  const [autoPoData, setAutoPoData] = useState({ item: '', quantity: '', unit: 'bags' })
 
   const canLogStock = Boolean(user && user.role !== 'Admin' && (user.role === 'Project Manager' || user.role === 'Contractor'))
   const canAddMaterial = !user || user.role === 'Admin' || user.role === 'Project Manager'
@@ -112,18 +115,13 @@ export default function Inventory() {
     }
   }
 
-  async function handleDeleteItem(id) {
-    if (!canLogStock) return
-    if (!window.confirm('Are you sure you want to remove this material from inventory?')) return
-
+  async function handleDeleteItem(itemId) {
     try {
-      await apiRequest(`/inventory/${id}`, {
-        method: 'DELETE',
-      })
-      setItems((prev) => prev.filter((i) => i.id !== id))
+      await apiRequest(`/inventory/${itemId}`, { method: 'DELETE' })
+      setItems((prev) => prev.filter((i) => i.id !== itemId))
     } catch (err) {
       console.warn('Delete API error, applying local removal fallback:', err)
-      setItems((prev) => prev.filter((i) => i.id !== id))
+      setItems((prev) => prev.filter((i) => i.id !== itemId))
     }
   }
 
@@ -168,33 +166,43 @@ export default function Inventory() {
     }
   }
 
+  function handleAutoRaisePO(item, recommendedQty) {
+    setAutoPoData({
+      item: item.item,
+      quantity: recommendedQty,
+      unit: item.unit || 'bags',
+    })
+    setPoModalOpen(true)
+  }
+
+  async function handleCreatePO(poPayload) {
+    try {
+      await apiRequest('/procurement', {
+        method: 'POST',
+        body: JSON.stringify(poPayload),
+      })
+      setPoModalOpen(false)
+      navigate('/procurement')
+    } catch (err) {
+      console.error('Failed to create auto-PO:', err)
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          (canAddMaterial || canLogStock) ? (
+          canAddMaterial ? (
             <div className="flex items-center gap-2">
-              {canAddMaterial && (
-                <Button
-                  variant="secondary"
-                  icon={Plus}
-                  onClick={() => setCreateModalOpen(true)}
-                >
-                  Add Material
-                </Button>
-              )}
-              {canLogStock && (
-                <Button
-                  variant="primary"
-                  icon={PackagePlus}
-                  onClick={() => items.length > 0 && openTransactionModal(items[0])}
-                  disabled={items.length === 0}
-                >
-                  Log Stock
-                </Button>
-              )}
+              <Button
+                variant="secondary"
+                icon={Plus}
+                onClick={() => setCreateModalOpen(true)}
+              >
+                Add Material
+              </Button>
             </div>
           ) : null
         }
@@ -219,6 +227,7 @@ export default function Inventory() {
             <div className="mb-5">
               <PredictiveProcurementCard
                 item={criticalItem}
+                onAutoRaisePO={handleAutoRaisePO}
                 onReview={canLogStock ? () => openTransactionModal(criticalItem) : undefined}
                 onOpenProcurement={() => navigate('/procurement')}
               />
@@ -255,6 +264,17 @@ export default function Inventory() {
           onCreate={handleCreateItem}
         />
       )}
+
+      <CreatePOModal
+        open={poModalOpen}
+        onClose={() => setPoModalOpen(false)}
+        siteId={selectedSite.id}
+        siteName={selectedSite.name}
+        initialItem={autoPoData.item}
+        initialQuantity={autoPoData.quantity}
+        initialUnit={autoPoData.unit}
+        onCreate={handleCreatePO}
+      />
     </div>
   )
 }

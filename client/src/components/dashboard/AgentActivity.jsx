@@ -288,8 +288,20 @@ export default function AgentActivity({ siteId }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge tone={SUBTASK_STATUS_TONE[st.status] || 'neutral'}>
-                        {isInvestigating ? '⚡ INVESTIGATING' : st.status?.toUpperCase() || 'RESOLVED'}
+                      <Badge
+                        tone={
+                          isInvestigating
+                            ? 'amber'
+                            : st.parent_alert_id || st.parentAlertId
+                            ? 'red'
+                            : 'green'
+                        }
+                      >
+                        {isInvestigating
+                          ? '⚡ INVESTIGATING'
+                          : st.parent_alert_id || st.parentAlertId
+                          ? '🚨 ALERT GENERATED'
+                          : '✓ VERIFIED NOMINAL'}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
                         {formatTime(st.created_at || st.createdAt)}

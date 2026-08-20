@@ -77,16 +77,14 @@ export default function Procurement() {
     }
   }
 
-  const handleDeleteOrder = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this purchase order?')) return
-
+  const handleDeleteOrder = async (orderId) => {
     try {
-      await apiRequest(`/procurement/${id}`, {
+      await apiRequest(`/procurement/${orderId}`, {
         method: 'DELETE',
       })
       setOrders((prev) => {
         const list = Array.isArray(prev) ? prev : safeOrders
-        return list.filter((o) => o.id !== id)
+        return list.filter((o) => o.id !== orderId)
       })
     } catch (err) {
       console.warn('Delete PO API error, applying local fallback:', err)

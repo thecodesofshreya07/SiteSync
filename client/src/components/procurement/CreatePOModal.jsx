@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import { vendors } from '../../data/procurement'
@@ -17,14 +17,23 @@ const PRESET_UNITS = [
   'Custom...',
 ]
 
-export default function CreatePOModal({ open, onClose, siteId, siteName, onCreate }) {
-  const [item, setItem] = useState('')
+export default function CreatePOModal({ open, onClose, siteId, siteName, onCreate, initialItem = '', initialQuantity = '', initialUnit = 'bags' }) {
+  const [item, setItem] = useState(initialItem)
   const [vendorId, setVendorId] = useState(vendors[0]?.id || 'VEN-001')
-  const [quantity, setQuantity] = useState('')
-  const [selectedUnit, setSelectedUnit] = useState('bags')
+  const [quantity, setQuantity] = useState(initialQuantity)
+  const [selectedUnit, setSelectedUnit] = useState(initialUnit)
   const [customUnit, setCustomUnit] = useState('')
   const [expectedDelivery, setExpectedDelivery] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  // Sync initial values when modal opens
+  useEffect(() => {
+    if (open) {
+      if (initialItem) setItem(initialItem)
+      if (initialQuantity) setQuantity(initialQuantity)
+      if (initialUnit) setSelectedUnit(initialUnit)
+    }
+  }, [open, initialItem, initialQuantity, initialUnit])
 
   if (!open) return null
 

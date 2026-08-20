@@ -78,11 +78,6 @@ export default function TasksEquipment() {
         </div>
       )}
 
-      {/* 7-Day Live Weather Forecast Strip */}
-      <div className="mb-5">
-        <WeatherStrip siteId={selectedSite.id} />
-      </div>
-
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
           {TABS.map((t) => (

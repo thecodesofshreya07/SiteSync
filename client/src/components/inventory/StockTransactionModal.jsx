@@ -9,12 +9,22 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
   const [type, setType] = useState('Stock In')
   const [quantity, setQuantity] = useState('')
   const [note, setNote] = useState('')
+  const [validationError, setValidationError] = useState('')
 
   if (!item) return null
 
   function handleSubmit() {
     const qty = Number(quantity)
-    if (!qty || qty <= 0) return
+    if (!qty || qty <= 0) {
+      setValidationError('Please enter a valid positive quantity.')
+      return
+    }
+    if ((type === 'Stock Out' || type === 'Transfer') && qty > Number(item.quantity || 0)) {
+      setValidationError(`Cannot log ${qty} ${item.unit}. Only ${item.quantity} ${item.unit} available in current stock.`)
+      return
+    }
+
+    setValidationError('')
     onSubmit({ type, quantity: qty, note })
     setQuantity('')
     setNote('')
@@ -25,6 +35,11 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
   return (
     <Modal open={open} onClose={onClose} title="Log Transaction" subtitle={`${item.item} · ${item.id}`}>
       <div className="space-y-4 font-public min-w-0">
+        {validationError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
+            ⚠️ {validationError}
+          </div>
+        )}
         <div>
           <label className="mb-1.5 block text-xs font-medium text-navy-600">Transaction Type</label>
           <div className="grid grid-cols-3 gap-1 rounded-lg border border-surface-border bg-surface-bg p-1">

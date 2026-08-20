@@ -56,13 +56,29 @@ function formatOrderRow(row) {
   const rawAmount = Number(row.amount ?? baseData.amount ?? 0)
   const finalAmount = rawAmount > 0 && rawAmount !== 250000 ? rawAmount : calculateBackendAmount(rawItem, rawQty, rawUnit)
 
+  const vendorMap = {
+    'VEN-017': 'BuildPro Materials',
+    'VEN-022': 'Metro Steel Ltd',
+    'VEN-009': 'Konkan Aggregates Co.',
+    'VEN-031': 'Shakti Electricals',
+    'VEN-014': 'Vishal Brick Works',
+  }
+  const resolvedVendorName =
+    baseData.vendorName ||
+    baseData.vendor ||
+    row.vendor_name ||
+    row.vendor ||
+    vendorMap[row.vendor_id || baseData.vendorId] ||
+    'BuildPro Materials'
+
   return {
     ...baseData,
     id: row.id || baseData.id,
     siteId: row.site_id || baseData.siteId,
     item: rawItem,
-    vendorId: row.vendor_id || baseData.vendorId,
-    vendorName: baseData.vendorName || row.vendor_name || '—',
+    vendorId: row.vendor_id || baseData.vendorId || 'VEN-017',
+    vendor: resolvedVendorName,
+    vendorName: resolvedVendorName,
     quantity: rawQty,
     unit: rawUnit,
     amount: finalAmount,

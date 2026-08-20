@@ -6,7 +6,7 @@ function daysRemaining(item) {
   return Math.round((item.quantity / item.consumptionPerDay) * 10) / 10
 }
 
-export default function PredictiveProcurementCard({ item, onReview, onOpenProcurement }) {
+export default function PredictiveProcurementCard({ item, onReview, onOpenProcurement, onAutoRaisePO }) {
   const remaining = daysRemaining(item)
   const recommendedOrder = Math.round((item.consumptionPerDay || 50) * 9) // ~9 days buffer
 
@@ -44,8 +44,17 @@ export default function PredictiveProcurementCard({ item, onReview, onOpenProcur
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        {onAutoRaisePO && (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => onAutoRaisePO(item, recommendedOrder)}
+          >
+            ⚡ 1-Click Raise Auto-PO ({recommendedOrder} {item.unit})
+          </Button>
+        )}
         {onReview && (
-          <Button size="sm" variant="primary" onClick={onReview}>
+          <Button size="sm" variant="secondary" onClick={onReview}>
             Log Transaction
           </Button>
         )}
