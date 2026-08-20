@@ -1,46 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Lock, Mail, ShieldAlert, Cpu, Database, CheckCircle2, ArrowRight } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { Lock, Mail, ShieldAlert, ArrowRight } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-
-const DEMO_ACCOUNTS = [
-  {
-    role: 'Admin',
-    email: 'admin@sitesync.com',
-    desc: 'Full access across all projects, sites & user management',
-    badgeTone: 'bg-purple-100 text-purple-800 border-purple-200',
-  },
-  {
-    role: 'Project Manager',
-    email: 'mirlubaib51005@gmail.com',
-    desc: 'Assigned to Project ID 1 (Cross-site view across Riverside, Warehouse, Metro)',
-    badgeTone: 'bg-teal-100 text-teal-800 border-teal-200',
-  },
-  {
-    role: 'Contractor 1',
-    email: 'contractor1@sitesync.com',
-    desc: 'Restricted strictly to SITE-001 (Riverside Tower)',
-    badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
-  },
-  {
-    role: 'Contractor 2',
-    email: 'contractor@sitesync.com',
-    desc: 'Restricted strictly to SITE-002 (Warehouse Expansion)',
-    badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
-  },
-  {
-    role: 'Contractor 3',
-    email: 'contractor3@sitesync.com',
-    desc: 'Restricted strictly to SITE-003 (Metro Heights)',
-    badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
-  },
-  {
-    role: 'Finance Manager',
-    email: 'shreyamishra22042007@gmail.com',
-    desc: 'Global financial approvals, budget overrun review & PO management',
-    badgeTone: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  },
-]
 
 export default function Login() {
   const { login } = useAuth()
@@ -62,7 +23,7 @@ export default function Login() {
       setLoading(true)
       setError(null)
       await login(email, password)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.')
     } finally {
@@ -70,35 +31,38 @@ export default function Login() {
     }
   }
 
-  const handleSelectDemoAccount = (demoEmail) => {
-    setEmail(demoEmail)
-    setPassword('password123')
-    setError(null)
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4 py-12 text-slate-100 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 text-slate-100 font-public">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20">
-            <Cpu size={32} />
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">SiteSync</h1>
-          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">AI Construction Operations Platform</p>
+          <Link to="/" className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-white p-2 shadow-lg shadow-teal-500/10">
+            <img
+              src="/sitesync_logo.png"
+              alt="SiteSync Logo"
+              className="h-full w-full object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none'
+              }}
+            />
+          </Link>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white font-public">Sign In to SiteSync</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 font-ibm">
+            Autonomous Multi-Site Construction Ops
+          </p>
         </div>
 
         {/* Login Card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-6">
-          <div className="border-b border-slate-800 pb-4">
-            <h2 className="text-lg font-bold text-slate-100">Sign In to Your Account</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Enter credentials to receive a signed JWT session.
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-7 shadow-2xl space-y-5 font-ibm backdrop-blur-md">
+          <div className="border-b border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-white font-public">Account Credentials</h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Enter your enterprise email and password to access your site workspace.
             </p>
           </div>
 
           {error && (
-            <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-950/50 p-3.5 text-xs text-red-300">
+            <div className="flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-950/60 p-3 text-xs text-red-300">
               <ShieldAlert size={16} className="shrink-0 text-red-400 mt-0.5" />
               <div className="flex-1">{error}</div>
             </div>
@@ -106,7 +70,9 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1 font-public">
+                Work Email
+              </label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-2.5 text-slate-500" />
                 <input
@@ -115,13 +81,15 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@sitesync.com"
                   required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1 font-public">
+                Password
+              </label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-2.5 text-slate-500" />
                 <input
@@ -130,7 +98,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
                   required
-                  className="w-full rounded-lg border border-slate-800 bg-slate-900 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -138,49 +106,26 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-500 py-2.5 text-sm font-semibold text-slate-950 shadow-md hover:bg-teal-400 active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#146b3a] hover:bg-[#188045] py-2.5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer font-public"
             >
               {loading ? 'Authenticating...' : 'Sign In'}
               {!loading && <ArrowRight size={16} />}
             </button>
           </form>
-        </div>
 
-        {/* Quick Demo Accounts */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Development Demo Accounts</span>
-            <span className="text-2xs text-slate-500">Password: <code className="text-teal-400">password123</code></span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.email}
-                type="button"
-                onClick={() => handleSelectDemoAccount(acc.email)}
-                className="flex items-start justify-between rounded-xl border border-slate-800 bg-slate-900/80 p-2.5 text-left hover:border-teal-500/50 hover:bg-slate-900 transition-all cursor-pointer group"
-              >
-                <div className="space-y-0.5 min-w-0 pr-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block rounded-md border px-2 py-0.5 text-2xs font-bold ${acc.badgeTone}`}>
-                      {acc.role}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-200">{acc.email}</span>
-                  </div>
-                  <p className="text-2xs text-slate-400 truncate">{acc.desc}</p>
-                </div>
-                <CheckCircle2 size={16} className="text-slate-600 group-hover:text-teal-400 shrink-0 mt-1" />
-              </button>
-            ))}
+          <div className="pt-2 text-center text-xs text-slate-400 border-t border-slate-800">
+            Don't have an account yet?{' '}
+            <Link to="/signup" className="font-bold text-teal-400 hover:text-teal-300">
+              Create an account
+            </Link>
           </div>
         </div>
 
-        {/* Footer info */}
-        <div className="flex items-center justify-center gap-3 text-2xs text-slate-500">
-          <span className="flex items-center gap-1"><Database size={11} /> PostgreSQL Supabase</span>
-          <span>•</span>
-          <span className="flex items-center gap-1"><Cpu size={11} /> JWT Authorization</span>
+        {/* Back to landing */}
+        <div className="text-center">
+          <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 font-ibm">
+            ← Back to marketing home
+          </Link>
         </div>
       </div>
     </div>

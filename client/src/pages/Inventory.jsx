@@ -79,7 +79,8 @@ export default function Inventory() {
 
   const filtered = safeItems.filter((item) => {
     if (!item || !item.item) return false
-    const matchesSearch = item.item.toLowerCase().includes(search.toLowerCase())
+    const q = search.toLowerCase().trim()
+    const matchesSearch = item.item.toLowerCase().includes(q) || (item.id && item.id.toLowerCase().includes(q))
     const matchesStatus = status === 'ALL' || item.status === status
     return matchesSearch && matchesStatus
   })

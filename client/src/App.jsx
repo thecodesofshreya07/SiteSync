@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
@@ -9,6 +9,8 @@ import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import UserManagement from './pages/UserManagement'
 import Login from './pages/Login'
+import SignUp from './pages/SignUp'
+import LandingPage from './pages/LandingPage'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 import { SiteProvider } from './context/SiteContext'
@@ -24,10 +26,14 @@ export default function App() {
           <AlertsProvider>
             <BrowserRouter>
               <Routes>
-                {/* Public Login Route */}
+                {/* Public Marketing & Auth Routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/welcome" element={<LandingPage />} />
+                <Route path="/landing" element={<LandingPage />} />
+                <Route path="/signup" element={<SignUp />} />
                 <Route path="/login" element={<Login />} />
 
-                {/* Protected Application Routes */}
+                {/* Protected Application Portal Routes */}
                 <Route
                   element={
                     <ProtectedRoute>
@@ -35,7 +41,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 >
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/procurement" element={<Procurement />} />
                   <Route path="/tasks-equipment" element={<TasksEquipment />} />
@@ -58,6 +64,9 @@ export default function App() {
                     }
                   />
                 </Route>
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </BrowserRouter>
           </AlertsProvider>

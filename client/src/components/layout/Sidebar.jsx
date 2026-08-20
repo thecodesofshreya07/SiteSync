@@ -16,7 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
 
 const NAV_ITEMS = [
-  { key: 'dashboard', to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'dashboard', to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'inventory', to: '/inventory', label: 'Inventory', icon: Boxes },
   { key: 'procurement', to: '/procurement', label: 'Procurement', icon: ShoppingCart },
   { key: 'tasks-equipment', to: '/tasks-equipment', label: 'Tasks & Equipment', icon: ListChecks },
