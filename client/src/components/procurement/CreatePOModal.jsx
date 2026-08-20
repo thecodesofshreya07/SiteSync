@@ -3,15 +3,31 @@ import Modal from '../common/Modal'
 import Button from '../common/Button'
 import { vendors } from '../../data/procurement'
 
+const PRESET_UNITS = [
+  'bags',
+  'cu.m',
+  'tonnes',
+  'units',
+  'meters',
+  'kg',
+  'liters',
+  'sq.m',
+  'truckloads',
+  'Custom...',
+]
+
 export default function CreatePOModal({ open, onClose, siteId, siteName, onCreate }) {
   const [item, setItem] = useState('')
   const [vendorId, setVendorId] = useState(vendors[0]?.id || 'VEN-001')
   const [quantity, setQuantity] = useState('')
-  const [unit, setUnit] = useState('bags')
+  const [selectedUnit, setSelectedUnit] = useState('bags')
+  const [customUnit, setCustomUnit] = useState('')
   const [expectedDelivery, setExpectedDelivery] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   if (!open) return null
+
+  const effectiveUnit = selectedUnit === 'Custom...' ? customUnit.trim() || 'units' : selectedUnit
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -26,7 +42,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
         vendorId,
         vendorName: selectedVendor?.name || '—',
         quantity: Number(quantity) || 1,
-        unit: unit.trim() || 'units',
+        unit: effectiveUnit,
         amount: 0,
         expectedDelivery: expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         stage: 'Material Request',
@@ -35,6 +51,8 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
       setItem('')
       setQuantity('')
       setExpectedDelivery('')
+      setCustomUnit('')
+      setSelectedUnit('bags')
       onClose()
     } catch (err) {
       console.error('Failed to create material request:', err)
@@ -91,16 +109,36 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Unit</label>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Unit *</label>
+            <select
+              value={selectedUnit}
+              onChange={(e) => setSelectedUnit(e.target.value)}
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+            >
+              {PRESET_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {selectedUnit === 'Custom...' && (
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Specify Custom Unit *
+            </label>
             <input
               type="text"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="bags, tonnes, cu.m"
+              required
+              value={customUnit}
+              onChange={(e) => setCustomUnit(e.target.value)}
+              placeholder="e.g. drums, rolls, pallets"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
-        </div>
+        )}
 
         <div>
           <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">

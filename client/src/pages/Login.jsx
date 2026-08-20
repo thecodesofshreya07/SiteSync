@@ -35,7 +35,7 @@ const DEMO_ACCOUNTS = [
     badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
   },
   {
-    role: 'Finance',
+    role: 'Accountant',
     email: 'finance@sitesync.com',
     desc: 'Global financial approvals, budget checking & payment management',
     badgeTone: 'bg-indigo-100 text-indigo-800 border-indigo-200',

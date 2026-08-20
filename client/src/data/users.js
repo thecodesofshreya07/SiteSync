@@ -90,7 +90,7 @@ export const initialUsers = [
     name: 'Aniket Verma',
     email: 'finance@sitesync.com',
     phone: '+91 98200 88888',
-    role: 'Finance',
+    role: 'Accountant',
     siteId: 'NA',
     projectId: 'NA',
     status: 'Active',

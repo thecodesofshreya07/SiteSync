@@ -65,26 +65,92 @@ async function autoUpdateSiteInventory(order) {
 
   if (existingItem) {
     const updatedQty = Math.round((Number(existingItem.quantity) + qtyToAdd) * 100) / 100
+    const threshold = Number(existingItem.reorderThreshold) || 0
+    let status = 'OK'
+    if (updatedQty <= threshold * 0.5) {
+      status = 'CRITICAL'
+    } else if (updatedQty <= threshold) {
+      status = 'LOW'
+    } else {
+      status = 'OK'
+    }
+
     const lastTransaction = {
       type: 'Stock In',
       quantity: qtyToAdd,
       date: new Date().toISOString().slice(0, 10),
       note: `Procurement delivery added to inventory (PO: ${order.id})`,
     }
-    updateById('inventory', existingItem.id, {
+
+    const updatedItem = {
+      ...existingItem,
       quantity: updatedQty,
+      status,
       lastUpdated: new Date().toISOString(),
       lastTransaction,
-    })
+    }
+
+    updateById('inventory', existingItem.id, updatedItem)
 
     if (pool) {
       try {
         await pool.query(
-          `UPDATE inventory SET quantity = $1, last_updated = $2, last_transaction = $3 WHERE id = $4`,
-          [updatedQty, new Date().toISOString(), JSON.stringify(lastTransaction), existingItem.id]
+          `UPDATE inventory SET quantity = $1, status = $2, last_updated = $3, last_transaction = $4, data = $5 WHERE id = $6`,
+          [updatedQty, status, updatedItem.lastUpdated, JSON.stringify(lastTransaction), JSON.stringify(updatedItem), existingItem.id]
         )
       } catch (err) {
         console.warn('PostgreSQL inventory update error:', err.message)
+      }
+    }
+  } else {
+    // Material item does not exist yet in site inventory -> auto create
+    const id = `INV-${Math.floor(100 + Math.random() * 900)}`
+    const threshold = Math.round(qtyToAdd * 0.4)
+    const lastTransaction = {
+      type: 'Stock In',
+      quantity: qtyToAdd,
+      date: new Date().toISOString().slice(0, 10),
+      note: `Procurement delivery added to inventory (PO: ${order.id})`,
+    }
+
+    const newItem = {
+      id,
+      siteId: order.siteId,
+      item: order.item,
+      unit: order.unit || 'units',
+      quantity: qtyToAdd,
+      reorderThreshold: threshold,
+      consumptionPerDay: 10,
+      status: 'OK',
+      lastUpdated: new Date().toISOString(),
+      lastTransaction,
+    }
+
+    inventoryList.push(newItem)
+    setCollection('inventory', inventoryList)
+
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO inventory (
+            id, site_id, item, unit, quantity, reorder_threshold, consumption_per_day, status, last_updated, last_transaction, data
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            id,
+            order.siteId,
+            order.item,
+            order.unit || 'units',
+            qtyToAdd,
+            threshold,
+            10,
+            'OK',
+            newItem.lastUpdated,
+            JSON.stringify(lastTransaction),
+            JSON.stringify(newItem),
+          ]
+        )
+      } catch (err) {
+        console.warn('PostgreSQL insert inventory item warning:', err.message)
       }
     }
   }

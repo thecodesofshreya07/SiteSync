@@ -77,8 +77,8 @@ export function requireSiteAccess(req, res, next) {
     return res.status(401).json({ error: 'Authentication required.' })
   }
 
-  // 1. Admin & Finance can access all sites
-  if (req.user.role === 'Admin' || req.user.role === 'Finance') {
+  // 1. Admin, Finance, & Accountant can access all sites
+  if (req.user.role === 'Admin' || req.user.role === 'Finance' || req.user.role === 'Accountant') {
     return next()
   }
 

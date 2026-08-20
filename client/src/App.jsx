@@ -38,7 +38,14 @@ export default function App() {
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/procurement" element={<Procurement />} />
                   <Route path="/tasks-equipment" element={<TasksEquipment />} />
-                  <Route path="/assistant" element={<Assistant />} />
+                  <Route
+                    path="/assistant"
+                    element={
+                      <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.PROJECT_MANAGER]}>
+                        <Assistant />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/settings" element={<Settings />} />
                   <Route
                     path="/user-management"

@@ -9,6 +9,7 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
+import { useAuth } from '../hooks/useAuth'
 import { apiRequest } from '../lib/api'
 import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
 
@@ -19,6 +20,7 @@ export function daysRemaining(item) {
 
 export default function Inventory() {
   const { selectedSite } = useSite()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -28,6 +30,8 @@ export default function Inventory() {
   const [txnItem, setTxnItem] = useState(null)
   const [txnModalOpen, setTxnModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
+
+  const canLogStock = user?.role === 'Contractor'
 
   useEffect(() => {
     let isMounted = true
@@ -72,7 +76,7 @@ export default function Inventory() {
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
   function openTransactionModal(item) {
-    if (!item) return
+    if (!item || !canLogStock) return
     setTxnItem(item)
     setTxnModalOpen(true)
   }
@@ -105,6 +109,7 @@ export default function Inventory() {
   }
 
   async function handleDeleteItem(id) {
+    if (!canLogStock) return
     if (!window.confirm('Are you sure you want to remove this material from inventory?')) return
 
     try {
@@ -119,7 +124,7 @@ export default function Inventory() {
   }
 
   async function handleTransaction({ type, quantity, note }) {
-    if (!txnItem) return
+    if (!txnItem || !canLogStock) return
 
     try {
       const updatedItem = await apiRequest(`/inventory/${txnItem.id}/transaction`, {
@@ -165,23 +170,25 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              icon={Plus}
-              onClick={() => setCreateModalOpen(true)}
-            >
-              Add Material
-            </Button>
-            <Button
-              variant="primary"
-              icon={PackagePlus}
-              onClick={() => items.length > 0 && openTransactionModal(items[0])}
-              disabled={items.length === 0}
-            >
-              Log Stock
-            </Button>
-          </div>
+          canLogStock ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                icon={Plus}
+                onClick={() => setCreateModalOpen(true)}
+              >
+                Add Material
+              </Button>
+              <Button
+                variant="primary"
+                icon={PackagePlus}
+                onClick={() => items.length > 0 && openTransactionModal(items[0])}
+                disabled={items.length === 0}
+              >
+                Log Stock
+              </Button>
+            </div>
+          ) : null
         }
       />
 
@@ -204,7 +211,7 @@ export default function Inventory() {
             <div className="mb-5">
               <PredictiveProcurementCard
                 item={criticalItem}
-                onReview={() => openTransactionModal(criticalItem)}
+                onReview={() => canLogStock && openTransactionModal(criticalItem)}
                 onOpenProcurement={() => navigate('/procurement')}
               />
             </div>
@@ -216,26 +223,30 @@ export default function Inventory() {
 
           <InventoryTable
             items={filtered}
-            onLogTransaction={openTransactionModal}
-            onDeleteItem={handleDeleteItem}
+            onLogTransaction={canLogStock ? openTransactionModal : undefined}
+            onDeleteItem={canLogStock ? handleDeleteItem : undefined}
           />
         </>
       )}
 
-      <StockTransactionModal
-        open={txnModalOpen}
-        item={txnItem}
-        onClose={() => setTxnModalOpen(false)}
-        onSubmit={handleTransaction}
-      />
+      {canLogStock && (
+        <>
+          <StockTransactionModal
+            open={txnModalOpen}
+            item={txnItem}
+            onClose={() => setTxnModalOpen(false)}
+            onSubmit={handleTransaction}
+          />
 
-      <CreateItemModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        siteId={selectedSite.id}
-        siteName={selectedSite.name}
-        onCreate={handleCreateItem}
-      />
+          <CreateItemModal
+            open={createModalOpen}
+            onClose={() => setCreateModalOpen(false)}
+            siteId={selectedSite.id}
+            siteName={selectedSite.name}
+            onCreate={handleCreateItem}
+          />
+        </>
+      )}
     </div>
   )
 }

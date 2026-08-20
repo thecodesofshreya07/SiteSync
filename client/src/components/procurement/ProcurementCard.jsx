@@ -1,7 +1,7 @@
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import { formatFullINR, formatDate } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
-import { CheckCircle2, ArrowRight, PackageCheck, AlertCircle } from 'lucide-react'
+import { CheckCircle2, PackageCheck } from 'lucide-react'
 
 export default function ProcurementCard({ po, onUpdateOrder }) {
   const { user } = useAuth()
@@ -44,29 +44,29 @@ export default function ProcurementCard({ po, onUpdateOrder }) {
         <ProcurementStatusBadge status={po.status} />
       </div>
 
-      {/* Role-Based Workflow Action Buttons */}
+      {/* Role-Based Action Buttons */}
       <div className="pt-2 border-t border-surface-border/60">
-        {/* PM Action: Validate Material Request & Select Vendor */}
-        {(role === 'Project Manager' || role === 'Admin') &&
+        {/* Step 2: PM ONLY approves order request & raises PO */}
+        {role === 'Project Manager' &&
           (po.status === 'Pending PM Validation' || po.stage === 'Material Request') && (
             <button
               type="button"
               onClick={() =>
                 handleAction('Vendor Quote', 'Pending Finance Approval', {
-                  vendorId: 'VEN-002',
-                  vendorName: 'Apex Concrete & Aggregates',
+                  vendorId: po.vendorId || 'VEN-002',
+                  vendorName: po.vendorName || 'Apex Concrete & Aggregates',
                   amount: po.amount || 250000,
                 })
               }
               className="flex w-full items-center justify-center gap-1 rounded-md bg-teal-600 px-2 py-1.5 text-2xs font-semibold text-white shadow-xs hover:bg-teal-700 active:scale-[0.98] transition-all cursor-pointer"
             >
               <CheckCircle2 size={12} />
-              Validate & Recommend Vendor
+              Approve Request & Raise PO
             </button>
           )}
 
-        {/* Finance Action: Budget Check & Financial Approval */}
-        {(role === 'Finance' || role === 'Admin') &&
+        {/* Step 3: Accountant / Finance OR Admin approves money & payment */}
+        {(role === 'Accountant' || role === 'Finance' || role === 'Admin') &&
           (po.status === 'Pending Finance Approval' || po.stage === 'Vendor Quote' || po.stage === 'Approval') && (
             <button
               type="button"
@@ -82,8 +82,8 @@ export default function ProcurementCard({ po, onUpdateOrder }) {
             </button>
           )}
 
-        {/* Delivery Completion & Inventory Auto-Update */}
-        {(role === 'Contractor' || role === 'Admin' || role === 'Project Manager') &&
+        {/* Step 4: Contractor ONLY marks delivery & logs site inventory */}
+        {role === 'Contractor' &&
           (po.status === 'Payment Completed' || po.stage === 'Purchase Order' || po.status === 'Awaiting Delivery') && (
             <button
               type="button"

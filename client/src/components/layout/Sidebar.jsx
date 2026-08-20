@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { useRole } from '../../hooks/useRole'
+import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
 
 const NAV_ITEMS = [
@@ -25,6 +26,14 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ mobileOpen, setMobileOpen }) {
   const { role, allowedRoutes } = useRole()
+  const { user } = useAuth()
+
+  const userInitials = (user?.name || 'US')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   const navContent = (
     <>
@@ -73,11 +82,11 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
       <div className="border-t border-white/10 px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-500/25 text-xs font-bold text-teal-300">
-            SM
+            {userInitials}
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">Shreya Mishra</p>
-            <p className="truncate text-xs font-medium text-slate-400">{role}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-white">{user?.name || 'User'}</p>
+            <p className="truncate text-xs font-medium text-slate-400">{user?.role || role}</p>
           </div>
         </div>
       </div>
@@ -86,7 +95,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
 
   return (
     <>
-      {/* Desktop Sidebar (Preserved exactly) */}
+      {/* Desktop Sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col bg-navy-950 md:flex">
         {navContent}
       </aside>
