@@ -9,6 +9,7 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
+import { useAlerts } from '../hooks/useAlerts'
 import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
 
 const API_BASE = 'http://localhost:4000/api'
@@ -20,6 +21,7 @@ export function daysRemaining(item) {
 
 export default function Inventory() {
   const { selectedSite } = useSite()
+  const { refreshAlerts } = useAlerts()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -96,6 +98,7 @@ export default function Inventory() {
       const created = await res.json()
       if (created && created.id) {
         setItems((prev) => [...prev, created])
+        if (refreshAlerts) refreshAlerts()
       }
     } catch (err) {
       console.warn('Create inventory item API error, applying local fallback:', err)
@@ -126,6 +129,7 @@ export default function Inventory() {
         throw new Error(`Delete failed with status ${res.status}`)
       }
       setItems((prev) => prev.filter((i) => i.id !== id))
+      if (refreshAlerts) refreshAlerts()
     } catch (err) {
       console.warn('Delete API error, applying local removal fallback:', err)
       setItems((prev) => prev.filter((i) => i.id !== id))
@@ -151,6 +155,7 @@ export default function Inventory() {
       const updatedItem = await res.json()
       if (updatedItem && updatedItem.id) {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
+        if (refreshAlerts) refreshAlerts()
       }
     } catch (err) {
       console.warn('Transaction API call failed, applying optimistic local update:', err)

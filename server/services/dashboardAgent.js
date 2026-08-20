@@ -160,21 +160,43 @@ export async function runMonitoringStream(siteId, res) {
       await sleep(500)
       if (isClosed) return
 
-      // Find transferable stock at sibling sites
-      const siblingStock = allInventory.filter(
-        (i) => i.siteId !== siteId && i.item === criticalInventory.item && i.quantity > (i.reorderThreshold || 0)
+      // Check if an inter-site transfer was previously rejected/declined
+      const existingAlerts = await getCollectionDirect('alerts')
+      const rejectedTransferAlert = existingAlerts.find(
+        (a) =>
+          a.siteId === siteId &&
+          (a.status === 'transfer_rejected' || a.type === 'emergency_procurement_fallback') &&
+          a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
       )
+
+      const wasTransferRejected = Boolean(rejectedTransferAlert)
+
+      // Find transferable stock at sibling sites (only if not previously rejected)
+      const siblingStock = !wasTransferRejected
+        ? allInventory.filter(
+            (i) => i.siteId !== siteId && i.item === criticalInventory.item && i.quantity > (i.reorderThreshold || 0)
+          )
+        : []
       const transferSource = siblingStock[0]
       const transferSite = transferSource
         ? sites.find((s) => s.id === transferSource.siteId)?.name || transferSource.siteId
         : 'Riverside Tower'
 
-      emit({
-        type: 'analyzing',
-        message: `Scanning sibling sites for available ${criticalInventory.item} stock transfer...`,
-      })
-      await sleep(550)
-      if (isClosed) return
+      if (wasTransferRejected) {
+        emit({
+          type: 'flagged',
+          message: `⚠ Note: Inter-site transfer was declined by Riverside Tower — switching to Emergency PO strategy.`,
+        })
+        await sleep(400)
+        if (isClosed) return
+      } else {
+        emit({
+          type: 'analyzing',
+          message: `Scanning sibling sites for available ${criticalInventory.item} stock transfer...`,
+        })
+        await sleep(550)
+        if (isClosed) return
+      }
 
       emit({ type: 'resolved', message: 'Investigation completed' })
       await sleep(400)
@@ -182,6 +204,8 @@ export async function runMonitoringStream(siteId, res) {
 
       const recMessage = transferSource
         ? `Recommendation generated — transfer 150 ${criticalInventory.unit} of ${criticalInventory.item} from ${transferSite}`
+        : wasTransferRejected
+        ? `Recommendation generated — expedite Emergency Purchase Order for 500 ${criticalInventory.unit} of ${criticalInventory.item} from local supplier BuildPro Materials`
         : `Recommendation generated — expedite emergency PO for ${criticalInventory.item}`
 
       emit({
@@ -194,7 +218,6 @@ export async function runMonitoringStream(siteId, res) {
       emit({ type: 'waiting', message: 'Waiting for manager approval' })
 
       console.log(`[ALERT] Creating alert for ${siteId}...`)
-      const existingAlerts = await getCollectionDirect('alerts')
       const matchedAlert = existingAlerts.find(
         (a) => a.siteId === siteId && a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
       )
@@ -204,14 +227,25 @@ export async function runMonitoringStream(siteId, res) {
         id: alertId,
         siteId,
         severity: 'critical',
-        title: `${criticalInventory.item} stock at ${currentSite.name} is projected to become critical in ${daysLeft} days.`,
+        type: wasTransferRejected ? 'emergency_procurement_fallback' : 'standard',
+        title: wasTransferRejected
+          ? `Transfer Declined by Riverside Tower — Emergency PO Recommended for ${criticalInventory.item}`
+          : `${criticalInventory.item} stock at ${currentSite.name} is projected to become critical in ${daysLeft} days.`,
         timestamp: new Date().toISOString(),
-        explanation: `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}. Pending replenishment is delayed by ${delayedPO?.delayDays || 4} days, causing a potential supply gap.`,
-        reasonPoints: [
-          `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day.`,
-          `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit}.`,
-          `Pending delivery (${delayedPO?.id || 'PO-2041'}) is delayed by ${delayedPO?.delayDays || 4} days.`,
-        ],
+        explanation: wasTransferRejected
+          ? `Riverside Tower site management declined the 150-bag transfer request. Inter-site transfer route is unavailable. Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}.`
+          : `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}. Pending replenishment is delayed by ${delayedPO?.delayDays || 4} days, causing a potential supply gap.`,
+        reasonPoints: wasTransferRejected
+          ? [
+              `Inter-site stock transfer was declined by Riverside Tower.`,
+              `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit} (runway: ${daysLeft} days).`,
+              `Direct vendor procurement is the only remaining replenishment pathway.`,
+            ]
+          : [
+              `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day.`,
+              `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit}.`,
+              `Pending delivery (${delayedPO?.id || 'PO-2041'}) is delayed by ${delayedPO?.delayDays || 4} days.`,
+            ],
         recommendation: recMessage.replace('Recommendation generated — ', ''),
         sources: [
           { type: 'inventory', id: criticalInventory.id, label: `Inventory Record ${criticalInventory.id}` },
@@ -219,7 +253,7 @@ export async function runMonitoringStream(siteId, res) {
           ...(delayedPO?.deliveryId ? [{ type: 'delivery', id: delayedPO.deliveryId, label: `Delivery ${delayedPO.deliveryId}` }] : []),
           ...(delayedPO?.vendorId ? [{ type: 'vendor', id: delayedPO.vendorId, label: `Vendor Record ${delayedPO.vendorId}` }] : []),
         ],
-        status: matchedAlert?.status || 'pending',
+        status: matchedAlert?.status === 'transfer_requested' ? 'transfer_requested' : 'pending',
         transferDetails: transferSource
           ? {
               sourceSiteId: transferSource.siteId,
