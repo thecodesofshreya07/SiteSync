@@ -1,12 +1,74 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown, Menu } from 'lucide-react'
+import { Bell, ChevronDown, Menu, Database, Cpu } from 'lucide-react'
 import SiteSelector from './SiteSelector'
 import { useRole } from '../../hooks/useRole'
 import { useAlerts } from '../../hooks/useAlerts'
-import { useSite } from '../../hooks/useSite'
 import { ROLE_LIST, SEVERITY_STYLES } from '../../lib/constants'
 import { cn, formatTime } from '../../lib/utils'
 import { Link } from 'react-router-dom'
+
+const API_BASE = 'http://localhost:4000/api'
+
+function DataSourceBadge() {
+  const [status, setStatus] = useState('checking') // 'live' | 'error' | 'checking'
+  const [details, setDetails] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/health`)
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted) {
+            setStatus('live')
+            setDetails(data)
+          }
+        } else {
+          if (isMounted) setStatus('error')
+        }
+      } catch (err) {
+        if (isMounted) setStatus('error')
+      }
+    }
+    checkHealth()
+    const interval = setInterval(checkHealth, 30000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
+
+  if (status === 'error') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-300 px-2.5 py-1 text-xs font-bold text-red-700 shadow-sm shrink-0">
+        <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+        🔴 ERROR — Backend Unavailable (localhost:4000)
+      </span>
+    )
+  }
+
+  return (
+    <div className="hidden sm:flex items-center gap-2 shrink-0">
+      <span
+        title="Connected to Supabase PostgreSQL on port 4000"
+        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-2xs font-bold text-emerald-800 shadow-xs"
+      >
+        <Database size={11} className="text-emerald-600" />
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        LIVE: PostgreSQL
+      </span>
+      <span
+        title="Agentic LLM powered by Groq openai/gpt-oss-120b"
+        className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-300 px-2.5 py-0.5 text-2xs font-bold text-indigo-800 shadow-xs"
+      >
+        <Cpu size={11} className="text-indigo-600" />
+        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+        AI: Groq (gpt-oss-120b)
+      </span>
+    </div>
+  )
+}
 
 function RoleSelector() {
   const { role, setRole } = useRole()
@@ -88,10 +150,10 @@ function NotificationBell() {
           </div>
           <div className="max-h-72 overflow-y-auto p-1.5">
             {pending.length === 0 && (
-              <p className="px-2 py-4 text-center text-xs text-navy-500">No pending alerts right now.</p>
+              <p className="px-2 py-4 text-center text-xs text-navy-500">No pending alerts in database.</p>
             )}
             {pending.map((a) => {
-              const s = SEVERITY_STYLES[a.severity]
+              const s = SEVERITY_STYLES[a.severity] || { dot: 'bg-amber-500' }
               return (
                 <Link
                   key={a.id}
@@ -130,10 +192,7 @@ export default function Topbar({ onMenuClick }) {
           <SiteSelector />
         </div>
 
-        <span className="hidden items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-xs font-bold text-teal-800 lg:flex shadow-sm shrink-0">
-          <span className="h-2 w-2 rounded-full bg-teal-500 pulse-dot" />
-          AI Monitoring Active
-        </span>
+        <DataSourceBadge />
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">

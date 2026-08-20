@@ -1,10 +1,9 @@
 import { AlertTriangle } from 'lucide-react'
 import EquipmentStatusBadge from './EquipmentStatusBadge'
-import { tasks } from '../../data/tasks'
 import { cn } from '../../lib/utils'
 
 export default function EquipmentCard({ eq }) {
-  const task = tasks.find((t) => t.id === eq.assignedTask)
+  const taskLabel = eq.assignedTaskName || eq.assignedTask || (eq.status === 'Idle' ? 'No active task assigned' : 'General Site Operations')
 
   return (
     <div className="rounded-lg border border-surface-border bg-white p-4 shadow-card hover:border-slate-300 transition-colors">
@@ -28,7 +27,7 @@ export default function EquipmentCard({ eq }) {
       </div>
 
       <p className="mt-3 text-xs font-semibold text-slate-600">
-        {task ? `Assigned: ${task.name}` : 'No task assigned'}
+        Assigned: {taskLabel}
       </p>
 
       {eq.idleDays > 0 && (

@@ -1,11 +1,11 @@
-import { getCollection, readDb } from '../db.js'
+import { getCollectionDirect, readDb } from '../db.js'
 
-function resolveSiteId(input) {
+async function resolveSiteId(input) {
   if (!input || typeof input !== 'string') return null
   const clean = input.trim().toLowerCase()
   if (clean === 'null' || clean === 'undefined' || clean === '') return null
 
-  const sites = getCollection('sites')
+  const sites = await getCollectionDirect('sites')
   // Check exact ID match
   const byId = sites.find((s) => s.id.toLowerCase() === clean)
   if (byId) return byId.id
@@ -186,11 +186,11 @@ export const AGENT_TOOLS = [
 ]
 
 export async function executeTool(toolName, args = {}) {
-  const targetSiteId = resolveSiteId(args.siteId)
+  const targetSiteId = await resolveSiteId(args.siteId)
 
   switch (toolName) {
     case 'get_sites': {
-      const sites = getCollection('sites')
+      const sites = await getCollectionDirect('sites')
       if (targetSiteId) {
         return sites.filter((s) => s.id === targetSiteId)
       }
@@ -198,7 +198,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_inventory': {
-      let items = getCollection('inventory')
+      let items = await getCollectionDirect('inventory')
       if (targetSiteId) {
         items = items.filter((i) => i.siteId === targetSiteId)
       }
@@ -208,14 +208,14 @@ export async function executeTool(toolName, args = {}) {
       }
       if (args.criticalOnly) {
         items = items.filter(
-          (i) => i.status === 'Critical' || i.status === 'Low' || (i.daysToStockout && i.daysToStockout <= 5)
+          (i) => i.status === 'Critical' || i.status === 'CRITICAL' || i.status === 'Low' || i.status === 'LOW' || (i.daysToStockout && i.daysToStockout <= 5)
         )
       }
       return items
     }
 
     case 'get_procurement_orders': {
-      let orders = getCollection('procurementOrders')
+      let orders = await getCollectionDirect('procurementOrders')
       if (targetSiteId) {
         orders = orders.filter((o) => o.siteId === targetSiteId)
       }
@@ -226,7 +226,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_equipment': {
-      let eq = getCollection('equipment')
+      let eq = await getCollectionDirect('equipment')
       if (targetSiteId) {
         eq = eq.filter((e) => e.siteId === targetSiteId)
       }
@@ -237,7 +237,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_tasks': {
-      let tasks = getCollection('tasks')
+      let tasks = await getCollectionDirect('tasks')
       if (targetSiteId) {
         tasks = tasks.filter((t) => t.siteId === targetSiteId)
       }
@@ -248,7 +248,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_deliveries': {
-      let deliveries = getCollection('deliveries')
+      let deliveries = await getCollectionDirect('deliveries')
       if (args.delayedOnly) {
         deliveries = deliveries.filter((d) => d.status === 'Delayed' || (d.delayDays && d.delayDays > 0))
       }
@@ -256,7 +256,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_vendors': {
-      let vendors = getCollection('vendors')
+      let vendors = await getCollectionDirect('vendors')
       if (args.category && typeof args.category === 'string') {
         vendors = vendors.filter((v) => v.category?.toLowerCase().includes(args.category.toLowerCase()))
       }
@@ -264,7 +264,7 @@ export async function executeTool(toolName, args = {}) {
     }
 
     case 'get_alerts': {
-      let alerts = getCollection('alerts')
+      let alerts = await getCollectionDirect('alerts')
       if (targetSiteId) {
         alerts = alerts.filter((a) => a.siteId === targetSiteId)
       }

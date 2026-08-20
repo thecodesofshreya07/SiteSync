@@ -1,15 +1,15 @@
-import { getCollection, readDb, setCollection } from '../db.js'
-import groq from '../groqClient.js'
-import { config } from '../config.js'
+import { getCollectionDirect, insertAlertDirect, readDb } from '../db.js'
 
 export const MONITORING_TOOLS = {
   getInventory: async ({ siteId }) => {
-    const items = getCollection('inventory')
+    console.log(`[TOOL] get_inventory(${siteId || 'ALL'})`)
+    const items = await getCollectionDirect('inventory')
     return siteId ? items.filter((i) => i.siteId === siteId) : items
   },
   getPendingDeliveries: async ({ siteId }) => {
-    const orders = getCollection('procurementOrders')
-    const deliveries = getCollection('deliveries')
+    console.log(`[TOOL] get_deliveries(${siteId || 'ALL'})`)
+    const orders = await getCollectionDirect('procurementOrders')
+    const deliveries = await getCollectionDirect('deliveries')
     const siteOrders = siteId ? orders.filter((o) => o.siteId === siteId) : orders
     const deliveryStage = siteOrders.filter(
       (o) => o.stage === 'Delivery' || (o.status && o.status.toLowerCase().includes('delay'))
@@ -17,16 +17,18 @@ export const MONITORING_TOOLS = {
     return { pendingOrders: deliveryStage, deliveries }
   },
   getVendorHistory: async ({ vendorId }) => {
-    const vendors = getCollection('vendors')
+    console.log(`[TOOL] get_vendors(${vendorId || 'ALL'})`)
+    const vendors = await getCollectionDirect('vendors')
     if (vendorId) {
       return vendors.find((v) => v.id === vendorId) || null
     }
     return vendors
   },
   getBudgetVariance: async ({ siteId }) => {
+    console.log(`[TOOL] get_budget_breakdown(${siteId || 'ALL'})`)
     const db = readDb()
     const budgetMap = db.budgetByCategory || {}
-    const sites = getCollection('sites')
+    const sites = await getCollectionDirect('sites')
     const site = sites.find((s) => s.id === siteId)
     return {
       siteBudget: site ? { planned: site.budgetPlanned, actual: site.budgetActual } : null,
@@ -34,11 +36,13 @@ export const MONITORING_TOOLS = {
     }
   },
   getEquipmentUtilization: async ({ siteId }) => {
-    const equipment = getCollection('equipment')
+    console.log(`[TOOL] get_equipment(${siteId || 'ALL'})`)
+    const equipment = await getCollectionDirect('equipment')
     return siteId ? equipment.filter((e) => e.siteId === siteId) : equipment
   },
   getTaskStatus: async ({ siteId }) => {
-    const tasks = getCollection('tasks')
+    console.log(`[TOOL] get_tasks(${siteId || 'ALL'})`)
+    const tasks = await getCollectionDirect('tasks')
     return siteId ? tasks.filter((t) => t.siteId === siteId) : tasks
   },
 }
@@ -69,49 +73,53 @@ export async function runMonitoringStream(siteId, res) {
     }
   }
 
-  const sites = getCollection('sites')
+  console.log(`[AGENT] Monitoring ${siteId}`)
+  const sites = await getCollectionDirect('sites')
   const currentSite = sites.find((s) => s.id === siteId) || { id: siteId, name: siteId }
 
   try {
     // 1. Initial greeting
     emit({ type: 'checking', message: `Initializing AI monitoring cycle for ${currentSite.name}...` })
-    await sleep(500)
+    await sleep(400)
     if (isClosed) return
 
     // 2. Inventory Scan
     emit({ type: 'checking', message: `Checking inventory stock levels & consumption rates (${siteId})...` })
     const inventory = await executeMonitoringTool('getInventory', { siteId })
-    await sleep(550)
+    await sleep(450)
     if (isClosed) return
 
     // 3. Deliveries & Procurement Scan
     emit({ type: 'checking', message: 'Checking pending delivery status and PO dispatch stages...' })
     const deliveries = await executeMonitoringTool('getPendingDeliveries', { siteId })
-    await sleep(550)
+    await sleep(450)
     if (isClosed) return
 
     // 4. Vendor History Retrieval
     emit({ type: 'retrieving', message: 'Retrieving vendor reliability logs & transport metrics...' })
     const vendors = await executeMonitoringTool('getVendorHistory', {})
-    await sleep(550)
+    await sleep(450)
     if (isClosed) return
 
     // 5. Equipment & Task Investigation
     emit({ type: 'investigating', message: 'Cross-referencing equipment idle records & milestone dependencies...' })
     const equipment = await executeMonitoringTool('getEquipmentUtilization', { siteId })
     const tasks = await executeMonitoringTool('getTaskStatus', { siteId })
-    await sleep(600)
+    await sleep(500)
     if (isClosed) return
 
+    console.log(`[AGENT] Analyzing real database results for ${siteId}...`)
+
     // 6. Autonomous Anomaly Detection & Reasoning from real database records
-    const allInventory = getCollection('inventory')
+    const allInventory = await getCollectionDirect('inventory')
     const criticalInventory = inventory.find(
-      (i) => i.status === 'Critical' || (i.consumptionPerDay && (i.quantity / i.consumptionPerDay) <= 4)
+      (i) => i.status === 'CRITICAL' || i.status === 'Critical' || (i.consumptionPerDay && (i.quantity / i.consumptionPerDay) <= 4)
     )
     const idleEquipment = equipment.find((e) => e.status === 'Idle' && e.idleDays >= 4)
     const delayedPO = deliveries.pendingOrders?.find((o) => o.delayDays > 0 || o.status?.toLowerCase().includes('delay'))
 
     if (criticalInventory) {
+      console.log(`[AGENT] Shortage detected for ${criticalInventory.item} (${criticalInventory.quantity} ${criticalInventory.unit} remaining)`)
       const daysLeft = criticalInventory.consumptionPerDay
         ? Math.round((criticalInventory.quantity / criticalInventory.consumptionPerDay) * 10) / 10
         : 3.2
@@ -120,27 +128,27 @@ export async function runMonitoringStream(siteId, res) {
         type: 'flagged',
         message: `⚠ Shortage risk detected — ${criticalInventory.item} has ${daysLeft} days to critical stockout`,
       })
-      await sleep(600)
+      await sleep(500)
       if (isClosed) return
 
       // Find transferable stock at sibling sites
       const siblingStock = allInventory.filter(
-        (i) => i.siteId !== siteId && i.item === criticalInventory.item && i.quantity > i.reorderThreshold
+        (i) => i.siteId !== siteId && i.item === criticalInventory.item && i.quantity > (i.reorderThreshold || 0)
       )
       const transferSource = siblingStock[0]
       const transferSite = transferSource
         ? sites.find((s) => s.id === transferSource.siteId)?.name || transferSource.siteId
-        : 'Riverside Tower (Site A)'
+        : 'Riverside Tower'
 
       emit({
         type: 'analyzing',
         message: `Scanning sibling sites for available ${criticalInventory.item} stock transfer...`,
       })
-      await sleep(650)
+      await sleep(550)
       if (isClosed) return
 
       emit({ type: 'resolved', message: 'Investigation completed' })
-      await sleep(500)
+      await sleep(400)
       if (isClosed) return
 
       const recMessage = transferSource
@@ -151,13 +159,13 @@ export async function runMonitoringStream(siteId, res) {
         type: 'recommendation',
         message: recMessage,
       })
-      await sleep(550)
+      await sleep(450)
       if (isClosed) return
 
       emit({ type: 'waiting', message: 'Waiting for manager approval' })
 
-      // Check existing alert in database for this item/site or create new
-      const existingAlerts = getCollection('alerts')
+      console.log(`[ALERT] Creating alert for ${siteId}...`)
+      const existingAlerts = await getCollectionDirect('alerts')
       const matchedAlert = existingAlerts.find(
         (a) => a.siteId === siteId && a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
       )
@@ -185,37 +193,40 @@ export async function runMonitoringStream(siteId, res) {
         status: matchedAlert?.status || 'pending',
       }
 
-      saveAlertIfNew(alert)
+      await insertAlertDirect(alert)
+      console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
       emit({ type: 'alert', alert })
     } else if (idleEquipment) {
+      console.log(`[AGENT] Idle equipment detected: ${idleEquipment.name} (${idleEquipment.idleDays} days)`)
       emit({
         type: 'flagged',
         message: `⚠ Idle equipment detected — ${idleEquipment.name} idle for ${idleEquipment.idleDays} days (${idleEquipment.utilization}% util)`,
       })
-      await sleep(600)
+      await sleep(500)
       if (isClosed) return
 
       emit({
         type: 'analyzing',
         message: 'Scanning active projects for reassignment opportunity...',
       })
-      await sleep(650)
+      await sleep(550)
       if (isClosed) return
 
       emit({ type: 'resolved', message: 'Investigation completed' })
-      await sleep(500)
+      await sleep(400)
       if (isClosed) return
 
       emit({
         type: 'recommendation',
         message: `Recommendation generated — reassign ${idleEquipment.name} to Metro Heights (Site C)`,
       })
-      await sleep(550)
+      await sleep(450)
       if (isClosed) return
 
       emit({ type: 'waiting', message: 'Waiting for manager approval' })
 
-      const existingAlerts = getCollection('alerts')
+      console.log(`[ALERT] Creating alert for idle equipment...`)
+      const existingAlerts = await getCollectionDirect('alerts')
       const matchedAlert = existingAlerts.find(
         (a) => a.siteId === siteId && a.title.toLowerCase().includes(idleEquipment.name.toLowerCase())
       )
@@ -240,32 +251,19 @@ export async function runMonitoringStream(siteId, res) {
         status: matchedAlert?.status || 'pending',
       }
 
-      saveAlertIfNew(alert)
+      await insertAlertDirect(alert)
+      console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
       emit({ type: 'alert', alert })
     } else {
       emit({ type: 'analyzing', message: 'Comparing planned vs actual spend by category...' })
-      await sleep(600)
+      await sleep(500)
       if (isClosed) return
 
+      console.log(`[AGENT] No anomalies detected for ${siteId}`)
       emit({ type: 'resolved', message: `No anomalies detected this monitoring cycle for ${currentSite.name}` })
     }
   } catch (err) {
     console.error('Monitoring stream error:', err.message)
     emit({ type: 'resolved', message: 'Monitoring cycle completed with database verification.' })
-  }
-}
-
-function saveAlertIfNew(newAlert) {
-  try {
-    const alerts = getCollection('alerts')
-    const idx = alerts.findIndex((a) => a.id === newAlert.id)
-    if (idx >= 0) {
-      alerts[idx] = { ...alerts[idx], ...newAlert, status: alerts[idx].status }
-    } else {
-      alerts.unshift(newAlert)
-    }
-    setCollection('alerts', alerts)
-  } catch (err) {
-    console.warn('Could not save alert to database:', err.message)
   }
 }

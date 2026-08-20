@@ -8,29 +8,34 @@ import InventoryTable from '../components/inventory/InventoryTable'
 import StockTransactionModal from '../components/inventory/StockTransactionModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
-import { getInventoryBySite, daysRemaining } from '../data/inventory'
-import { PackagePlus } from 'lucide-react'
+import { PackagePlus, AlertTriangle } from 'lucide-react'
 
 const API_BASE = 'http://localhost:4000/api'
+
+export function daysRemaining(item) {
+  if (!item || !item.consumptionPerDay || item.consumptionPerDay <= 0) return 999
+  return Math.round((item.quantity / item.consumptionPerDay) * 10) / 10
+}
 
 export default function Inventory() {
   const { selectedSite } = useSite()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('ALL')
   const [txnItem, setTxnItem] = useState(null)
   const [txnModalOpen, setTxnModalOpen] = useState(false)
 
-  // Fetch inventory for selected site with fallback to mock data
   useEffect(() => {
     let isMounted = true
     setLoading(true)
+    setError(null)
 
     const fetchInventory = async () => {
       try {
-        const res = await fetch(`${API_BASE}/inventory?siteId=${selectedSite.id}`)
+        const res = await fetch(`${API_BASE}/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (!res.ok) {
           throw new Error(`Server returned status ${res.status}`)
         }
@@ -43,9 +48,10 @@ export default function Inventory() {
           setLoading(false)
         }
       } catch (err) {
-        console.warn('Inventory API fetch failed, falling back to mock data:', err)
+        console.error('Inventory API fetch error:', err.message)
         if (isMounted) {
-          setItems(getInventoryBySite(selectedSite.id))
+          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve current inventory data from ${API_BASE}/inventory (${err.message})`)
+          setItems([])
           setLoading(false)
         }
       }
@@ -58,18 +64,15 @@ export default function Inventory() {
     }
   }, [selectedSite.id])
 
-  // Always guarantee items is treated as a valid array
-  const safeItems = Array.isArray(items) ? items : getInventoryBySite(selectedSite.id)
-
-  const filtered = safeItems.filter((item) => {
+  const filtered = items.filter((item) => {
     if (!item || !item.item) return false
     const matchesSearch = item.item.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = status === 'ALL' || item.status === status
     return matchesSearch && matchesStatus
   })
 
-  const criticalItem = safeItems
-    .filter((i) => i && i.status === 'CRITICAL')
+  const criticalItem = items
+    .filter((i) => i && (i.status === 'CRITICAL' || i.status === 'Critical'))
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
   function openTransactionModal(item) {
@@ -96,39 +99,11 @@ export default function Inventory() {
 
       const updatedItem = await res.json()
       if (updatedItem && updatedItem.id) {
-        setItems((prev) => {
-          const list = Array.isArray(prev) ? prev : safeItems
-          return list.map((i) => (i.id === updatedItem.id ? updatedItem : i))
-        })
+        setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
       }
     } catch (err) {
-      console.warn('Transaction API call failed, applying optimistic local update:', err)
-      // Graceful local fallback if server is offline or fails
-      setItems((prev) => {
-        const list = Array.isArray(prev) ? prev : safeItems
-        return list.map((i) => {
-          if (i.id !== txnItem.id) return i
-          let newQty = i.quantity
-          if (type === 'Stock In') newQty += quantity
-          if (type === 'Stock Out' || type === 'Transfer') newQty -= quantity
-          newQty = Math.max(newQty, 0)
-          const newStatus =
-            newQty <= i.reorderThreshold * 0.5 ? 'CRITICAL' : newQty <= i.reorderThreshold ? 'LOW' : 'OK'
-          return {
-            ...i,
-            quantity: newQty,
-            status: newStatus,
-            lastUpdated: new Date().toISOString(),
-            lastTransaction: {
-              type,
-              quantity,
-              date: new Date().toISOString().slice(0, 10),
-              relatedPO: i.lastTransaction?.relatedPO,
-              note,
-            },
-          }
-        })
-      })
+      console.error('Transaction API call error:', err.message)
+      alert(`Transaction failed: ${err.message}`)
     }
   }
 
@@ -141,16 +116,27 @@ export default function Inventory() {
           <Button
             variant="primary"
             icon={PackagePlus}
-            onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
-            disabled={safeItems.length === 0}
+            onClick={() => items.length > 0 && openTransactionModal(items[0])}
+            disabled={items.length === 0}
           >
             Add Stock
           </Button>
         }
       />
 
+      {error && (
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {loading ? (
-        <LoadingState label="Loading inventory..." />
+        <LoadingState label="Loading inventory from PostgreSQL..." />
+      ) : items.length === 0 && !error ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
+          NO REAL DATA FOUND — No inventory records exist in PostgreSQL for {selectedSite.name}.
+        </div>
       ) : (
         <>
           {criticalItem && (

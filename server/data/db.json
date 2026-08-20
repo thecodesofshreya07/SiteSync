@@ -827,7 +827,7 @@
       "siteId": "SITE-002",
       "severity": "critical",
       "title": "Cement Portland Type I stock at Site B — Warehouse Expansion is projected to become critical in 3.3 days.",
-      "timestamp": "2026-08-20T10:43:15.650Z",
+      "timestamp": "2026-08-20T10:53:31.056Z",
       "explanation": "Current consumption is 55 bags/day against remaining stock of 180 bags. Pending replenishment is delayed by 4 days, causing a potential supply gap.",
       "reasonPoints": [
         "Current consumption is 55 bags/day.",
