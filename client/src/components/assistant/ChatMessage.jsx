@@ -6,21 +6,26 @@ export default function ChatMessage({ message, onSourceClick }) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={cn('flex gap-2.5', isUser && 'flex-row-reverse')}>
+    <div className={cn('flex gap-2.5 min-w-0', isUser && 'flex-row-reverse')}>
       <div
         className={cn(
-          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full mt-0.5',
           isUser ? 'bg-navy-900/10 text-navy-700' : 'bg-teal-500/15 text-teal-600'
         )}
       >
         {isUser ? <User size={14} /> : <Bot size={14} />}
       </div>
-      <div className={cn('max-w-[80%] rounded-xl px-4 py-3 font-public', isUser ? 'bg-navy-900 text-white' : 'bg-white border border-surface-border shadow-card')}>
-        <p className={cn('whitespace-pre-line text-sm leading-relaxed font-ibm font-medium', isUser ? 'text-white' : 'text-slate-900')}>
+      <div
+        className={cn(
+          'max-w-[90%] sm:max-w-[80%] rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 font-public min-w-0 break-words',
+          isUser ? 'bg-navy-900 text-white' : 'bg-white border border-surface-border shadow-card'
+        )}
+      >
+        <p className={cn('whitespace-pre-line text-xs sm:text-sm leading-relaxed font-ibm font-medium break-words', isUser ? 'text-white' : 'text-slate-900')}>
           {message.text}
         </p>
         {message.sources?.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2 border-t border-surface-border pt-2.5 font-public">
+          <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2 border-t border-surface-border pt-2.5 font-public">
             {message.sources.map((s) => (
               <SourceCitation key={s.id} source={s} onClick={onSourceClick} />
             ))}

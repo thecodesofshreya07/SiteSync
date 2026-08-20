@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown } from 'lucide-react'
+import { Bell, ChevronDown, Menu } from 'lucide-react'
 import SiteSelector from './SiteSelector'
 import { useRole } from '../../hooks/useRole'
 import { useAlerts } from '../../hooks/useAlerts'
@@ -25,10 +25,10 @@ function RoleSelector() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-white px-3 py-1.5 text-sm font-medium text-navy-800 hover:border-navy-600/30"
+        className="flex items-center gap-1 rounded-lg border border-surface-border bg-white px-2.5 py-1.5 text-xs sm:text-sm font-medium text-navy-800 hover:border-navy-600/30"
       >
-        {role}
-        <ChevronDown size={14} className={cn('text-navy-400 transition-transform', open && 'rotate-180')} />
+        <span className="truncate max-w-[90px] sm:max-w-none">{role}</span>
+        <ChevronDown size={14} className={cn('text-navy-400 shrink-0 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
         <div className="absolute right-0 z-30 mt-1.5 w-44 rounded-lg border border-surface-border bg-white p-1.5 shadow-pop">
@@ -81,7 +81,7 @@ function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-30 mt-1.5 w-80 rounded-lg border border-surface-border bg-white shadow-pop">
+        <div className="absolute right-0 z-30 mt-1.5 w-72 sm:w-80 rounded-lg border border-surface-border bg-white shadow-pop max-w-[calc(100vw-2rem)]">
           <div className="border-b border-surface-border px-3.5 py-2.5">
             <p className="text-sm font-semibold text-navy-900">AI Alerts</p>
             <p className="text-2xs text-navy-500">{pending.length} pending your review</p>
@@ -114,19 +114,29 @@ function NotificationBell() {
   )
 }
 
-export default function Topbar() {
-  const { selectedSite } = useSite()
-
+export default function Topbar({ onMenuClick }) {
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-surface-border bg-white px-5">
-      <div className="flex items-center gap-3">
-        <SiteSelector />
-        <span className="hidden items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-xs font-bold text-teal-800 sm:flex shadow-sm">
+    <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-surface-border bg-white px-3 sm:px-5">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          onClick={onMenuClick}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-surface-border bg-white text-navy-700 hover:bg-surface-bg md:hidden"
+          aria-label="Open menu"
+        >
+          <Menu size={18} />
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <SiteSelector />
+        </div>
+
+        <span className="hidden items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-xs font-bold text-teal-800 lg:flex shadow-sm shrink-0">
           <span className="h-2 w-2 rounded-full bg-teal-500 pulse-dot" />
           AI Monitoring Active
         </span>
       </div>
-      <div className="flex items-center gap-3">
+
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <RoleSelector />
         <NotificationBell />
       </div>

@@ -26,7 +26,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
   return (
     <div
       className={cn(
-        'rounded-xl border bg-white shadow-card transition-colors font-public',
+        'rounded-xl border bg-white shadow-card transition-colors font-public min-w-0',
         alert.status === 'pending' ? severity.border : 'border-surface-border'
       )}
     >
@@ -49,7 +49,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
               {site && <span className="text-xs font-semibold text-slate-600 font-public">{site.name}</span>}
               <span className="text-xs font-medium text-slate-500 font-ibm">· {formatTime(alert.timestamp)}</span>
             </div>
-            <p className="mt-1.5 text-base font-bold leading-snug text-slate-900 font-public">{alert.title}</p>
+            <p className="mt-1.5 text-base font-bold leading-snug text-slate-900 font-public break-words">{alert.title}</p>
           </div>
         </div>
         <ChevronDown
@@ -62,13 +62,13 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
         <div className="border-t border-surface-border px-4 pb-4 pt-3.5">
           <div className="rounded-lg bg-surface-bg p-3.5">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-700 font-public">AI Explanation</p>
-            <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800 font-ibm">{alert.explanation}</p>
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800 font-ibm break-words">{alert.explanation}</p>
             {alert.reasonPoints?.length > 0 && (
               <ul className="mt-2.5 space-y-1.5">
                 {alert.reasonPoints.map((point, i) => (
-                  <li key={i} className="flex gap-2 text-xs font-medium text-slate-700 font-ibm">
-                    <span className="text-slate-500 font-bold">•</span>
-                    {point}
+                  <li key={i} className="flex gap-2 text-xs font-medium text-slate-700 font-ibm break-words">
+                    <span className="text-slate-500 font-bold shrink-0">•</span>
+                    <span>{point}</span>
                   </li>
                 ))}
               </ul>
@@ -77,7 +77,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
 
           <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3.5">
             <p className="text-xs font-bold uppercase tracking-wider text-teal-800 font-public">Recommendation</p>
-            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm">{alert.recommendation}</p>
+            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm break-words">{alert.recommendation}</p>
           </div>
 
           {alert.sources?.length > 0 && (
@@ -90,20 +90,20 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
                   <button
                     key={s.id}
                     onClick={() => setActiveSource(s)}
-                    className="flex items-center gap-1.5 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm font-ibm"
+                    className="flex items-center gap-1.5 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm font-ibm break-words"
                   >
-                    <FileSearch size={13} className="text-teal-600" />
-                    {s.label}
+                    <FileSearch size={13} className="text-teal-600 shrink-0" />
+                    <span className="truncate max-w-[200px]">{s.label}</span>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-surface-border pt-3.5">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-surface-border pt-3.5">
             <Badge tone={statusBadge.tone}>{statusBadge.label}</Badge>
             {alert.status === ALERT_STATUS.PENDING && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Button
                   size="sm"
                   variant="danger"

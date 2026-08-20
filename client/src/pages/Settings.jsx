@@ -6,17 +6,17 @@ import { useRole } from '../hooks/useRole'
 
 function SettingRow({ icon: Icon, label, value, right }) {
   return (
-    <div className="flex items-center justify-between border-b border-surface-border px-4 py-3.5 last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-900/5 text-navy-500">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-surface-border px-4 py-3.5 last:border-0 min-w-0">
+      <div className="flex items-start sm:items-center gap-3 min-w-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy-900/5 text-navy-500 mt-0.5 sm:mt-0">
           <Icon size={15} />
         </div>
-        <div>
-          <p className="text-sm font-medium text-navy-800">{label}</p>
-          {value && <p className="text-xs text-navy-500">{value}</p>}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-navy-800 break-words">{label}</p>
+          {value && <p className="text-xs text-navy-500 break-words">{value}</p>}
         </div>
       </div>
-      {right}
+      {right && <div className="shrink-0 pl-11 sm:pl-0">{right}</div>}
     </div>
   )
 }
@@ -47,11 +47,11 @@ export default function Settings() {
           />
         </div>
 
-        <div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4 min-w-0">
           <FlaskConical size={16} className="mt-0.5 shrink-0 text-amber-600" />
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-amber-800">Demo Environment</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-700">
+            <p className="mt-1 text-xs leading-relaxed text-amber-700 break-words">
               This is a hackathon prototype running on static mock data. No real backend, database, or AI model
               is connected — the Agentic AI layer here is a simulated preview of the intended architecture.
             </p>

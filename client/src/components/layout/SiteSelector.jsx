@@ -23,20 +23,20 @@ export default function SiteSelector() {
   }, [])
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative min-w-0" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-surface-border bg-white px-3 py-1.5 text-left hover:border-navy-600/30"
+        className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-white px-2.5 sm:px-3 py-1.5 text-left hover:border-navy-600/30 max-w-[140px] xs:max-w-[180px] sm:max-w-xs"
       >
         <MapPin size={15} className="shrink-0 text-teal-600" />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight text-navy-900">{selectedSite.name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs sm:text-sm font-semibold leading-tight text-navy-900">{selectedSite.name}</p>
         </div>
         <ChevronDown size={14} className={cn('shrink-0 text-navy-400 transition-transform', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute left-0 z-30 mt-1.5 w-72 rounded-lg border border-surface-border bg-white p-1.5 shadow-pop">
+        <div className="absolute left-0 z-30 mt-1.5 w-64 sm:w-72 rounded-lg border border-surface-border bg-white p-1.5 shadow-pop max-w-[calc(100vw-2rem)]">
           {sites.map((site) => (
             <button
               key={site.id}
@@ -49,7 +49,7 @@ export default function SiteSelector() {
                 site.id === selectedSite.id && 'bg-teal-50/60'
               )}
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-navy-900">{site.name}</p>
                 <p className="truncate text-2xs text-navy-500">{site.location}</p>
               </div>
