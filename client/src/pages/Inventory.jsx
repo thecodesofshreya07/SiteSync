@@ -11,7 +11,7 @@ import { useSite } from '../hooks/useSite'
 import { getInventoryBySite, daysRemaining } from '../data/inventory'
 import { PackagePlus } from 'lucide-react'
 
-const API_BASE = 'http://localhost:5000/api'
+const API_BASE = 'http://127.0.0.1:5000/api'
 
 export default function Inventory() {
   const { selectedSite } = useSite()
@@ -35,6 +35,9 @@ export default function Inventory() {
           throw new Error(`Server returned status ${res.status}`)
         }
         const data = await res.json()
+        if (!Array.isArray(data)) {
+          throw new Error('Server returned non-array data for inventory')
+        }
         if (isMounted) {
           setItems(data)
           setLoading(false)
@@ -55,14 +58,18 @@ export default function Inventory() {
     }
   }, [selectedSite.id])
 
-  const filtered = items.filter((item) => {
+  // Always guarantee items is treated as a valid array
+  const safeItems = Array.isArray(items) ? items : getInventoryBySite(selectedSite.id)
+
+  const filtered = safeItems.filter((item) => {
+    if (!item || !item.item) return false
     const matchesSearch = item.item.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = status === 'ALL' || item.status === status
     return matchesSearch && matchesStatus
   })
 
-  const criticalItem = items
-    .filter((i) => i.status === 'CRITICAL')
+  const criticalItem = safeItems
+    .filter((i) => i && i.status === 'CRITICAL')
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
   function openTransactionModal(item) {
@@ -88,12 +95,18 @@ export default function Inventory() {
       }
 
       const updatedItem = await res.json()
-      setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
+      if (updatedItem && updatedItem.id) {
+        setItems((prev) => {
+          const list = Array.isArray(prev) ? prev : safeItems
+          return list.map((i) => (i.id === updatedItem.id ? updatedItem : i))
+        })
+      }
     } catch (err) {
       console.warn('Transaction API call failed, applying optimistic local update:', err)
-      // Graceful local fallback if server is offline
-      setItems((prev) =>
-        prev.map((i) => {
+      // Graceful local fallback if server is offline or fails
+      setItems((prev) => {
+        const list = Array.isArray(prev) ? prev : safeItems
+        return list.map((i) => {
           if (i.id !== txnItem.id) return i
           let newQty = i.quantity
           if (type === 'Stock In') newQty += quantity
@@ -115,7 +128,7 @@ export default function Inventory() {
             },
           }
         })
-      )
+      })
     }
   }
 
@@ -128,8 +141,8 @@ export default function Inventory() {
           <Button
             variant="primary"
             icon={PackagePlus}
-            onClick={() => items.length > 0 && openTransactionModal(items[0])}
-            disabled={items.length === 0}
+            onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
+            disabled={safeItems.length === 0}
           >
             Add Stock
           </Button>

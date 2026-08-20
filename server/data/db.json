@@ -461,17 +461,16 @@
       "siteId": "SITE-002",
       "item": "Cement Portland Type I",
       "unit": "bags",
-      "quantity": 1460,
+      "quantity": 180,
       "reorderThreshold": 400,
       "consumptionPerDay": 55,
-      "status": "OK",
-      "lastUpdated": "2026-08-20T07:35:39.974Z",
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-19T09:10:00",
       "lastTransaction": {
-        "type": "Stock In",
-        "quantity": 1000,
-        "date": "2026-08-20",
-        "relatedPO": "PO-2041",
-        "note": "test above threshold"
+        "type": "Stock Out",
+        "quantity": 120,
+        "date": "2026-08-18",
+        "relatedPO": "PO-2041"
       }
     },
     {
