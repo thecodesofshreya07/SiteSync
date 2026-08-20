@@ -24,7 +24,7 @@ export default function AssistantChat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, thinking])
 
-  function send(question) {
+  async function send(question) {
     const q = question.trim()
     if (!q) return
 
@@ -32,14 +32,37 @@ export default function AssistantChat() {
     setInput('')
     setThinking(true)
 
-    setTimeout(() => {
-      const response = getAssistantResponse(q)
+    try {
+      const res = await fetch('http://localhost:5000/api/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: q }),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`)
+      }
+
+      const data = await res.json()
       setMessages((prev) => [
         ...prev,
-        { id: `${Date.now()}-a`, role: 'assistant', text: response.answer, sources: response.sources },
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          text: data.answer || data.text || 'No response text received.',
+          sources: data.sources || [],
+        },
       ])
+    } catch (err) {
+      console.warn('Backend assistant request error, using fallback:', err.message)
+      const fallback = getAssistantResponse(q)
+      setMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-a`, role: 'assistant', text: fallback.answer, sources: fallback.sources || [] },
+      ])
+    } finally {
       setThinking(false)
-    }, 900)
+    }
   }
 
   return (

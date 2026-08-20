@@ -11,6 +11,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') })
 export const config = {
   port: process.env.PORT || 5000,
   geminiApiKey: process.env.GEMINI_API_KEY || '',
+  groqApiKey: process.env.GROQ_API_KEY || '',
   dbPath: path.join(__dirname, 'data/db.json'),
   databaseUrl: process.env.DATABASE_URL || '',
 }
