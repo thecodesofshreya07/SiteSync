@@ -13,6 +13,8 @@ import alertsRouter from './routes/alerts.js'
 import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
 
+import { getPool } from './db.js'
+
 const app = express()
 
 // Middleware
@@ -24,9 +26,18 @@ app.use(
 )
 app.use(express.json())
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' })
+// Health check with DB status
+app.get('/api/health', async (req, res) => {
+  const pool = getPool()
+  if (!pool) {
+    return res.json({ status: 'ok', database: 'local JSON (db.json)' })
+  }
+  try {
+    await pool.query('SELECT 1')
+    res.json({ status: 'ok', database: 'connected to Supabase PostgreSQL' })
+  } catch (err) {
+    res.status(500).json({ status: 'degraded', error: err.message, database: 'fallback active' })
+  }
 })
 
 // Mount routers
@@ -43,9 +54,22 @@ app.use('/api/timeline', timelineRouter)
 
 const PORT = config.port
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SiteSync Express server scaffold listening on http://localhost:${PORT}`)
+app.listen(PORT, async () => {
+  console.log(`SiteSync Express server listening on http://localhost:${PORT}`)
   console.log(`Health check: http://localhost:${PORT}/api/health`)
+
+  const pool = getPool()
+  if (pool) {
+    try {
+      const res = await pool.query('SELECT current_database(), current_user')
+      console.log(`✓ Connected to Supabase PostgreSQL [DB: ${res.rows[0].current_database}, User: ${res.rows[0].current_user}]`)
+    } catch (err) {
+      console.warn(`! Supabase connection warning: ${err.message}`)
+    }
+  } else {
+    console.log(`ℹ Using local JSON database (${config.dbPath})`)
+  }
 })
 
 export default app
+
