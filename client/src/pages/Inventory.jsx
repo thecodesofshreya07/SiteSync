@@ -157,8 +157,7 @@ export default function Inventory() {
     } catch (err) {
       console.warn('Transaction API call failed, applying optimistic local update:', err)
       setItems((prev) => {
-        const list = Array.isArray(prev) ? prev : safeItems
-        return list.map((i) => {
+        return prev.map((i) => {
           if (i.id !== txnItem.id) return i
           let newQty = i.quantity
           if (type === 'Stock In') newQty += quantity
@@ -201,8 +200,8 @@ export default function Inventory() {
             <Button
               variant="primary"
               icon={PackagePlus}
-              onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
-              disabled={safeItems.length === 0}
+              onClick={() => items.length > 0 && openTransactionModal(items[0])}
+              disabled={items.length === 0}
             >
               Log Stock
             </Button>

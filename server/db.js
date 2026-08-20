@@ -344,3 +344,6 @@ export async function updateByIdDirect(collectionName, id, updateFields) {
 
   return updatedItem
 }
+
+export const updateById = updateByIdDirect
+
