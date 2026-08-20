@@ -1,0 +1,1190 @@
+{
+  "sites": [
+    {
+      "id": "SITE-001",
+      "name": "Riverside Tower",
+      "location": "Bandra East, Mumbai",
+      "type": "Residential High-Rise",
+      "status": "On Track",
+      "manager": "Shreya Mishra",
+      "budgetPlanned": 62000000,
+      "budgetActual": 48200000,
+      "progress": 58,
+      "startDate": "2025-11-04",
+      "targetDate": "2027-02-28",
+      "lastScan": "2026-08-19T10:42:15"
+    },
+    {
+      "id": "SITE-002",
+      "name": "Site B — Warehouse Expansion",
+      "location": "Bhiwandi, Thane",
+      "type": "Industrial / Warehouse",
+      "status": "At Risk",
+      "manager": "Shreya Mishra",
+      "budgetPlanned": 31000000,
+      "budgetActual": 34658000,
+      "progress": 41,
+      "startDate": "2026-02-10",
+      "targetDate": "2026-11-15",
+      "lastScan": "2026-08-19T10:42:15"
+    },
+    {
+      "id": "SITE-003",
+      "name": "Metro Heights",
+      "location": "Powai, Mumbai",
+      "type": "Commercial Mixed-Use",
+      "status": "On Track",
+      "manager": "Arjun Kulkarni",
+      "budgetPlanned": 89000000,
+      "budgetActual": 52000000,
+      "progress": 34,
+      "startDate": "2026-01-20",
+      "targetDate": "2027-09-30",
+      "lastScan": "2026-08-19T10:38:02"
+    },
+    {
+      "id": "SITE-004",
+      "name": "Greenfield Commercial Complex",
+      "location": "Hinjewadi, Pune",
+      "type": "Commercial Mixed-Use",
+      "status": "On Track",
+      "manager": "Neha Patwardhan",
+      "budgetPlanned": 45500000,
+      "budgetActual": 19800000,
+      "progress": 19,
+      "startDate": "2026-05-01",
+      "targetDate": "2027-12-31",
+      "lastScan": "2026-08-19T10:35:44"
+    }
+  ],
+  "budgetByCategory": {
+    "SITE-001": [
+      {
+        "category": "Materials",
+        "planned": 24000000,
+        "actual": 20100000
+      },
+      {
+        "category": "Labor",
+        "planned": 16000000,
+        "actual": 15200000
+      },
+      {
+        "category": "Equipment",
+        "planned": 12000000,
+        "actual": 8400000
+      },
+      {
+        "category": "Procurement",
+        "planned": 10000000,
+        "actual": 4500000
+      }
+    ],
+    "SITE-002": [
+      {
+        "category": "Materials",
+        "planned": 13000000,
+        "actual": 14200000
+      },
+      {
+        "category": "Labor",
+        "planned": 8500000,
+        "actual": 9900000
+      },
+      {
+        "category": "Equipment",
+        "planned": 5500000,
+        "actual": 7600000
+      },
+      {
+        "category": "Procurement",
+        "planned": 4000000,
+        "actual": 2958000
+      }
+    ],
+    "SITE-003": [
+      {
+        "category": "Materials",
+        "planned": 34000000,
+        "actual": 20500000
+      },
+      {
+        "category": "Labor",
+        "planned": 22000000,
+        "actual": 13800000
+      },
+      {
+        "category": "Equipment",
+        "planned": 18000000,
+        "actual": 10200000
+      },
+      {
+        "category": "Procurement",
+        "planned": 15000000,
+        "actual": 7500000
+      }
+    ],
+    "SITE-004": [
+      {
+        "category": "Materials",
+        "planned": 18000000,
+        "actual": 8200000
+      },
+      {
+        "category": "Labor",
+        "planned": 12000000,
+        "actual": 5100000
+      },
+      {
+        "category": "Equipment",
+        "planned": 9500000,
+        "actual": 4000000
+      },
+      {
+        "category": "Procurement",
+        "planned": 6000000,
+        "actual": 2500000
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "id": "TASK-031",
+      "siteId": "SITE-002",
+      "name": "Foundation Reinforcement",
+      "assignee": "Ramesh Yadav",
+      "column": "In Progress",
+      "dueDate": "2026-08-22",
+      "progress": 65,
+      "dependency": "Steel delivery — PO-2045",
+      "priority": "High"
+    },
+    {
+      "id": "TASK-012",
+      "siteId": "SITE-001",
+      "name": "Foundation — Block C",
+      "assignee": "Sunil Kadam",
+      "column": "Done",
+      "dueDate": "2026-08-05",
+      "progress": 100,
+      "dependency": null,
+      "priority": "High"
+    },
+    {
+      "id": "TASK-018",
+      "siteId": "SITE-001",
+      "name": "Structural Work — Floors 4-6",
+      "assignee": "Prakash More",
+      "column": "In Progress",
+      "dueDate": "2026-08-28",
+      "progress": 48,
+      "dependency": "Structural steel stock",
+      "priority": "High"
+    },
+    {
+      "id": "TASK-020",
+      "siteId": "SITE-001",
+      "name": "Electrical Rough-in — Floor 2",
+      "assignee": "Vikram Salvi",
+      "column": "To Do",
+      "dueDate": "2026-09-02",
+      "progress": 0,
+      "dependency": "Structural sign-off Floor 2",
+      "priority": "Medium"
+    },
+    {
+      "id": "TASK-025",
+      "siteId": "SITE-002",
+      "name": "Warehouse Roof Trusses",
+      "assignee": "Ganesh Pawar",
+      "column": "To Do",
+      "dueDate": "2026-08-30",
+      "progress": 0,
+      "dependency": "Steel Rebar 12mm stock",
+      "priority": "Medium"
+    },
+    {
+      "id": "TASK-027",
+      "siteId": "SITE-002",
+      "name": "Site Grading & Drainage",
+      "assignee": "Ramesh Yadav",
+      "column": "Done",
+      "dueDate": "2026-08-02",
+      "progress": 100,
+      "dependency": null,
+      "priority": "Medium"
+    },
+    {
+      "id": "TASK-033",
+      "siteId": "SITE-003",
+      "name": "Piling — Tower A",
+      "assignee": "Anil Deshpande",
+      "column": "In Progress",
+      "dueDate": "2026-08-25",
+      "progress": 72,
+      "dependency": null,
+      "priority": "High"
+    },
+    {
+      "id": "TASK-041",
+      "siteId": "SITE-003",
+      "name": "Perimeter Boundary Wall",
+      "assignee": "Suresh Rane",
+      "column": "To Do",
+      "dueDate": "2026-09-10",
+      "progress": 0,
+      "dependency": "Bricks stock replenishment",
+      "priority": "Low"
+    },
+    {
+      "id": "TASK-052",
+      "siteId": "SITE-004",
+      "name": "Site Clearance & Survey",
+      "assignee": "Mahesh Joshi",
+      "column": "Done",
+      "dueDate": "2026-06-01",
+      "progress": 100,
+      "dependency": null,
+      "priority": "Medium"
+    },
+    {
+      "id": "TASK-055",
+      "siteId": "SITE-004",
+      "name": "Excavation — Basement",
+      "assignee": "Rajendra Salunkhe",
+      "column": "In Progress",
+      "dueDate": "2026-09-05",
+      "progress": 30,
+      "dependency": "Excavator EX-03",
+      "priority": "High"
+    }
+  ],
+  "timelines": {
+    "SITE-001": [
+      {
+        "id": "PH-1",
+        "name": "Foundation",
+        "start": "2025-11-04",
+        "end": "2026-01-20",
+        "progress": 100,
+        "status": "Done",
+        "team": "Civil Crew A"
+      },
+      {
+        "id": "PH-2",
+        "name": "Structural Work",
+        "start": "2026-01-21",
+        "end": "2026-09-15",
+        "progress": 55,
+        "status": "In Progress",
+        "team": "Civil Crew B / TC-04"
+      },
+      {
+        "id": "PH-3",
+        "name": "Electrical",
+        "start": "2026-06-01",
+        "end": "2026-11-30",
+        "progress": 12,
+        "status": "In Progress",
+        "team": "Shakti Electricals crew"
+      },
+      {
+        "id": "PH-4",
+        "name": "Plumbing",
+        "start": "2026-07-01",
+        "end": "2026-12-15",
+        "progress": 8,
+        "status": "In Progress",
+        "team": "Plumbing Crew A"
+      },
+      {
+        "id": "PH-5",
+        "name": "Interior",
+        "start": "2026-10-01",
+        "end": "2027-01-31",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "Interior Fit-out Team"
+      },
+      {
+        "id": "PH-6",
+        "name": "Final Inspection",
+        "start": "2027-02-01",
+        "end": "2027-02-28",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "QA & Compliance"
+      }
+    ],
+    "SITE-002": [
+      {
+        "id": "PH-1",
+        "name": "Foundation",
+        "start": "2026-02-10",
+        "end": "2026-04-30",
+        "progress": 100,
+        "status": "Done",
+        "team": "Civil Crew C"
+      },
+      {
+        "id": "PH-2",
+        "name": "Structural Work",
+        "start": "2026-05-01",
+        "end": "2026-09-20",
+        "progress": 62,
+        "status": "In Progress",
+        "team": "Civil Crew C / CM-12"
+      },
+      {
+        "id": "PH-3",
+        "name": "Electrical",
+        "start": "2026-08-15",
+        "end": "2026-10-15",
+        "progress": 5,
+        "status": "In Progress",
+        "team": "Shakti Electricals crew"
+      },
+      {
+        "id": "PH-4",
+        "name": "Plumbing",
+        "start": "2026-09-01",
+        "end": "2026-10-20",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "Plumbing Crew B"
+      },
+      {
+        "id": "PH-5",
+        "name": "Interior",
+        "start": "2026-10-15",
+        "end": "2026-11-05",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "Interior Fit-out Team"
+      },
+      {
+        "id": "PH-6",
+        "name": "Final Inspection",
+        "start": "2026-11-06",
+        "end": "2026-11-15",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "QA & Compliance"
+      }
+    ]
+  },
+  "equipment": [
+    {
+      "id": "EQ-018",
+      "siteId": "SITE-001",
+      "name": "Tower Crane TC-04",
+      "category": "Crane",
+      "status": "Idle",
+      "assignedTask": null,
+      "utilization": 38,
+      "idleDays": 6
+    },
+    {
+      "id": "EQ-022",
+      "siteId": "SITE-002",
+      "name": "Concrete Mixer CM-12",
+      "category": "Mixer",
+      "status": "Active",
+      "assignedTask": "TASK-031",
+      "utilization": 88,
+      "idleDays": 0
+    },
+    {
+      "id": "EQ-003",
+      "siteId": "SITE-004",
+      "name": "Excavator EX-03",
+      "category": "Excavator",
+      "status": "Active",
+      "assignedTask": "TASK-055",
+      "utilization": 91,
+      "idleDays": 0
+    },
+    {
+      "id": "EQ-008",
+      "siteId": "SITE-003",
+      "name": "Forklift FL-08",
+      "category": "Forklift",
+      "status": "Active",
+      "assignedTask": "TASK-033",
+      "utilization": 74,
+      "idleDays": 0
+    },
+    {
+      "id": "EQ-005",
+      "siteId": "SITE-002",
+      "name": "Generator GN-05",
+      "category": "Generator",
+      "status": "Active",
+      "assignedTask": "TASK-025",
+      "utilization": 66,
+      "idleDays": 0
+    },
+    {
+      "id": "EQ-011",
+      "siteId": "SITE-001",
+      "name": "Concrete Mixer CM-06",
+      "category": "Mixer",
+      "status": "Active",
+      "assignedTask": "TASK-018",
+      "utilization": 79,
+      "idleDays": 0
+    },
+    {
+      "id": "EQ-014",
+      "siteId": "SITE-003",
+      "name": "Tower Crane TC-09",
+      "category": "Crane",
+      "status": "Maintenance",
+      "assignedTask": null,
+      "utilization": 0,
+      "idleDays": 2
+    },
+    {
+      "id": "EQ-027",
+      "siteId": "SITE-004",
+      "name": "Generator GN-11",
+      "category": "Generator",
+      "status": "Idle",
+      "assignedTask": null,
+      "utilization": 12,
+      "idleDays": 3
+    }
+  ],
+  "inventory": [
+    {
+      "id": "INV-104",
+      "siteId": "SITE-002",
+      "item": "Cement Portland Type I",
+      "unit": "bags",
+      "quantity": 180,
+      "reorderThreshold": 400,
+      "consumptionPerDay": 55,
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-19T09:10:00",
+      "lastTransaction": {
+        "type": "Stock Out",
+        "quantity": 120,
+        "date": "2026-08-18",
+        "relatedPO": "PO-2041"
+      }
+    },
+    {
+      "id": "INV-091",
+      "siteId": "SITE-002",
+      "item": "Steel Rebar 12mm",
+      "unit": "tonnes",
+      "quantity": 14.2,
+      "reorderThreshold": 10,
+      "consumptionPerDay": 0.8,
+      "status": "OK",
+      "lastUpdated": "2026-08-18T16:20:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 8,
+        "date": "2026-08-14",
+        "relatedPO": "PO-2045"
+      }
+    },
+    {
+      "id": "INV-045",
+      "siteId": "SITE-001",
+      "item": "Structural Steel",
+      "unit": "tonnes",
+      "quantity": 22.6,
+      "reorderThreshold": 15,
+      "consumptionPerDay": 1.1,
+      "status": "OK",
+      "lastUpdated": "2026-08-19T08:15:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 12,
+        "date": "2026-08-16",
+        "relatedPO": "PO-2038"
+      }
+    },
+    {
+      "id": "INV-052",
+      "siteId": "SITE-001",
+      "item": "Sand",
+      "unit": "cu.m",
+      "quantity": 340,
+      "reorderThreshold": 150,
+      "consumptionPerDay": 18,
+      "status": "OK",
+      "lastUpdated": "2026-08-19T07:50:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 90,
+        "date": "2026-08-17",
+        "relatedPO": "PO-2036"
+      }
+    },
+    {
+      "id": "INV-063",
+      "siteId": "SITE-001",
+      "item": "Aggregate",
+      "unit": "cu.m",
+      "quantity": 96,
+      "reorderThreshold": 120,
+      "consumptionPerDay": 22,
+      "status": "LOW",
+      "lastUpdated": "2026-08-19T07:55:00",
+      "lastTransaction": {
+        "type": "Stock Out",
+        "quantity": 40,
+        "date": "2026-08-19",
+        "relatedPO": "PO-2036"
+      }
+    },
+    {
+      "id": "INV-077",
+      "siteId": "SITE-003",
+      "item": "Bricks",
+      "unit": "units",
+      "quantity": 48500,
+      "reorderThreshold": 20000,
+      "consumptionPerDay": 1600,
+      "status": "OK",
+      "lastUpdated": "2026-08-18T14:30:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 15000,
+        "date": "2026-08-15",
+        "relatedPO": "PO-2029"
+      }
+    },
+    {
+      "id": "INV-088",
+      "siteId": "SITE-003",
+      "item": "PVC Pipes",
+      "unit": "units",
+      "quantity": 620,
+      "reorderThreshold": 300,
+      "consumptionPerDay": 24,
+      "status": "OK",
+      "lastUpdated": "2026-08-18T11:10:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 200,
+        "date": "2026-08-12",
+        "relatedPO": "PO-2022"
+      }
+    },
+    {
+      "id": "INV-099",
+      "siteId": "SITE-004",
+      "item": "Electrical Cable",
+      "unit": "meters",
+      "quantity": 1850,
+      "reorderThreshold": 1000,
+      "consumptionPerDay": 65,
+      "status": "OK",
+      "lastUpdated": "2026-08-19T06:40:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 500,
+        "date": "2026-08-11",
+        "relatedPO": "PO-2018"
+      }
+    },
+    {
+      "id": "INV-112",
+      "siteId": "SITE-002",
+      "item": "Bricks",
+      "unit": "units",
+      "quantity": 6200,
+      "reorderThreshold": 10000,
+      "consumptionPerDay": 900,
+      "status": "LOW",
+      "lastUpdated": "2026-08-19T09:00:00",
+      "lastTransaction": {
+        "type": "Stock Out",
+        "quantity": 1800,
+        "date": "2026-08-18",
+        "relatedPO": "PO-2043"
+      }
+    },
+    {
+      "id": "INV-018",
+      "siteId": "SITE-001",
+      "item": "Cement Portland Type I",
+      "unit": "bags",
+      "quantity": 860,
+      "reorderThreshold": 400,
+      "consumptionPerDay": 40,
+      "status": "OK",
+      "lastUpdated": "2026-08-19T08:05:00",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 300,
+        "date": "2026-08-10",
+        "relatedPO": "PO-2015"
+      }
+    }
+  ],
+  "vendors": [
+    {
+      "id": "VEN-017",
+      "name": "BuildPro Materials",
+      "category": "Cement & Aggregates",
+      "reliability": "Moderate",
+      "avgDelayDays": 3.5
+    },
+    {
+      "id": "VEN-022",
+      "name": "Metro Steel Ltd",
+      "category": "Steel & Rebar",
+      "reliability": "High",
+      "avgDelayDays": 0.5
+    },
+    {
+      "id": "VEN-009",
+      "name": "Konkan Aggregates Co.",
+      "category": "Sand & Aggregate",
+      "reliability": "High",
+      "avgDelayDays": 1
+    },
+    {
+      "id": "VEN-031",
+      "name": "Shakti Electricals",
+      "category": "Electrical",
+      "reliability": "High",
+      "avgDelayDays": 0.8
+    },
+    {
+      "id": "VEN-014",
+      "name": "Vishal Brick Works",
+      "category": "Bricks & Blocks",
+      "reliability": "Moderate",
+      "avgDelayDays": 2
+    }
+  ],
+  "procurementOrders": [
+    {
+      "id": "PO-2041",
+      "siteId": "SITE-002",
+      "item": "Cement Portland Type I",
+      "vendorId": "VEN-017",
+      "quantity": 500,
+      "unit": "bags",
+      "amount": 425000,
+      "dateRaised": "2026-08-10",
+      "expectedDelivery": "2026-08-17",
+      "stage": "Delivery",
+      "status": "Delivery delayed",
+      "deliveryId": "DEL-882",
+      "delayDays": 4
+    },
+    {
+      "id": "PO-2045",
+      "siteId": "SITE-002",
+      "item": "Steel Rebar 12mm",
+      "vendorId": "VEN-022",
+      "quantity": 8,
+      "unit": "tonnes",
+      "amount": 840000,
+      "dateRaised": "2026-08-12",
+      "expectedDelivery": "2026-08-15",
+      "stage": "Purchase Order",
+      "status": "Approved",
+      "deliveryId": null,
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2038",
+      "siteId": "SITE-001",
+      "item": "Structural Steel",
+      "vendorId": "VEN-022",
+      "quantity": 12,
+      "unit": "tonnes",
+      "amount": 1260000,
+      "dateRaised": "2026-08-08",
+      "expectedDelivery": "2026-08-16",
+      "stage": "Expense",
+      "status": "Completed",
+      "deliveryId": "DEL-871",
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2036",
+      "siteId": "SITE-001",
+      "item": "Sand & Aggregate",
+      "vendorId": "VEN-009",
+      "quantity": 130,
+      "unit": "cu.m",
+      "amount": 312000,
+      "dateRaised": "2026-08-09",
+      "expectedDelivery": "2026-08-17",
+      "stage": "Expense",
+      "status": "Completed",
+      "deliveryId": "DEL-865",
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2043",
+      "siteId": "SITE-002",
+      "item": "Bricks",
+      "vendorId": "VEN-014",
+      "quantity": 20000,
+      "unit": "units",
+      "amount": 168000,
+      "dateRaised": "2026-08-13",
+      "expectedDelivery": "2026-08-21",
+      "stage": "Vendor Quote",
+      "status": "Pending quote confirmation",
+      "deliveryId": null,
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2029",
+      "siteId": "SITE-003",
+      "item": "Bricks",
+      "vendorId": "VEN-014",
+      "quantity": 15000,
+      "unit": "units",
+      "amount": 126000,
+      "dateRaised": "2026-08-05",
+      "expectedDelivery": "2026-08-15",
+      "stage": "Expense",
+      "status": "Completed",
+      "deliveryId": "DEL-849",
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2022",
+      "siteId": "SITE-003",
+      "item": "PVC Pipes",
+      "vendorId": "VEN-031",
+      "quantity": 200,
+      "unit": "units",
+      "amount": 84000,
+      "dateRaised": "2026-08-01",
+      "expectedDelivery": "2026-08-12",
+      "stage": "Expense",
+      "status": "Completed",
+      "deliveryId": "DEL-830",
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2018",
+      "siteId": "SITE-004",
+      "item": "Electrical Cable",
+      "vendorId": "VEN-031",
+      "quantity": 500,
+      "unit": "meters",
+      "amount": 145000,
+      "dateRaised": "2026-07-28",
+      "expectedDelivery": "2026-08-11",
+      "stage": "Expense",
+      "status": "Completed",
+      "deliveryId": "DEL-812",
+      "delayDays": 0
+    },
+    {
+      "id": "PO-2049",
+      "siteId": "SITE-004",
+      "item": "Structural Steel",
+      "vendorId": "VEN-022",
+      "quantity": 6,
+      "unit": "tonnes",
+      "amount": 630000,
+      "dateRaised": "2026-08-17",
+      "expectedDelivery": "2026-08-24",
+      "stage": "Material Request",
+      "status": "Awaiting vendor quote",
+      "deliveryId": null,
+      "delayDays": 0
+    }
+  ],
+  "deliveries": [
+    {
+      "id": "DEL-882",
+      "poId": "PO-2041",
+      "expectedDate": "2026-08-17",
+      "revisedDate": "2026-08-21",
+      "delayDays": 4,
+      "status": "Delayed",
+      "reason": "Vendor transport shortage reported by BuildPro Materials"
+    },
+    {
+      "id": "DEL-871",
+      "poId": "PO-2038",
+      "expectedDate": "2026-08-16",
+      "revisedDate": "2026-08-16",
+      "delayDays": 0,
+      "status": "Delivered",
+      "reason": null
+    }
+  ],
+  "alerts": [
+    {
+      "id": "ALT-009",
+      "siteId": "SITE-002",
+      "severity": "critical",
+      "title": "Cement stock at Site B is projected to become critical in 3.2 days.",
+      "timestamp": "2026-08-19T10:42:11",
+      "explanation": "Current consumption is 55 bags/day against a remaining stock of 180 bags. The pending replenishment order is delayed by 4 days, which means the site will run out of cement roughly 2.4 days before the delayed delivery arrives — halting foundation reinforcement work at Site B.",
+      "reasonPoints": [
+        "Current consumption is 55 bags/day.",
+        "Current stock is 180 bags.",
+        "Pending delivery (PO-2041) is delayed by 4 days."
+      ],
+      "recommendation": "Transfer 150 bags from Site A (INV-018, currently at 860 bags) to cover the gap until PO-2041 arrives.",
+      "sources": [
+        {
+          "type": "inventory",
+          "id": "INV-104",
+          "label": "Inventory Transaction INV-104"
+        },
+        {
+          "type": "procurement",
+          "id": "PO-2041",
+          "label": "Purchase Order PO-2041"
+        },
+        {
+          "type": "delivery",
+          "id": "DEL-882",
+          "label": "Delivery DEL-882"
+        },
+        {
+          "type": "vendor",
+          "id": "VEN-017",
+          "label": "Historical Vendor Record VEN-017"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "ALT-010",
+      "siteId": "SITE-001",
+      "severity": "warning",
+      "title": "Tower Crane TC-04 has been idle for 6 days.",
+      "timestamp": "2026-08-19T09:15:47",
+      "explanation": "TC-04 was last logged against an active task on 13 Aug. Utilization has dropped to 38% this week while Structural Work at Riverside Tower continues on schedule using ground-level equipment. Continued idling represents avoidable rental cost.",
+      "reasonPoints": [
+        "No task assignment logged since 13 Aug 2026.",
+        "Utilization has fallen to 38%, down from a 7-day average of 81%.",
+        "Rental cost continues to accrue at ₹18,500/day regardless of usage."
+      ],
+      "recommendation": "Reassign TC-04 to Metro Heights (Site C), where Tower Crane TC-09 is currently under maintenance and piling work needs crane support.",
+      "sources": [
+        {
+          "type": "equipment",
+          "id": "EQ-018",
+          "label": "Equipment Record EQ-018"
+        },
+        {
+          "type": "task",
+          "id": "TASK-018",
+          "label": "Task TASK-018"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "ALT-011",
+      "siteId": "SITE-002",
+      "severity": "warning",
+      "title": "Site budget is trending 11.8% above planned spend.",
+      "timestamp": "2026-08-19T08:52:30",
+      "explanation": "Site B actual spend of ₹3.47 Cr against a planned ₹3.10 Cr is being driven primarily by steel procurement, equipment rental, and additional labor charges. The steel overage traces back to an emergency alternate-vendor purchase made after the original delivery was delayed.",
+      "reasonPoints": [
+        "Steel procurement is ₹8.4L above plan (PO-2045, alternate vendor surcharge).",
+        "Equipment rental is ₹2.1L above plan due to CM-12 extended usage.",
+        "Additional labor cost is ₹1.4L above plan from weekend shifts to recover schedule."
+      ],
+      "recommendation": "Flag PO-2045 for Finance review and lock remaining Site B discretionary procurement pending budget reconciliation.",
+      "sources": [
+        {
+          "type": "procurement",
+          "id": "PO-2045",
+          "label": "Purchase Order PO-2045"
+        },
+        {
+          "type": "site",
+          "id": "SITE-002",
+          "label": "Site B Budget Record"
+        },
+        {
+          "type": "vendor",
+          "id": "VEN-022",
+          "label": "Vendor History VEN-022"
+        }
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "ALT-012",
+      "siteId": "SITE-002",
+      "severity": "medium",
+      "title": "Foundation task may miss its milestone due to delayed steel delivery.",
+      "timestamp": "2026-08-19T08:20:05",
+      "explanation": "Foundation Reinforcement (TASK-031) is 65% complete but depends on the remaining Steel Rebar 12mm delivery under PO-2045, currently in the Purchase Order stage. If the order is not dispatched within 2 days, the 22 Aug milestone is at risk.",
+      "reasonPoints": [
+        "TASK-031 is 65% complete with 4 working days remaining until its 22 Aug due date.",
+        "PO-2045 has not yet progressed past Purchase Order stage.",
+        "Remaining reinforcement work requires the full 8-tonne rebar order on site."
+      ],
+      "recommendation": "Expedite PO-2045 with Metro Steel Ltd and confirm a dispatch date within 48 hours to protect the milestone.",
+      "sources": [
+        {
+          "type": "task",
+          "id": "TASK-031",
+          "label": "Task TASK-031"
+        },
+        {
+          "type": "procurement",
+          "id": "PO-2045",
+          "label": "Purchase Order PO-2045"
+        }
+      ],
+      "status": "pending"
+    }
+  ],
+  "agentActivity": {
+    "SITE-002": [
+      {
+        "type": "checking",
+        "message": "Monitoring Site B inventory..."
+      },
+      {
+        "type": "checking",
+        "message": "Checking cement consumption (INV-104)..."
+      },
+      {
+        "type": "checking",
+        "message": "Checking pending delivery status (PO-2041)..."
+      },
+      {
+        "type": "retrieving",
+        "message": "Retrieving vendor history for VEN-017..."
+      },
+      {
+        "type": "investigating",
+        "message": "Comparing consumption rate against remaining stock..."
+      },
+      {
+        "type": "flagged",
+        "message": "⚠ Shortage risk detected — 3.2 days to critical"
+      },
+      {
+        "type": "analyzing",
+        "message": "Checking Site A stock availability for transfer option..."
+      },
+      {
+        "type": "resolved",
+        "message": "Investigation completed"
+      },
+      {
+        "type": "recommendation",
+        "message": "Recommendation generated — transfer 150 bags from Site A"
+      },
+      {
+        "type": "waiting",
+        "message": "Waiting for manager approval"
+      }
+    ],
+    "SITE-001": [
+      {
+        "type": "checking",
+        "message": "Monitoring Riverside Tower equipment logs..."
+      },
+      {
+        "type": "checking",
+        "message": "Checking Tower Crane TC-04 task assignment..."
+      },
+      {
+        "type": "investigating",
+        "message": "Cross-referencing utilization against 7-day average..."
+      },
+      {
+        "type": "retrieving",
+        "message": "Retrieving rental cost record for TC-04..."
+      },
+      {
+        "type": "flagged",
+        "message": "⚠ Idle equipment detected — TC-04, 6 days"
+      },
+      {
+        "type": "analyzing",
+        "message": "Scanning nearby sites for reassignment opportunity..."
+      },
+      {
+        "type": "resolved",
+        "message": "Investigation completed"
+      },
+      {
+        "type": "recommendation",
+        "message": "Recommendation generated — reassign TC-04 to Metro Heights"
+      },
+      {
+        "type": "waiting",
+        "message": "Waiting for manager approval"
+      }
+    ],
+    "SITE-003": [
+      {
+        "type": "checking",
+        "message": "Monitoring Metro Heights task board..."
+      },
+      {
+        "type": "checking",
+        "message": "Checking Tower Crane TC-09 maintenance schedule..."
+      },
+      {
+        "type": "retrieving",
+        "message": "Retrieving piling task progress (TASK-033)..."
+      },
+      {
+        "type": "analyzing",
+        "message": "Comparing crew allocation against plan..."
+      },
+      {
+        "type": "resolved",
+        "message": "No anomalies detected this cycle"
+      }
+    ],
+    "SITE-004": [
+      {
+        "type": "checking",
+        "message": "Monitoring Greenfield Commercial Complex budget..."
+      },
+      {
+        "type": "checking",
+        "message": "Checking excavation progress (TASK-055)..."
+      },
+      {
+        "type": "retrieving",
+        "message": "Retrieving Generator GN-11 utilization log..."
+      },
+      {
+        "type": "analyzing",
+        "message": "Comparing planned vs actual spend by category..."
+      },
+      {
+        "type": "resolved",
+        "message": "No anomalies detected this cycle"
+      }
+    ]
+  },
+  "suggestedQuestions": [
+    "Why is Site B over budget?",
+    "What's currently low in stock?",
+    "Which equipment is idle?",
+    "What procurement deliveries are delayed?",
+    "Which tasks are at risk?",
+    "What should we purchase next?"
+  ],
+  "assistantResponses": {
+    "why is site b over budget?": {
+      "answer": "Site B is currently 11.8% above planned spending.\n\nThe primary drivers are:\n\n1. Steel procurement — ₹8.4L above plan\n2. Equipment rental — ₹2.1L above plan\n3. Additional labor — ₹1.4L above plan\n\nThe steel increase is primarily associated with a delayed delivery that required an alternative vendor purchase.",
+      "sources": [
+        {
+          "type": "procurement",
+          "id": "PO-2045",
+          "label": "PO-2045"
+        },
+        {
+          "type": "site",
+          "id": "SITE-002",
+          "label": "Budget Record"
+        },
+        {
+          "type": "vendor",
+          "id": "VEN-022",
+          "label": "Vendor History"
+        }
+      ]
+    },
+    "what's currently low in stock?": {
+      "answer": "Three items are currently below their reorder threshold:\n\n1. Cement Portland Type I at Site B — 180 bags remaining, CRITICAL (3.2 days to stockout)\n2. Aggregate at Riverside Tower — 96 cu.m remaining, LOW\n3. Bricks at Site B — 6,200 units remaining, LOW\n\nCement at Site B is the most urgent — it's the subject of the current open critical alert.",
+      "sources": [
+        {
+          "type": "inventory",
+          "id": "INV-104",
+          "label": "INV-104"
+        },
+        {
+          "type": "inventory",
+          "id": "INV-063",
+          "label": "INV-063"
+        },
+        {
+          "type": "inventory",
+          "id": "INV-112",
+          "label": "INV-112"
+        }
+      ]
+    },
+    "which equipment is idle?": {
+      "answer": "Two units are currently idle:\n\n1. Tower Crane TC-04 at Riverside Tower — idle for 6 days, utilization down to 38%\n2. Generator GN-11 at Greenfield Commercial Complex — idle for 3 days, utilization at 12%\n\nTC-04 already has an open recommendation to reassign it to Metro Heights, where a crane is under maintenance.",
+      "sources": [
+        {
+          "type": "equipment",
+          "id": "EQ-018",
+          "label": "EQ-018"
+        },
+        {
+          "type": "equipment",
+          "id": "EQ-027",
+          "label": "EQ-027"
+        }
+      ]
+    },
+    "what procurement deliveries are delayed?": {
+      "answer": "One delivery is currently delayed:\n\nDEL-882, covering PO-2041 (500 bags of Cement Portland Type I for Site B), was expected on 17 Aug and is now revised to 21 Aug — a 4-day delay. BuildPro Materials cited a transport shortage.\n\nThis delay is the direct cause of the open critical cement shortage alert at Site B.",
+      "sources": [
+        {
+          "type": "delivery",
+          "id": "DEL-882",
+          "label": "DEL-882"
+        },
+        {
+          "type": "procurement",
+          "id": "PO-2041",
+          "label": "PO-2041"
+        },
+        {
+          "type": "vendor",
+          "id": "VEN-017",
+          "label": "Vendor Record"
+        }
+      ]
+    },
+    "which tasks are at risk?": {
+      "answer": "Foundation Reinforcement (TASK-031) at Site B is the main task at risk. It's 65% complete with a due date of 22 Aug, but depends on the remaining steel rebar delivery under PO-2045, which hasn't progressed past the Purchase Order stage yet.\n\nIf the order doesn't dispatch within 48 hours, the milestone will likely slip.",
+      "sources": [
+        {
+          "type": "task",
+          "id": "TASK-031",
+          "label": "TASK-031"
+        },
+        {
+          "type": "procurement",
+          "id": "PO-2045",
+          "label": "PO-2045"
+        }
+      ]
+    },
+    "what should we purchase next?": {
+      "answer": "Based on current consumption and pending delivery delays, the top priority purchase is:\n\nCement Portland Type I — recommended order of 500 bags for Site B, driven by 55 bags/day consumption and a projected shortage in 3.2 days.\n\nSecondary priority: Bricks for Site B (6,200 units remaining against 900/day consumption).",
+      "sources": [
+        {
+          "type": "inventory",
+          "id": "INV-104",
+          "label": "INV-104"
+        },
+        {
+          "type": "inventory",
+          "id": "INV-112",
+          "label": "INV-112"
+        }
+      ]
+    }
+  }
+}

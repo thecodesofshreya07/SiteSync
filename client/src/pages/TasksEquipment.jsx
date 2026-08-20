@@ -1,23 +1,67 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PageHeader from '../components/common/PageHeader'
 import TaskBoard from '../components/tasks/TaskBoard'
 import TaskFilters from '../components/tasks/TaskFilters'
 import EquipmentGrid from '../components/equipment/EquipmentGrid'
+import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
 import { getTasksBySite } from '../data/tasks'
 import { getEquipmentBySite } from '../data/equipment'
 import { cn } from '../lib/utils'
 
 const TABS = ['Tasks', 'Equipment']
+const API_BASE = 'http://localhost:5000/api'
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()
   const [tab, setTab] = useState('Tasks')
   const [priority, setPriority] = useState('ALL')
 
-  const tasks = getTasksBySite(selectedSite.id)
+  const [tasks, setTasks] = useState([])
+  const [equipment, setEquipment] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    setLoading(true)
+
+    const fetchOperationalData = async () => {
+      try {
+        const [tasksRes, equipmentRes] = await Promise.all([
+          fetch(`${API_BASE}/tasks?siteId=${selectedSite.id}`),
+          fetch(`${API_BASE}/equipment?siteId=${selectedSite.id}`),
+        ])
+
+        if (!tasksRes.ok || !equipmentRes.ok) {
+          throw new Error('API server returned error status')
+        }
+
+        const tasksData = await tasksRes.json()
+        const equipmentData = await equipmentRes.json()
+
+        if (isMounted) {
+          setTasks(tasksData)
+          setEquipment(equipmentData)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to mock data:', err)
+        if (isMounted) {
+          setTasks(getTasksBySite(selectedSite.id))
+          setEquipment(getEquipmentBySite(selectedSite.id))
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchOperationalData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedSite.id])
+
   const filteredTasks = priority === 'ALL' ? tasks : tasks.filter((t) => t.priority === priority)
-  const equipment = getEquipmentBySite(selectedSite.id)
 
   return (
     <div>
@@ -41,7 +85,13 @@ export default function TasksEquipment() {
         {tab === 'Tasks' && <TaskFilters priority={priority} onPriorityChange={setPriority} />}
       </div>
 
-      {tab === 'Tasks' ? <TaskBoard tasks={filteredTasks} /> : <EquipmentGrid equipment={equipment} />}
+      {loading ? (
+        <LoadingState label="Loading operational status..." />
+      ) : tab === 'Tasks' ? (
+        <TaskBoard tasks={filteredTasks} />
+      ) : (
+        <EquipmentGrid equipment={equipment} />
+      )}
     </div>
   )
 }
