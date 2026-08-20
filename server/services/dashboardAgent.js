@@ -160,16 +160,32 @@ export async function runMonitoringStream(siteId, res) {
       await sleep(500)
       if (isClosed) return
 
-      // Check if an inter-site transfer was previously rejected/declined
+      // Check if an existing alert for this item already exists or if transfer was previously rejected
       const existingAlerts = await getCollectionDirect('alerts')
-      const rejectedTransferAlert = existingAlerts.find(
-        (a) =>
-          a.siteId === siteId &&
-          (a.status === 'transfer_rejected' || a.type === 'emergency_procurement_fallback') &&
-          a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
-      )
+      
+      function matchesItem(alert, invItem) {
+        if (!alert || !invItem) return false
+        if (alert.siteId !== siteId) return false
+        if (alert.inventoryItemId === invItem.id) return true
+        if (alert.sources?.some((s) => s.id === invItem.id)) return true
+        const itemLower = invItem.item.toLowerCase()
+        const titleLower = (alert.title || '').toLowerCase()
+        const expLower = (alert.explanation || '').toLowerCase()
+        const recLower = (alert.recommendation || '').toLowerCase()
+        return (
+          titleLower.includes(itemLower) ||
+          expLower.includes(itemLower) ||
+          recLower.includes(itemLower) ||
+          (alert.transferDetails && alert.transferDetails.item?.toLowerCase() === itemLower)
+        )
+      }
 
-      const wasTransferRejected = Boolean(rejectedTransferAlert)
+      const matchedAlert = existingAlerts.find((a) => matchesItem(a, criticalInventory))
+      const wasTransferRejected =
+        matchedAlert &&
+        (matchedAlert.status === 'transfer_rejected' ||
+          matchedAlert.type === 'emergency_procurement_fallback' ||
+          matchedAlert.recommendation?.toLowerCase().includes('emergency purchase order'))
 
       // Find transferable stock at sibling sites (only if not previously rejected)
       const siblingStock = !wasTransferRejected
@@ -185,7 +201,7 @@ export async function runMonitoringStream(siteId, res) {
       if (wasTransferRejected) {
         emit({
           type: 'flagged',
-          message: `⚠ Note: Inter-site transfer was declined by Riverside Tower — switching to Emergency PO strategy.`,
+          message: `⚠ Note: Inter-site transfer was declined by Riverside Tower — maintaining Emergency PO strategy.`,
         })
         await sleep(400)
         if (isClosed) return
@@ -216,19 +232,21 @@ export async function runMonitoringStream(siteId, res) {
       if (isClosed) return
 
       console.log(`[ALERT] Evaluating alert state for ${siteId}...`)
-      const matchedAlert = existingAlerts.find(
-        (a) => a.siteId === siteId && a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
-      )
 
       if (matchedAlert && matchedAlert.status !== 'pending') {
-        // If alert was already actioned (e.g. approved, transfer_requested, resolved, emergency PO in progress), do NOT overwrite it!
+        // If alert was already actioned (e.g. approved, transfer_requested, resolved), preserve it!
         console.log(`[AGENT] Shortage alert ${matchedAlert.id} is already in state '${matchedAlert.status}'. Preserving state.`)
+        emit({ type: 'alert', alert: matchedAlert })
+      } else if (matchedAlert && matchedAlert.type === 'emergency_procurement_fallback') {
+        // Already have an emergency fallback alert active, do not overwrite it with a transfer recommendation
+        console.log(`[AGENT] Emergency procurement fallback alert ${matchedAlert.id} active. Preserving fallback alert.`)
         emit({ type: 'alert', alert: matchedAlert })
       } else {
         const alertId = matchedAlert ? matchedAlert.id : `ALT-${Date.now().toString().slice(-4)}`
         const alert = {
           id: alertId,
           siteId,
+          inventoryItemId: criticalInventory.id,
           severity: 'critical',
           type: wasTransferRejected ? 'emergency_procurement_fallback' : 'standard',
           title: wasTransferRejected
