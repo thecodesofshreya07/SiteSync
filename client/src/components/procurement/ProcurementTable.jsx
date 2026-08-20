@@ -5,7 +5,7 @@ import { getVendorById } from '../../data/procurement'
 import { getSiteById } from '../../data/sites'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
-export default function ProcurementTable({ orders }) {
+export default function ProcurementTable({ orders, onUpdateOrder }) {
   if (orders.length === 0) {
     return <EmptyState icon={ClipboardList} title="No purchase orders" description="Nothing matches the current view." />
   }
