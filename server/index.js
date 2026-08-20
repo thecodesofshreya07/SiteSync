@@ -21,11 +21,13 @@ import { getPool } from './db.js'
 
 const app = express()
 
-// Middleware
+// Production-Ready CORS Middleware
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+    origin: true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-role', 'x-user-site-id', 'x-user-email', 'Accept'],
   })
 )
 app.use(express.json({ limit: '50mb' }))
@@ -73,16 +75,15 @@ app.use('/api/users', usersRouter)
 app.use('/api/agent', agentRouter)
 app.use('/api/photos', photosRouter)
 
-const PORT = config.port
+const PORT = process.env.PORT || config.port || 4000
 
-app.listen(PORT, async () => {
-  console.log(`SiteSync Express server listening on http://localhost:${PORT}`)
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
   console.log(`Health check: http://localhost:${PORT}/api/health`)
 
   const pool = getPool()
   if (pool) {
-    try {
-      const res = await pool.query('SELECT current_database(), current_user, inet_server_addr()')
+    pool.query('SELECT current_database(), current_user, inet_server_addr()').then((res) => {
       let hostInfo = 'Supabase Cloud'
       if (config.databaseUrl) {
         try {
@@ -91,10 +92,10 @@ app.listen(PORT, async () => {
         } catch (_) {}
       }
       console.log(`✓ Connected to PostgreSQL [Host: ${hostInfo}, DB: ${res.rows[0].current_database}, User: ${res.rows[0].current_user}]`)
-    } catch (err) {
+    }).catch((err) => {
       console.error(`❌ PostgreSQL connection failed: ${err.message}`)
       console.warn(`ℹ Falling back to local cache (${config.dbPath})`)
-    }
+    })
   } else {
     console.log(`ℹ No PostgreSQL configured. Using local JSON database (${config.dbPath})`)
   }

@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:4000/api')
 const API_FALLBACK = 'http://127.0.0.1:4000/api'
 
 export function getToken() {
