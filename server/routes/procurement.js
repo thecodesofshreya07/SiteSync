@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCollection, findById, updateById } from '../db.js'
+import { getCollection, findById, updateById, getPool } from '../db.js'
 
 const router = Router()
 
@@ -27,10 +27,51 @@ const ALLOWED_UPDATE_FIELDS = [
   'siteId',
 ]
 
+function formatOrderRow(row) {
+  if (!row) return null
+  const baseData = row.data && typeof row.data === 'object' ? row.data : {}
+  return {
+    ...baseData,
+    id: row.id || baseData.id,
+    siteId: row.site_id || baseData.siteId,
+    item: row.item || baseData.item,
+    vendorId: row.vendor_id || baseData.vendorId,
+    quantity: Number(row.quantity ?? baseData.quantity ?? 0),
+    unit: row.unit || baseData.unit,
+    amount: Number(row.amount ?? baseData.amount ?? 0),
+    dateRaised: row.date_raised || baseData.dateRaised,
+    expectedDelivery: row.expected_delivery || baseData.expectedDelivery,
+    stage: row.stage || baseData.stage,
+    status: row.status || baseData.status,
+    deliveryId: row.delivery_id || baseData.deliveryId || null,
+    delayDays: Number(row.delay_days ?? baseData.delayDays ?? 0),
+  }
+}
+
 // GET /api/procurement - List procurement orders (optional ?siteId=...)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { siteId } = req.query
+    const pool = getPool()
+
+    if (pool) {
+      try {
+        let query = 'SELECT * FROM procurement_orders'
+        const params = []
+        if (siteId) {
+          query += ' WHERE site_id = $1'
+          params.push(siteId)
+        }
+        query += ' ORDER BY id ASC'
+        const result = await pool.query(query, params)
+        if (result.rows && result.rows.length > 0) {
+          return res.json(result.rows.map(formatOrderRow))
+        }
+      } catch (err) {
+        console.warn('PostgreSQL procurement query failed, using local collection:', err.message)
+      }
+    }
+
     let orders = getCollection('procurementOrders')
     if (!orders || !orders.length) {
       orders = getCollection('procurement')
@@ -47,9 +88,23 @@ router.get('/', (req, res) => {
 })
 
 // GET /api/procurement/:id - Single procurement order
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const order = findById('procurementOrders', req.params.id) || findById('procurement', req.params.id)
+    const { id } = req.params
+    const pool = getPool()
+
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM procurement_orders WHERE id = $1', [id])
+        if (result.rows.length > 0) {
+          return res.json(formatOrderRow(result.rows[0]))
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL procurement lookup failed for ${id}:`, err.message)
+      }
+    }
+
+    const order = findById('procurementOrders', id) || findById('procurement', id)
     if (!order) {
       return res.status(404).json({ error: 'Procurement order not found' })
     }
@@ -61,15 +116,11 @@ router.get('/:id', (req, res) => {
 })
 
 // PATCH /api/procurement/:id - Update procurement order
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
-    const existing = findById('procurementOrders', id) || findById('procurement', id)
-    if (!existing) {
-      return res.status(404).json({ error: 'Procurement order not found' })
-    }
-
     const payload = req.body
+
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return res.status(400).json({ error: 'Invalid update payload' })
     }
@@ -93,12 +144,37 @@ router.patch('/:id', (req, res) => {
       return res.status(400).json({ error: 'No valid fields provided for update' })
     }
 
-    const updated = updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
-    if (!updated) {
-      return res.status(500).json({ error: 'Failed to update procurement order' })
+    const pool = getPool()
+    let updated = null
+
+    if (pool) {
+      try {
+        const existingRes = await pool.query('SELECT * FROM procurement_orders WHERE id = $1', [id])
+        if (existingRes.rows.length > 0) {
+          const current = formatOrderRow(existingRes.rows[0])
+          const merged = { ...current, ...updateFields }
+          await pool.query(
+            `UPDATE procurement_orders
+             SET stage = $1, status = $2, data = $3
+             WHERE id = $4`,
+            [merged.stage, merged.status, JSON.stringify(merged), id]
+          )
+          updated = merged
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL update failed for procurement order ${id}:`, err.message)
+      }
     }
 
-    res.json(updated)
+    const localUpdated =
+      updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
+
+    const finalResult = updated || localUpdated
+    if (!finalResult) {
+      return res.status(404).json({ error: 'Procurement order not found' })
+    }
+
+    res.json(finalResult)
   } catch (err) {
     console.error(`Error updating procurement order ${req.params.id}:`, err)
     res.status(500).json({ error: 'Failed to update procurement order' })
