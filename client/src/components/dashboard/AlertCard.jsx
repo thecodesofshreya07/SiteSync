@@ -85,7 +85,16 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
             <p className="text-xs font-bold uppercase tracking-wider text-teal-800 font-public">
               {isIncomingTransfer ? 'Required Action' : 'Recommendation'}
             </p>
-            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm break-words">{alert.recommendation}</p>
+            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm break-words">
+              {alert.recommendation ||
+                alert.recommendedAction ||
+                alert.recommended_action ||
+                alert.data?.recommendation ||
+                alert.data?.recommendedAction ||
+                (isIncomingTransfer
+                  ? `Authorize dispatch of ${alert.transferDetails?.quantity || 150} ${alert.transferDetails?.unit || 'bags'} of ${alert.transferDetails?.item || 'materials'} to ${alert.transferDetails?.targetSiteName || 'the requesting site'}, or Decline to preserve local inventory.`
+                  : `Initiate expedited procurement reorder or cross-site transfer to prevent schedule delay.`)}
+            </p>
           </div>
 
           {alert.sources?.length > 0 && (

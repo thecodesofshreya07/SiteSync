@@ -33,11 +33,20 @@ export function formatDate(dateStr, opts = {}) {
 }
 
 export function formatTime(dateStr) {
+  if (!dateStr) return 'Just now'
   const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return 'Just now'
+
+  const now = new Date()
+  const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffSec < 60 && diffSec >= 0) return 'Just now'
+  if (diffSec < 3600 && diffSec >= 0) return `${Math.floor(diffSec / 60)}m ago`
+  if (diffSec < 86400 && diffSec >= 0) return `${Math.floor(diffSec / 3600)}h ago`
+
   return date.toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
   })
 }

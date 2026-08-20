@@ -9,35 +9,34 @@ export function AlertsProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Fetch persisted alerts directly from backend API
+  // Fetch persisted alerts directly from backend API with live auto-polling
   useEffect(() => {
     let isMounted = true
     async function fetchAlerts() {
       try {
-        setLoading(true)
         const res = await fetch(`${API_BASE}/alerts`)
         if (res.ok) {
           const data = await res.json()
           if (isMounted) {
             setAlerts(Array.isArray(data) ? data : [])
+            setError(null)
           }
-        } else {
-          throw new Error(`HTTP ${res.status}`)
         }
       } catch (err) {
-        console.error('Could not fetch backend alerts:', err.message)
         if (isMounted) {
-          setError(err.message)
-          setAlerts([])
+          console.warn('Could not fetch backend alerts:', err.message)
         }
       } finally {
         if (isMounted) setLoading(false)
       }
     }
+
     fetchAlerts()
+    const interval = setInterval(fetchAlerts, 3000)
 
     return () => {
       isMounted = false
+      clearInterval(interval)
     }
   }, [])
 

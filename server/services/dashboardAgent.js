@@ -537,9 +537,12 @@ export async function runAutonomousEvaluationCycle() {
               severity: 'critical',
               title: `Material Shortage: ${item.item} below critical threshold`,
               explanation: `Autonomous monitoring evaluated ${item.item} (${qty} ${item.unit}) at ${site.name}. Projected stockout requires action.`,
+              recommendation: transferSource
+                ? `Initiate transfer of 150 ${item.unit} from ${transferSource.siteId}`
+                : `Issue emergency Purchase Order for ${item.item}`,
               recommendedAction: transferSource
                 ? `Initiate transfer of 150 ${item.unit} from ${transferSource.siteId}`
-                : `Issue emergency PO for ${item.item}`,
+                : `Issue emergency Purchase Order for ${item.item}`,
               actionType: transferSource ? 'transfer' : 'po',
               status: 'pending',
               timestamp: new Date().toISOString(),
