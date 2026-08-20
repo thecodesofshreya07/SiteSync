@@ -220,6 +220,17 @@ export async function runMonitoringStream(siteId, res) {
           ...(delayedPO?.vendorId ? [{ type: 'vendor', id: delayedPO.vendorId, label: `Vendor Record ${delayedPO.vendorId}` }] : []),
         ],
         status: matchedAlert?.status || 'pending',
+        transferDetails: transferSource
+          ? {
+              sourceSiteId: transferSource.siteId,
+              sourceSiteName: transferSite,
+              targetSiteId: siteId,
+              targetSiteName: currentSite.name,
+              item: criticalInventory.item,
+              quantity: 150,
+              unit: criticalInventory.unit || 'bags',
+            }
+          : null,
       }
 
       await insertAlertDirect(alert)

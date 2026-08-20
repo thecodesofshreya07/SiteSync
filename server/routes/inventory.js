@@ -1,7 +1,90 @@
 import { Router } from 'express'
-import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
+import { getCollection, findById, updateById, setCollection, getPool, getCollectionDirect, insertAlertDirect } from '../db.js'
 
 const router = Router()
+
+async function triggerShortageAlertIfNeeded(item) {
+  try {
+    const isCritical =
+      item.status === 'CRITICAL' ||
+      item.status === 'Critical' ||
+      (item.consumptionPerDay > 0 && item.quantity / item.consumptionPerDay <= 4) ||
+      (item.reorderThreshold > 0 && item.quantity <= item.reorderThreshold * 0.5)
+
+    if (!isCritical) return
+
+    const existingAlerts = await getCollectionDirect('alerts')
+    const activeAlert = existingAlerts.find(
+      (a) =>
+        a.siteId === item.siteId &&
+        (a.status === 'pending' || a.status === 'transfer_requested') &&
+        a.title.toLowerCase().includes(item.item.toLowerCase())
+    )
+
+    if (activeAlert) return // Alert already pending or in flight
+
+    const allInventory = await getCollectionDirect('inventory')
+    const sites = await getCollectionDirect('sites')
+    const currentSite = sites.find((s) => s.id === item.siteId) || { id: item.siteId, name: item.siteId }
+
+    // Search for surplus stock at sibling sites
+    const siblingStock = allInventory.filter(
+      (i) =>
+        i.siteId !== item.siteId &&
+        i.item.toLowerCase() === item.item.toLowerCase() &&
+        i.quantity > (i.reorderThreshold || 0)
+    )
+    const transferSource = siblingStock[0]
+    const transferSite = transferSource
+      ? sites.find((s) => s.id === transferSource.siteId)?.name || transferSource.siteId
+      : 'Riverside Tower'
+
+    const daysLeft = item.consumptionPerDay
+      ? Math.round((item.quantity / item.consumptionPerDay) * 10) / 10
+      : 3.2
+
+    const recQty = 150
+    const recMessage = transferSource
+      ? `Transfer ${recQty} ${item.unit || 'bags'} of ${item.item} from ${transferSite}`
+      : `Expedite emergency PO for ${item.item}`
+
+    const alertId = `ALT-${Date.now().toString().slice(-4)}`
+    const alert = {
+      id: alertId,
+      siteId: item.siteId,
+      severity: 'critical',
+      title: `${item.item} stock at ${currentSite.name} is projected to reach stockout in ${daysLeft} days.`,
+      timestamp: new Date().toISOString(),
+      explanation: `Current stock level is ${item.quantity} ${item.unit || ''} against daily consumption of ${item.consumptionPerDay || 55} ${item.unit || ''}/day. Critical safety threshold is ${item.reorderThreshold || 250} ${item.unit || ''}.`,
+      reasonPoints: [
+        `Current stock has dropped to ${item.quantity} ${item.unit || ''}.`,
+        `Daily consumption rate is ${item.consumptionPerDay || 55} ${item.unit || ''}/day.`,
+        `Estimated runway is ${daysLeft} days before critical stockout occurs.`,
+      ],
+      recommendation: recMessage,
+      sources: [
+        { type: 'inventory', id: item.id, label: `Inventory Record ${item.id}` },
+      ],
+      status: 'pending',
+      transferDetails: transferSource
+        ? {
+            sourceSiteId: transferSource.siteId,
+            sourceSiteName: transferSite,
+            targetSiteId: item.siteId,
+            targetSiteName: currentSite.name,
+            item: item.item,
+            quantity: recQty,
+            unit: item.unit || 'bags',
+          }
+        : null,
+    }
+
+    await insertAlertDirect(alert)
+    console.log(`[DYNAMIC ALERT] Created dynamic shortage alert for ${item.item} at ${item.siteId} (ID: ${alertId})`)
+  } catch (err) {
+    console.warn('[DYNAMIC ALERT] Warning creating shortage alert:', err.message)
+  }
+}
 
 function formatInventoryRow(row) {
   if (!row) return null
@@ -254,6 +337,11 @@ router.post('/:id/transaction', async (req, res) => {
     lastTransaction,
   })
 
+  // Dynamically trigger AI shortage alert if critical
+  triggerShortageAlertIfNeeded(updatedPayload).catch((e) =>
+    console.warn('[INVENTORY] Shortage trigger warning:', e.message)
+  )
+
   res.json(updatedPayload)
 })
 
@@ -343,6 +431,12 @@ router.patch('/:id', async (req, res) => {
     }
 
     updateById('inventory', id, merged)
+
+    // Dynamically trigger AI shortage alert if critical
+    triggerShortageAlertIfNeeded(merged).catch((e) =>
+      console.warn('[INVENTORY] Shortage trigger warning:', e.message)
+    )
+
     res.json(merged)
   } catch (err) {
     console.error('Error updating inventory item:', err)
