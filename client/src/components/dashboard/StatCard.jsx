@@ -14,17 +14,17 @@ export default function StatCard({ label, value, sublabel, trend, trendLabel, tr
   const accentStyle = ACCENTS[accent] || ACCENTS.navy
 
   return (
-    <div className="rounded-xl border border-surface-border bg-white p-4 shadow-card">
-      <div className="flex items-start justify-between">
+    <div className="rounded-xl border border-surface-border bg-white p-4 shadow-card min-w-0">
+      <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-600">{label}</p>
         {Icon && (
-          <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg', accentStyle.bg)}>
+          <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', accentStyle.bg)}>
             <Icon size={16} className={accentStyle.text} />
           </div>
         )}
       </div>
-      <p className="mt-2 text-2xl font-extrabold tabular-nums text-slate-900">{value}</p>
-      <div className="mt-2 flex items-center gap-2">
+      <p className="mt-2 text-xl sm:text-2xl font-extrabold tabular-nums text-slate-900 break-words">{value}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         {sublabel && <span className="text-xs font-semibold text-slate-500">{sublabel}</span>}
         {trend !== undefined && (
           <span

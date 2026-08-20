@@ -7,6 +7,7 @@ import {
   MessageSquareText,
   Settings,
   Building2,
+  X,
 } from 'lucide-react'
 import { useRole } from '../../hooks/useRole'
 import { cn } from '../../lib/utils'
@@ -20,19 +21,29 @@ const NAV_ITEMS = [
   { key: 'settings', to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, setMobileOpen }) {
   const { role, allowedRoutes } = useRole()
 
-  return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-navy-950 md:flex">
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/20 text-teal-400">
-          <Building2 size={20} strokeWidth={2.25} />
+  const navContent = (
+    <>
+      <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/20 text-teal-400">
+            <Building2 size={20} strokeWidth={2.25} />
+          </div>
+          <div>
+            <p className="text-base font-bold leading-none text-white tracking-tight">SiteSync</p>
+            <p className="mt-1.5 text-xs font-semibold leading-none text-teal-400/90">AI Construction Ops</p>
+          </div>
         </div>
-        <div>
-          <p className="text-base font-bold leading-none text-white tracking-tight">SiteSync</p>
-          <p className="mt-1.5 text-xs font-semibold leading-none text-teal-400/90">AI Construction Ops</p>
-        </div>
+        {/* Mobile close button */}
+        <button
+          onClick={() => setMobileOpen?.(false)}
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white md:hidden"
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <nav className="mt-3 flex-1 space-y-1 px-3">
@@ -41,6 +52,7 @@ export default function Sidebar() {
             key={item.key}
             to={item.to}
             end={item.to === '/'}
+            onClick={() => setMobileOpen?.(false)}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors',
@@ -67,6 +79,30 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop Sidebar (Preserved exactly) */}
+      <aside className="hidden w-64 shrink-0 flex-col bg-navy-950 md:flex">
+        {navContent}
+      </aside>
+
+      {/* Mobile Sidebar Drawer */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-navy-950/70 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileOpen?.(false)}
+          />
+          {/* Drawer Content */}
+          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-navy-950 shadow-2xl z-10 animate-fade-in-right">
+            {navContent}
+          </aside>
+        </div>
+      )}
+    </>
   )
 }

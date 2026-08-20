@@ -38,9 +38,9 @@ export default function Dashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-xl font-bold text-slate-900">{selectedSite.name}</h1>
             <Badge tone={STATUS_TONE[selectedSite.status] || 'neutral'}>{selectedSite.status}</Badge>
           </div>
@@ -48,7 +48,7 @@ export default function Dashboard() {
             {selectedSite.location} · <span className="text-slate-800 font-semibold">Viewing as {role}</span>
           </p>
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Agent Scan</p>
           <p className="text-sm font-bold text-slate-800">
             {formatDate(selectedSite.lastScan)} · {formatTime(selectedSite.lastScan)}
@@ -57,7 +57,7 @@ export default function Dashboard() {
       </div>
 
       {/* Top stats */}
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Budget Used"
           value={`${formatINR(selectedSite.budgetActual)} / ${formatINR(selectedSite.budgetPlanned)}`}
@@ -90,10 +90,10 @@ export default function Dashboard() {
 
       {/* Main grid: budget + agent activity */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 min-w-0">
           <BudgetOverview site={selectedSite} categoryData={categoryData} />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <AgentActivityLog siteId={selectedSite.id} />
         </div>
       </div>
