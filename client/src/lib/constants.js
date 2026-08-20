@@ -10,11 +10,11 @@ export const ROLE_LIST = [ROLES.PROJECT_MANAGER, ROLES.CONTRACTOR, ROLES.ACCOUNT
 
 // Which nav routes each role is allowed to see.
 export const ROLE_NAV_ACCESS = {
-  [ROLES.PROJECT_MANAGER]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings'],
-  [ROLES.CONTRACTOR]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'settings'],
+  [ROLES.PROJECT_MANAGER]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'photo-progress', 'assistant', 'settings'],
+  [ROLES.CONTRACTOR]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'photo-progress', 'settings'],
   [ROLES.ACCOUNTANT]: ['dashboard', 'procurement', 'settings'],
   [ROLES.FINANCE]: ['dashboard', 'procurement', 'settings'],
-  [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings', 'user-management'],
+  [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'photo-progress', 'assistant', 'settings', 'user-management'],
 }
 
 // Realistic material unit market rates in INR (₹)

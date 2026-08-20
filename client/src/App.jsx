@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Inventory from './pages/Inventory'
 import Procurement from './pages/Procurement'
 import TasksEquipment from './pages/TasksEquipment'
+import PhotoProgress from './pages/PhotoProgress'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import UserManagement from './pages/UserManagement'
@@ -38,6 +39,7 @@ export default function App() {
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/procurement" element={<Procurement />} />
                   <Route path="/tasks-equipment" element={<TasksEquipment />} />
+                  <Route path="/photo-progress" element={<PhotoProgress />} />
                   <Route
                     path="/assistant"
                     element={

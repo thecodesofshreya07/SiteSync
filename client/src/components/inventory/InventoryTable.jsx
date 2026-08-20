@@ -1,5 +1,7 @@
-import { PackagePlus, ClipboardList, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { PackagePlus, ClipboardList, Trash2, QrCode } from 'lucide-react'
 import InventoryStatusBadge from './InventoryStatusBadge'
+import QRCodeModal from './QRCodeModal'
 import EmptyState from '../common/EmptyState'
 import { formatDate } from '../../lib/utils'
 
@@ -9,6 +11,8 @@ function daysRemaining(item) {
 }
 
 export default function InventoryTable({ items, onLogTransaction, onDeleteItem }) {
+  const [selectedQrItem, setSelectedQrItem] = useState(null)
+
   if (!items || items.length === 0) {
     return (
       <EmptyState
@@ -21,7 +25,7 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
 
   const canLog = typeof onLogTransaction === 'function'
   const canDelete = typeof onDeleteItem === 'function'
-  const showActions = canLog || canDelete
+  const showActions = canLog || canDelete || true
 
   return (
     <div className="overflow-x-auto rounded-xl border border-surface-border bg-white shadow-card">
@@ -56,8 +60,22 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
                 <td className="px-4 py-3.5 tabular-nums font-medium text-slate-600">
                   {item.consumptionPerDay !== undefined ? `${item.consumptionPerDay} ${item.unit || ''}/day` : '—'}
                 </td>
-                <td className="px-4 py-3.5 tabular-nums font-bold text-slate-900">
-                  {remaining === '—' ? '—' : `${remaining}d`}
+                <td className="px-4 py-3.5 tabular-nums">
+                  {remaining === '—' ? (
+                    <span className="text-slate-400 font-medium">—</span>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold ${
+                        Number(remaining) <= 4
+                          ? 'bg-red-100 text-red-800 border border-red-200 animate-pulse'
+                          : Number(remaining) <= 7
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-teal-50 text-teal-800 border border-teal-200'
+                      }`}
+                    >
+                      ~{remaining}d runway
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3.5">
                   <InventoryStatusBadge status={item.status} />
@@ -66,6 +84,14 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
                 {showActions && (
                   <td className="px-4 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => setSelectedQrItem(item)}
+                        className="inline-flex items-center gap-1 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm transition-colors cursor-pointer"
+                        title="View & Print Material QR Code"
+                      >
+                        <QrCode size={13} className="text-teal-600" />
+                        QR Label
+                      </button>
                       {canLog && (
                         <button
                           onClick={() => onLogTransaction(item)}
@@ -93,6 +119,14 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
           })}
         </tbody>
       </table>
+
+      {/* Material QR Code & Label Modal */}
+      <QRCodeModal
+        open={Boolean(selectedQrItem)}
+        item={selectedQrItem}
+        onClose={() => setSelectedQrItem(null)}
+        onQuickLog={onLogTransaction}
+      />
     </div>
   )
 }

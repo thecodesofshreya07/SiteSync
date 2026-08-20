@@ -15,6 +15,7 @@ import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
 import usersRouter from './routes/users.js'
 import agentRouter from './routes/agent.js'
+import photosRouter from './routes/photos.js'
 
 import { getPool } from './db.js'
 
@@ -27,7 +28,8 @@ app.use(
     credentials: true,
   })
 )
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 app.get('/', (req, res) => {
   res.json({
@@ -69,6 +71,7 @@ app.use('/api/assistant', assistantRouter)
 app.use('/api/timeline', timelineRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/agent', agentRouter)
+app.use('/api/photos', photosRouter)
 
 const PORT = config.port
 

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 import Modal from './Modal'
 import Badge from './Badge'
 import LoadingState from './LoadingState'
+import Button from './Button'
 import { formatDate, formatFullINR } from '../../lib/utils'
 
 const API_BASE = 'http://localhost:4000/api'
@@ -108,6 +111,40 @@ export default function SourceRecordModal({ source, open, onClose }) {
             {data.dateRaised && <Row label="Date Raised" value={formatDate(data.dateRaised)} />}
             {data.expectedDelivery && <Row label="Expected Delivery" value={formatDate(data.expectedDelivery)} />}
             {data.lastUpdated && <Row label="Last Updated" value={formatDate(data.lastUpdated)} />}
+          </div>
+
+          {/* Direct module route navigation */}
+          <div className="mt-4 pt-3 border-t border-surface-border flex justify-end">
+            {source.type === 'inventory' && (
+              <Link
+                to={`/inventory?search=${encodeURIComponent(source.id)}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 transition-colors"
+              >
+                <span>Open in Inventory Management</span>
+                <ExternalLink size={13} />
+              </Link>
+            )}
+            {(source.type === 'procurement' || source.type === 'delivery' || source.type === 'vendor') && (
+              <Link
+                to={`/procurement?search=${encodeURIComponent(source.id)}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 transition-colors"
+              >
+                <span>Open in Procurement</span>
+                <ExternalLink size={13} />
+              </Link>
+            )}
+            {(source.type === 'equipment' || source.type === 'task') && (
+              <Link
+                to={`/tasks-equipment?search=${encodeURIComponent(source.id)}`}
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-700 transition-colors"
+              >
+                <span>Open in Tasks & Equipment</span>
+                <ExternalLink size={13} />
+              </Link>
+            )}
           </div>
         </div>
       )}

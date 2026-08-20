@@ -1,4 +1,4 @@
-import { getCollectionDirect, insertAlertDirect, readDb } from '../db.js'
+import { getCollectionDirect, insertAlertDirect, insertSubtaskDirect, updateSubtaskDirect, readDb } from '../db.js'
 
 export const MONITORING_TOOLS = {
   getInventory: async ({ siteId }) => {
@@ -153,6 +153,26 @@ export async function runMonitoringStream(siteId, res) {
         ? Math.round((criticalInventory.quantity / criticalInventory.consumptionPerDay) * 10) / 10
         : 3.2
 
+      // STEP A: Create subtask in 'investigating' status
+      const subtaskId = `TSK-${Date.now().toString().slice(-6)}`
+      const subtask = {
+        id: subtaskId,
+        site_id: siteId,
+        siteId,
+        type: 'check_stock',
+        status: 'investigating',
+        reasoning_summary: `Stock for ${criticalInventory.item} (${criticalInventory.id}) fell to ${criticalInventory.quantity} ${criticalInventory.unit} (projected runway: ${daysLeft} days) — investigating sibling site availability and reorder pathways.`,
+        related_record_type: 'inventory',
+        related_record_id: criticalInventory.id,
+        relatedRecordType: 'inventory',
+        relatedRecordId: criticalInventory.id,
+        parent_alert_id: null,
+        created_at: new Date().toISOString(),
+        resolved_at: null,
+      }
+      await insertSubtaskDirect(subtask)
+      emit({ type: 'subtask', subtask })
+
       emit({
         type: 'flagged',
         message: `⚠ Shortage risk detected — ${criticalInventory.item} has ${daysLeft} days to critical stockout`,
@@ -234,18 +254,31 @@ export async function runMonitoringStream(siteId, res) {
       console.log(`[ALERT] Evaluating alert state for ${siteId}...`)
 
       if (matchedAlert && matchedAlert.status !== 'pending') {
-        // If alert was already actioned (e.g. approved, transfer_requested, resolved), preserve it!
         console.log(`[AGENT] Shortage alert ${matchedAlert.id} is already in state '${matchedAlert.status}'. Preserving state.`)
+        await updateSubtaskDirect(subtaskId, {
+          status: 'resolved',
+          parent_alert_id: matchedAlert.id,
+          resolved_at: new Date().toISOString(),
+          reasoning_summary: `${subtask.reasoning_summary} -> Found existing actioned alert (${matchedAlert.id}, status: ${matchedAlert.status}).`,
+        })
+        emit({ type: 'subtask', subtask: { ...subtask, status: 'resolved', parent_alert_id: matchedAlert.id } })
         emit({ type: 'alert', alert: matchedAlert })
       } else if (matchedAlert && matchedAlert.type === 'emergency_procurement_fallback') {
-        // Already have an emergency fallback alert active, do not overwrite it with a transfer recommendation
         console.log(`[AGENT] Emergency procurement fallback alert ${matchedAlert.id} active. Preserving fallback alert.`)
+        await updateSubtaskDirect(subtaskId, {
+          status: 'resolved',
+          parent_alert_id: matchedAlert.id,
+          resolved_at: new Date().toISOString(),
+          reasoning_summary: `${subtask.reasoning_summary} -> Emergency fallback alert active (${matchedAlert.id}).`,
+        })
+        emit({ type: 'subtask', subtask: { ...subtask, status: 'resolved', parent_alert_id: matchedAlert.id } })
         emit({ type: 'alert', alert: matchedAlert })
       } else {
         const alertId = matchedAlert ? matchedAlert.id : `ALT-${Date.now().toString().slice(-4)}`
         const alert = {
           id: alertId,
           siteId,
+          source_subtask_id: subtaskId,
           inventoryItemId: criticalInventory.id,
           severity: 'critical',
           type: wasTransferRejected ? 'emergency_procurement_fallback' : 'standard',
@@ -290,10 +323,40 @@ export async function runMonitoringStream(siteId, res) {
 
         await insertAlertDirect(alert)
         console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
+
+        // STEP B: Update subtask to resolved with parent alert link
+        await updateSubtaskDirect(subtaskId, {
+          status: 'resolved',
+          parent_alert_id: alert.id,
+          resolved_at: new Date().toISOString(),
+          reasoning_summary: `${subtask.reasoning_summary} -> Result: Generated alert ${alert.id} with recommendation: ${alert.recommendation}`,
+        })
+        emit({ type: 'subtask', subtask: { ...subtask, status: 'resolved', parent_alert_id: alert.id } })
         emit({ type: 'alert', alert })
       }
     } else if (idleEquipment) {
       console.log(`[AGENT] Idle equipment detected: ${idleEquipment.name} (${idleEquipment.idleDays} days)`)
+      
+      // STEP A: Create subtask in investigating status
+      const eqSubtaskId = `TSK-${Date.now().toString().slice(-6)}`
+      const eqSubtask = {
+        id: eqSubtaskId,
+        site_id: siteId,
+        siteId,
+        type: 'verify_equipment_idle',
+        status: 'investigating',
+        reasoning_summary: `${idleEquipment.name} (${idleEquipment.id}) is logged idle for ${idleEquipment.idleDays} days with ${idleEquipment.utilization}% utilization — evaluating cross-site reassignment.`,
+        related_record_type: 'equipment',
+        related_record_id: idleEquipment.id,
+        relatedRecordType: 'equipment',
+        relatedRecordId: idleEquipment.id,
+        parent_alert_id: null,
+        created_at: new Date().toISOString(),
+        resolved_at: null,
+      }
+      await insertSubtaskDirect(eqSubtask)
+      emit({ type: 'subtask', subtask: eqSubtask })
+
       emit({
         type: 'flagged',
         message: `⚠ Idle equipment detected — ${idleEquipment.name} idle for ${idleEquipment.idleDays} days (${idleEquipment.utilization}% util)`,
@@ -331,6 +394,7 @@ export async function runMonitoringStream(siteId, res) {
       const alert = {
         id: alertId,
         siteId,
+        source_subtask_id: eqSubtaskId,
         severity: 'warning',
         title: `${idleEquipment.name} has been idle for ${idleEquipment.idleDays} days.`,
         timestamp: new Date().toISOString(),
@@ -349,11 +413,39 @@ export async function runMonitoringStream(siteId, res) {
 
       await insertAlertDirect(alert)
       console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
+
+      // STEP B: Resolve subtask with alert reference
+      await updateSubtaskDirect(eqSubtaskId, {
+        status: 'resolved',
+        parent_alert_id: alert.id,
+        resolved_at: new Date().toISOString(),
+      })
+      emit({ type: 'subtask', subtask: { ...eqSubtask, status: 'resolved', parent_alert_id: alert.id } })
       emit({ type: 'alert', alert })
     } else {
       emit({ type: 'analyzing', message: 'Comparing planned vs actual spend by category...' })
       await sleep(500)
       if (isClosed) return
+
+      // STEP A & B: Record routine check subtask and resolve without alert
+      const scanSubtaskId = `TSK-${Date.now().toString().slice(-6)}`
+      const scanSubtask = {
+        id: scanSubtaskId,
+        site_id: siteId,
+        siteId,
+        type: 'check_stock',
+        status: 'resolved',
+        reasoning_summary: `Scanned all inventory items, equipment utilization, and procurement pipelines at ${currentSite.name}. Stock buffers and equipment runtime are within nominal bounds.`,
+        related_record_type: 'site',
+        related_record_id: siteId,
+        relatedRecordType: 'site',
+        relatedRecordId: siteId,
+        parent_alert_id: null,
+        created_at: new Date().toISOString(),
+        resolved_at: new Date().toISOString(),
+      }
+      await insertSubtaskDirect(scanSubtask)
+      emit({ type: 'subtask', subtask: scanSubtask })
 
       console.log(`[AGENT] No anomalies detected for ${siteId}`)
       emit({ type: 'resolved', message: `No anomalies detected this monitoring cycle for ${currentSite.name}` })
@@ -385,3 +477,100 @@ export async function runMonitoringStream(siteId, res) {
     cleanupHandlers.push(resolve)
   })
 }
+
+/**
+ * Autonomous Background Scheduler (Runs continuously without requiring UI clicks)
+ * Interval: Scans all active project sites in PostgreSQL every 30 seconds
+ */
+export async function runAutonomousEvaluationCycle() {
+  try {
+    const sites = await getCollectionDirect('sites')
+    if (!sites || sites.length === 0) return
+
+    for (const site of sites) {
+      const siteId = site.id
+      const inventory = await getCollectionDirect('inventory')
+      const siteInventory = inventory.filter((i) => i.siteId === siteId)
+
+      // 1. Scan for critical stock shortages
+      for (const item of siteInventory) {
+        const qty = Number(item.quantity || 0)
+        const threshold = Number(item.reorderThreshold || 0)
+        const isCritical = item.status === 'CRITICAL' || (threshold > 0 && qty <= threshold)
+
+        if (isCritical) {
+          const existingAlerts = await getCollectionDirect('alerts')
+          const hasAlert = existingAlerts.some(
+            (a) => a.siteId === siteId && (a.sources?.some((s) => s.id === item.id) || a.inventoryItemId === item.id)
+          )
+
+          if (!hasAlert) {
+            const subtaskId = `TSK-AUTO-${Date.now().toString().slice(-4)}`
+            const subtask = {
+              id: subtaskId,
+              site_id: siteId,
+              siteId,
+              type: 'check_stock',
+              status: 'investigating',
+              reasoning_summary: `Autonomous agent detected ${item.item} (${item.id}) quantity at ${qty} ${item.unit || 'units'}, which is at or below safety threshold (${threshold}). Investigating sibling site surplus.`,
+              related_record_type: 'inventory',
+              related_record_id: item.id,
+              relatedRecordType: 'inventory',
+              relatedRecordId: item.id,
+              linked_alert_id: null,
+              parent_alert_id: null,
+              created_at: new Date().toISOString(),
+              resolved_at: null,
+            }
+            await insertSubtaskDirect(subtask)
+
+            // Evaluate sibling stock
+            const siblingStock = inventory.filter(
+              (i) => i.siteId !== siteId && i.item.toLowerCase() === item.item.toLowerCase() && i.quantity > i.reorderThreshold
+            )
+            const transferSource = siblingStock[0]
+
+            const alertId = `ALT-AUTO-${Date.now().toString().slice(-4)}`
+            const alert = {
+              id: alertId,
+              siteId,
+              severity: 'critical',
+              title: `Material Shortage: ${item.item} below critical threshold`,
+              explanation: `Autonomous monitoring evaluated ${item.item} (${qty} ${item.unit}) at ${site.name}. Projected stockout requires action.`,
+              recommendedAction: transferSource
+                ? `Initiate transfer of 150 ${item.unit} from ${transferSource.siteId}`
+                : `Issue emergency PO for ${item.item}`,
+              actionType: transferSource ? 'transfer' : 'po',
+              status: 'pending',
+              timestamp: new Date().toISOString(),
+              sources: [{ id: item.id, table: 'inventory', label: `${item.item} (${item.id})` }],
+              source_record_id: item.id,
+              sourceRecordId: item.id,
+              source_subtask_id: subtaskId,
+            }
+
+            await insertAlertDirect(alert)
+            await updateSubtaskDirect(subtaskId, {
+              status: 'resolved',
+              linked_alert_id: alertId,
+              parent_alert_id: alertId,
+              resolved_at: new Date().toISOString(),
+            })
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[SCHEDULER] Autonomous scan cycle notice:', err.message)
+  }
+}
+
+// Background scheduler interval running every 30 seconds
+export function startAutonomousAgentScheduler(intervalMs = 30000) {
+  console.log(`[AGENT] Starting autonomous background scheduler (every ${intervalMs / 1000}s)...`)
+  runAutonomousEvaluationCycle().catch(() => {})
+  return setInterval(runAutonomousEvaluationCycle, intervalMs)
+}
+
+// Start scheduler immediately on import
+startAutonomousAgentScheduler()

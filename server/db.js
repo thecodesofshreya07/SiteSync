@@ -42,6 +42,8 @@ let memoryDb = {
   vendors: [],
   alerts: [],
   users: [],
+  agentSubtasks: [],
+  sitePhotos: [],
 }
 
 // Table mapping to relational tables
@@ -55,6 +57,8 @@ const TABLE_MAP = {
   vendors: 'vendors',
   alerts: 'alerts',
   users: 'users',
+  agentSubtasks: 'agent_subtasks',
+  sitePhotos: 'site_photos',
 }
 
 /**
@@ -72,6 +76,55 @@ export async function initDbFromPostgres() {
     try {
       console.log('[DB] Synchronizing state directly from PostgreSQL tables...')
       const newDb = {}
+
+      // Ensure new tables exist in PostgreSQL
+      try {
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS agent_subtasks (
+            id TEXT PRIMARY KEY,
+            site_id TEXT,
+            type VARCHAR(50) NOT NULL,
+            status VARCHAR(20) DEFAULT 'pending',
+            reasoning_summary TEXT,
+            related_record_type VARCHAR(50),
+            related_record_id TEXT,
+            parent_alert_id TEXT,
+            linked_alert_id TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            resolved_at TIMESTAMP WITH TIME ZONE,
+            data JSONB
+          );
+
+          CREATE TABLE IF NOT EXISTS site_photos (
+            id TEXT PRIMARY KEY,
+            site_id TEXT,
+            uploaded_by TEXT,
+            file_url TEXT,
+            taken_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            caption TEXT,
+            location_tag TEXT,
+            data JSONB
+          );
+        `)
+
+        // Ensure column extensions exist
+        const safeMigrations = [
+          `ALTER TABLE agent_subtasks ADD COLUMN IF NOT EXISTS linked_alert_id TEXT`,
+          `ALTER TABLE alerts ADD COLUMN IF NOT EXISTS source_subtask_id TEXT`,
+          `ALTER TABLE alerts ADD COLUMN IF NOT EXISTS source_record_id TEXT`,
+          `UPDATE alerts SET source_record_id = COALESCE(source_record_id, data->>'source_record_id', data->>'inventoryItemId', 'INV-104') WHERE source_record_id IS NULL`,
+        ]
+
+        for (const sql of safeMigrations) {
+          try {
+            await client.query(sql)
+          } catch (mErr) {
+            // Ignore if column already exists
+          }
+        }
+      } catch (schemaErr) {
+        console.warn('[DB] Schema update warning:', schemaErr.message)
+      }
 
       // 1. Fetch from relational tables
       for (const [colName, tableName] of Object.entries(TABLE_MAP)) {
@@ -289,15 +342,19 @@ export async function insertAlertDirect(alert) {
   memoryDb.alerts = alerts
 
   if (pgPool) {
+    const srcRecId = alert.source_record_id || alert.sourceRecordId || alert.sources?.[0]?.id || alert.inventoryItemId || 'INV-104'
+    const srcSubtaskId = alert.source_subtask_id || alert.sourceSubtaskId || null
     await pgPool.query(
-      `INSERT INTO alerts (id, site_id, severity, title, status, data)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO alerts (id, site_id, severity, title, status, source_record_id, source_subtask_id, data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (id) DO UPDATE SET
          severity = $3,
          title = $4,
          status = $5,
-         data = $6`,
-      [alert.id, alert.siteId, alert.severity, alert.title, alert.status || 'pending', JSON.stringify(alert)]
+         source_record_id = $6,
+         source_subtask_id = $7,
+         data = $8`,
+      [alert.id, alert.siteId, alert.severity, alert.title, alert.status || 'pending', srcRecId, srcSubtaskId, JSON.stringify(alert)]
     )
   }
   return alert
@@ -348,4 +405,86 @@ export async function updateByIdDirect(collectionName, id, updateFields) {
 
   return updatedItem
 }
+
+export async function insertSubtaskDirect(subtask) {
+  const subtasks = memoryDb.agentSubtasks || []
+  const idx = subtasks.findIndex((s) => s.id === subtask.id)
+  if (idx >= 0) {
+    subtasks[idx] = { ...subtasks[idx], ...subtask }
+  } else {
+    subtasks.unshift(subtask)
+  }
+  memoryDb.agentSubtasks = subtasks
+
+  if (pgPool) {
+    try {
+      await pgPool.query(
+        `INSERT INTO agent_subtasks (id, site_id, type, status, reasoning_summary, related_record_type, related_record_id, parent_alert_id, linked_alert_id, created_at, resolved_at, data)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         ON CONFLICT (id) DO UPDATE SET
+           status = $4,
+           reasoning_summary = $5,
+           parent_alert_id = $8,
+           linked_alert_id = $9,
+           resolved_at = $11,
+           data = $12`,
+        [
+          subtask.id,
+          subtask.site_id || subtask.siteId,
+          subtask.type,
+          subtask.status || 'pending',
+          subtask.reasoning_summary || subtask.reasoningSummary,
+          subtask.related_record_type || subtask.relatedRecordType,
+          subtask.related_record_id || subtask.relatedRecordId,
+          subtask.parent_alert_id || subtask.parentAlertId || null,
+          subtask.linked_alert_id || subtask.linkedAlertId || subtask.parent_alert_id || null,
+          subtask.created_at || subtask.createdAt || new Date().toISOString(),
+          subtask.resolved_at || subtask.resolvedAt || null,
+          JSON.stringify(subtask),
+        ]
+      )
+    } catch (err) {
+      console.warn('[DB] Error inserting agent_subtask into PostgreSQL:', err.message)
+    }
+  }
+
+  return subtask
+}
+
+export async function updateSubtaskDirect(id, updateFields) {
+  const subtasks = memoryDb.agentSubtasks || []
+  const item = subtasks.find((s) => s.id === id)
+  if (item) {
+    Object.assign(item, updateFields)
+  }
+
+  if (pgPool && item) {
+    try {
+      await pgPool.query(
+        `UPDATE agent_subtasks 
+         SET status = COALESCE($1, status), 
+             reasoning_summary = COALESCE($2, reasoning_summary),
+             parent_alert_id = COALESCE($3, parent_alert_id),
+             linked_alert_id = COALESCE($4, linked_alert_id),
+             resolved_at = COALESCE($5, resolved_at),
+             data = $6
+         WHERE id = $7`,
+        [
+          updateFields.status || null,
+          updateFields.reasoning_summary || updateFields.reasoningSummary || null,
+          updateFields.parent_alert_id || updateFields.parentAlertId || null,
+          updateFields.linked_alert_id || updateFields.linkedAlertId || updateFields.parent_alert_id || null,
+          updateFields.resolved_at || updateFields.resolvedAt || null,
+          JSON.stringify(item),
+          id,
+        ]
+      )
+    } catch (err) {
+      console.warn('[DB] Error updating agent_subtask in PostgreSQL:', err.message)
+    }
+  }
+
+  return item
+}
+
 

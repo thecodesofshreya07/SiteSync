@@ -3,13 +3,15 @@ import { AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import TaskBoard from '../components/tasks/TaskBoard'
 import TaskFilters from '../components/tasks/TaskFilters'
+import GanttView from '../components/tasks/GanttView'
 import EquipmentGrid from '../components/equipment/EquipmentGrid'
 import LoadingState from '../components/common/LoadingState'
+import WeatherStrip from '../components/weather/WeatherStrip'
 import { useSite } from '../hooks/useSite'
 import { cn } from '../lib/utils'
 
-const TABS = ['Tasks', 'Equipment']
-const API_BASE = 'http://127.0.0.1:5000/api'
+const TABS = ['Tasks', 'Gantt Timeline', 'Equipment']
+const API_BASE = 'http://localhost:4000/api'
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()
@@ -76,6 +78,11 @@ export default function TasksEquipment() {
         </div>
       )}
 
+      {/* 7-Day Live Weather Forecast Strip */}
+      <div className="mb-5">
+        <WeatherStrip siteId={selectedSite.id} />
+      </div>
+
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
           {TABS.map((t) => (
@@ -104,6 +111,8 @@ export default function TasksEquipment() {
         ) : (
           <TaskBoard tasks={filteredTasks} />
         )
+      ) : tab === 'Gantt Timeline' ? (
+        <GanttView tasks={filteredTasks} />
       ) : equipment.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
           No equipment records exist for {selectedSite.name}.

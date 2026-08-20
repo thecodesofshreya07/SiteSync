@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCollection, findById, updateById, setCollection, getPool, getCollectionDirect, insertAlertDirect } from '../db.js'
+import { getCollection, findById, updateById, setCollection, getPool, getCollectionDirect, insertAlertDirect, insertSubtaskDirect } from '../db.js'
 
 const router = Router()
 
@@ -139,6 +139,97 @@ router.get('/', async (req, res) => {
     return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
   res.json(inventory)
+})
+
+// GET /api/inventory/forecast/all - Forecast for all items
+router.get('/forecast/all', async (req, res) => {
+  try {
+    const siteId = req.query.siteId || req.query.site_id
+    let items = await getCollectionDirect('inventory')
+    if (siteId) {
+      items = items.filter((i) => (i.siteId || i.site_id) === siteId)
+    }
+
+    const forecasts = items.map((item) => {
+      const consumptionRate = Number(item.consumptionPerDay || item.consumption_per_day) || 15
+      const currentStock = Number(item.quantity || 0)
+      const threshold = Number(item.reorderThreshold || item.reorder_threshold) || 50
+      const daysUntilStockout = consumptionRate > 0 ? Math.round((currentStock / consumptionRate) * 10) / 10 : 99
+      const reorderQty = Math.max(threshold * 2, Math.round(consumptionRate * 14))
+
+      return {
+        id: item.id,
+        item: item.item,
+        siteId: item.siteId || item.site_id,
+        unit: item.unit || 'units',
+        currentStock,
+        consumptionRate,
+        daysUntilStockout,
+        predictedStockoutDate: new Date(Date.now() + daysUntilStockout * 86400000).toISOString().slice(0, 10),
+        recommendedReorderQty: reorderQty,
+        status: daysUntilStockout <= 4 ? 'CRITICAL' : daysUntilStockout <= 7 ? 'WARNING' : 'HEALTHY',
+      }
+    })
+
+    res.json(forecasts)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/inventory/:id/forecast - Material predictive consumption forecast
+router.get('/:id/forecast', async (req, res) => {
+  try {
+    const items = await getCollectionDirect('inventory')
+    const item = items.find((i) => i.id === req.params.id)
+    if (!item) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    const consumptionRate = Number(item.consumptionPerDay || item.consumption_per_day) || 15
+    const currentStock = Number(item.quantity || 0)
+    const threshold = Number(item.reorderThreshold || item.reorder_threshold) || 50
+    const daysUntilStockout = consumptionRate > 0 ? Math.round((currentStock / consumptionRate) * 10) / 10 : 99
+    const predictedStockoutDate = new Date(Date.now() + daysUntilStockout * 86400000).toISOString().slice(0, 10)
+    const recommendedReorderQty = Math.max(threshold * 2, Math.round(consumptionRate * 14))
+
+    // If critical runway, record an agent subtask
+    if (daysUntilStockout <= 4) {
+      const subtaskId = `TSK-FC-${Date.now().toString().slice(-4)}`
+      const subtask = {
+        id: subtaskId,
+        site_id: item.siteId,
+        siteId: item.siteId,
+        type: 'predicted_stockout',
+        status: 'resolved',
+        reasoning_summary: `Predictive model calculated ${daysUntilStockout} days until stockout for ${item.item} (${item.id}) at current burn rate of ${consumptionRate} ${item.unit}/day. Recommended reorder qty: ${recommendedReorderQty} ${item.unit}.`,
+        related_record_type: 'inventory',
+        related_record_id: item.id,
+        relatedRecordType: 'inventory',
+        relatedRecordId: item.id,
+        parent_alert_id: null,
+        created_at: new Date().toISOString(),
+        resolved_at: new Date().toISOString(),
+      }
+      insertSubtaskDirect(subtask).catch(() => {})
+    }
+
+    res.json({
+      id: item.id,
+      item: item.item,
+      siteId: item.siteId,
+      unit: item.unit || 'units',
+      currentStock,
+      consumptionRate,
+      daysUntilStockout,
+      predictedStockoutDate,
+      recommendedReorderQty,
+      vendorLeadTimeDays: 4,
+      status: daysUntilStockout <= 4 ? 'CRITICAL' : daysUntilStockout <= 7 ? 'WARNING' : 'HEALTHY',
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // GET /api/inventory/:id - Single inventory item by ID or Site ID

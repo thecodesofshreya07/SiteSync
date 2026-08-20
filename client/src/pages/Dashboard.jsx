@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { IndianRupee, ListChecks, ShieldAlert, Gauge } from 'lucide-react'
 import StatCard from '../components/dashboard/StatCard'
 import BudgetOverview from '../components/dashboard/BudgetOverview'
-import AgentActivityLog from '../components/dashboard/AgentActivityLog'
+import AgentActivity from '../components/dashboard/AgentActivity'
 import AlertList from '../components/dashboard/AlertList'
 import ProjectTimeline from '../components/dashboard/ProjectTimeline'
 import Badge from '../components/common/Badge'
@@ -151,7 +151,7 @@ export default function Dashboard() {
         </div>
         {canViewAI && (
           <div className="lg:col-span-2 min-w-0">
-            <AgentActivityLog siteId={selectedSite.id} />
+            <AgentActivity siteId={selectedSite.id} />
           </div>
         )}
       </div>

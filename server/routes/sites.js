@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { getCollectionDirect } from '../db.js'
+import { fetchSiteForecast } from '../services/weatherService.js'
 
 const router = Router()
 
@@ -11,6 +12,17 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Error in GET /api/sites:', err)
     res.status(500).json({ error: 'Failed to retrieve sites' })
+  }
+})
+
+// GET /api/sites/:id/weather - 7-day live weather forecast & task risk flags
+router.get('/:id/weather', async (req, res) => {
+  try {
+    const forecast = await fetchSiteForecast(req.params.id)
+    res.json(forecast)
+  } catch (err) {
+    console.error('Error in GET /api/sites/:id/weather:', err)
+    res.status(500).json({ error: 'Failed to retrieve site weather forecast' })
   }
 })
 

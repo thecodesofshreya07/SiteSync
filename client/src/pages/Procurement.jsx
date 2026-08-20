@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { LayoutGrid, Table2, Plus, AlertTriangle } from 'lucide-react'
+import { LayoutGrid, Table2, Plus, AlertTriangle, Award } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import Button from '../components/common/Button'
 import ProcurementPipeline from '../components/procurement/ProcurementPipeline'
 import ProcurementTable from '../components/procurement/ProcurementTable'
+import VendorIntelligence from '../components/procurement/VendorIntelligence'
 import CreatePOModal from '../components/procurement/CreatePOModal'
 import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
@@ -155,6 +156,16 @@ export default function Procurement() {
                 <Table2 size={13} />
                 Table
               </button>
+              <button
+                onClick={() => setView('intelligence')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  view === 'intelligence' ? 'bg-teal-600 text-white' : 'text-navy-600 hover:bg-surface-bg'
+                )}
+              >
+                <Award size={13} />
+                Vendor Intelligence
+              </button>
             </div>
           </div>
         }
@@ -169,6 +180,8 @@ export default function Procurement() {
 
       {loading ? (
         <LoadingState label="Loading procurement orders from PostgreSQL..." />
+      ) : view === 'intelligence' ? (
+        <VendorIntelligence />
       ) : safeOrders.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
           No procurement orders exist for {selectedSite.name}. {canCreateRequest ? 'Click "+ Material Request" to create one.' : ''}

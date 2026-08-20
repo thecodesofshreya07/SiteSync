@@ -39,7 +39,76 @@ router.get('/', async (req, res) => {
   }
 })
 
-// GET /api/vendors/:id - Single vendor by ID
+import { getCollectionDirect } from '../db.js'
+
+// GET /api/vendors/analytics - Aggregated vendor intelligence matrix
+router.get('/analytics', async (req, res) => {
+  try {
+    const vendors = await getCollectionDirect('vendors')
+    const orders = await getCollectionDirect('procurementOrders')
+    const deliveries = await getCollectionDirect('deliveries')
+
+    const analytics = (vendors || []).map((v) => {
+      const vendorOrders = (orders || []).filter((o) => o.vendorId === v.id || o.vendor === v.name)
+      const totalOrders = vendorOrders.length
+      const totalSpend = vendorOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0)
+      
+      const delays = vendorOrders.map((o) => Number(o.delayDays) || 0)
+      const avgDelay = delays.length > 0 ? Math.round((delays.reduce((a, b) => a + b, 0) / delays.length) * 10) / 10 : Number(v.avgDelayDays || 0)
+      
+      const onTimeOrders = vendorOrders.filter((o) => !o.delayDays || Number(o.delayDays) === 0).length
+      const onTimePct = totalOrders > 0 ? Math.round((onTimeOrders / totalOrders) * 100) : v.reliability === 'High' ? 95 : 82
+
+      return {
+        id: v.id,
+        name: v.name,
+        category: v.category || 'Materials',
+        contact: v.contact || v.phone || '+91 98200 12345',
+        totalOrders,
+        totalSpend,
+        avgDelayDays: avgDelay,
+        onTimeDeliveryPct: onTimePct,
+        reliability: v.reliability || (onTimePct >= 90 ? 'High' : onTimePct >= 75 ? 'Moderate' : 'Low'),
+        pricingScore: totalSpend > 5000000 ? 'A+ (Volume Discounted)' : 'A (Market Standard)',
+        leadTimeDays: avgDelay <= 1 ? '2-3 days (Fast)' : `${Math.round(avgDelay + 3)} days (Standard)`,
+      }
+    })
+
+    res.json(analytics)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/vendors/:id/stats - Single vendor deep stats
+router.get('/:id/stats', async (req, res) => {
+  try {
+    const { id } = req.params
+    const vendors = await getCollectionDirect('vendors')
+    const orders = await getCollectionDirect('procurementOrders')
+    const vendor = vendors.find((v) => v.id === id)
+
+    if (!vendor) return res.status(404).json({ error: 'Vendor not found' })
+
+    const vendorOrders = (orders || []).filter((o) => o.vendorId === id || o.vendor === vendor.name)
+    const totalOrders = vendorOrders.length
+    const totalSpend = vendorOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0)
+    const onTimeOrders = vendorOrders.filter((o) => !o.delayDays || Number(o.delayDays) === 0).length
+    const onTimePct = totalOrders > 0 ? Math.round((onTimeOrders / totalOrders) * 100) : 90
+
+    res.json({
+      vendor,
+      stats: {
+        totalOrders,
+        totalSpend,
+        onTimeDeliveryPct: onTimePct,
+        recentOrders: vendorOrders.slice(-5),
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params

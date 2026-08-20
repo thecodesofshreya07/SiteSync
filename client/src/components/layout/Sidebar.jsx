@@ -9,6 +9,7 @@ import {
   Building2,
   Users,
   X,
+  Camera,
 } from 'lucide-react'
 import { useRole } from '../../hooks/useRole'
 import { useAuth } from '../../hooks/useAuth'
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { key: 'inventory', to: '/inventory', label: 'Inventory', icon: Boxes },
   { key: 'procurement', to: '/procurement', label: 'Procurement', icon: ShoppingCart },
   { key: 'tasks-equipment', to: '/tasks-equipment', label: 'Tasks & Equipment', icon: ListChecks },
+  { key: 'photo-progress', to: '/photo-progress', label: 'Photo Progress', icon: Camera },
   { key: 'assistant', to: '/assistant', label: 'Assistant', icon: MessageSquareText },
   { key: 'settings', to: '/settings', label: 'Settings', icon: Settings },
   { key: 'user-management', to: '/user-management', label: 'User Management', icon: Users },
