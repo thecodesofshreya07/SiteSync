@@ -17,6 +17,42 @@ export const ROLE_NAV_ACCESS = {
   [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings', 'user-management'],
 }
 
+// Realistic material unit market rates in INR (₹)
+export const MATERIAL_UNIT_PRICES = [
+  { item: 'Cement Portland Type I', pricePerUnit: 380, defaultUnit: 'bags' },
+  { item: 'UltraTech Cement 53 Grade', pricePerUnit: 410, defaultUnit: 'bags' },
+  { item: 'Sand', pricePerUnit: 2400, defaultUnit: 'cu.m' },
+  { item: 'Sand & Aggregate', pricePerUnit: 2400, defaultUnit: 'cu.m' },
+  { item: 'Aggregate', pricePerUnit: 2100, defaultUnit: 'cu.m' },
+  { item: 'Steel Rebar 12mm', pricePerUnit: 65000, defaultUnit: 'tonnes' },
+  { item: 'Structural Steel', pricePerUnit: 70000, defaultUnit: 'tonnes' },
+  { item: 'Bricks', pricePerUnit: 8.4, defaultUnit: 'units' },
+  { item: 'PVC Pipes', pricePerUnit: 420, defaultUnit: 'units' },
+  { item: 'Electrical Cable', pricePerUnit: 290, defaultUnit: 'meters' },
+]
+
+export function calculateMaterialAmount(itemName, quantity, unit) {
+  const qty = Number(quantity) || 1
+  if (!itemName) return qty * 500
+
+  const normalized = String(itemName).trim().toLowerCase()
+  const found = MATERIAL_UNIT_PRICES.find((m) => normalized.includes(m.item.toLowerCase()))
+
+  if (found) {
+    return Math.round(qty * found.pricePerUnit)
+  }
+
+  // Unit-based fallback market rate calculation
+  const cleanUnit = String(unit || '').toLowerCase()
+  if (cleanUnit === 'bags') return qty * 390
+  if (cleanUnit === 'cu.m') return qty * 2300
+  if (cleanUnit === 'tonnes') return qty * 68000
+  if (cleanUnit === 'meters') return qty * 250
+  if (cleanUnit === 'units') return qty * 15
+
+  return Math.round(qty * 500)
+}
+
 export const SEVERITY = {
   CRITICAL: 'critical',
   HIGH: 'high',

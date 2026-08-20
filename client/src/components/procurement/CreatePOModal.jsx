@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import { vendors } from '../../data/procurement'
+import { calculateMaterialAmount } from '../../lib/constants'
 
 const PRESET_UNITS = [
   'bags',
@@ -28,6 +29,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
   if (!open) return null
 
   const effectiveUnit = selectedUnit === 'Custom...' ? customUnit.trim() || 'units' : selectedUnit
+  const estimatedAmount = calculateMaterialAmount(item, quantity, effectiveUnit)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -43,7 +45,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
         vendorName: selectedVendor?.name || '—',
         quantity: Number(quantity) || 1,
         unit: effectiveUnit,
-        amount: 0,
+        amount: estimatedAmount,
         expectedDelivery: expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         stage: 'Material Request',
         status: 'Pending PM Validation',
@@ -137,6 +139,16 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
               placeholder="e.g. drums, rolls, pallets"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
+          </div>
+        )}
+
+        {quantity > 0 && item.trim() && (
+          <div className="rounded-lg border border-teal-200 bg-teal-50/70 p-3 text-xs text-teal-900">
+            <span className="font-bold">Calculated Market Estimate: </span>
+            <span className="font-bold tabular-nums text-teal-700 text-sm">
+              ₹{estimatedAmount.toLocaleString('en-IN')}
+            </span>{' '}
+            ({quantity} {effectiveUnit})
           </div>
         )}
 
