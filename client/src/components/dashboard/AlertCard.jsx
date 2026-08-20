@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Check, X, Clock3, FileSearch, AlertTriangle } from 'lucide-react'
+import { ChevronDown, Check, X, Clock3, FileSearch, AlertTriangle, Send, CheckCircle2 } from 'lucide-react'
 import Badge from '../common/Badge'
 import Button from '../common/Button'
 import SourceRecordModal from '../common/SourceRecordModal'
@@ -13,6 +13,9 @@ const STATUS_BADGE = {
   approved: { tone: 'green', label: '✓ APPROVED BY YOU' },
   dismissed: { tone: 'neutral', label: 'DISMISSED' },
   snoozed: { tone: 'blue', label: 'SNOOZED' },
+  transfer_requested: { tone: 'blue', label: '⏳ TRANSFER REQUESTED · AWAITING SOURCE APPROVAL' },
+  transfer_rejected: { tone: 'red', label: '✕ TRANSFER DECLINED BY SOURCE SITE' },
+  resolved: { tone: 'green', label: '✓ RESOLVED & TRANSFERRED' },
 }
 
 export default function AlertCard({ alert, defaultExpanded = false }) {
@@ -23,6 +26,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
   const severity = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.medium
   const site = sites?.find((s) => s.id === alert.siteId)
   const statusBadge = STATUS_BADGE[alert.status] || STATUS_BADGE.pending
+  const isIncomingTransfer = alert.type === 'incoming_transfer_request'
 
   return (
     <div
@@ -47,6 +51,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-public">
               <Badge tone={severity.text.includes('red') ? 'red' : 'amber'}>{severity.label}</Badge>
+              {isIncomingTransfer && <Badge tone="blue">INCOMING TRANSFER REQUEST</Badge>}
               {site && <span className="text-xs font-semibold text-slate-600 font-public">{site.name}</span>}
               <span className="text-xs font-medium text-slate-500 font-ibm">· {formatTime(alert.timestamp)}</span>
             </div>
@@ -77,7 +82,9 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
           </div>
 
           <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-teal-800 font-public">Recommendation</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-teal-800 font-public">
+              {isIncomingTransfer ? 'Required Action' : 'Recommendation'}
+            </p>
             <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm break-words">{alert.recommendation}</p>
           </div>
 
@@ -111,23 +118,25 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
                   icon={X}
                   onClick={() => updateAlertStatus(alert.id, ALERT_STATUS.DISMISSED)}
                 >
-                  Dismiss
+                  {isIncomingTransfer ? 'Decline Transfer' : 'Dismiss'}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="warning"
-                  icon={Clock3}
-                  onClick={() => updateAlertStatus(alert.id, ALERT_STATUS.SNOOZED)}
-                >
-                  Snooze
-                </Button>
+                {!isIncomingTransfer && (
+                  <Button
+                    size="sm"
+                    variant="warning"
+                    icon={Clock3}
+                    onClick={() => updateAlertStatus(alert.id, ALERT_STATUS.SNOOZED)}
+                  >
+                    Snooze
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="success"
-                  icon={Check}
+                  icon={isIncomingTransfer ? Send : Check}
                   onClick={() => updateAlertStatus(alert.id, ALERT_STATUS.APPROVED)}
                 >
-                  Approve
+                  {isIncomingTransfer ? 'Authorize Dispatch' : 'Approve'}
                 </Button>
               </div>
             )}

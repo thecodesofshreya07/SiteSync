@@ -42,6 +42,7 @@ export default function SourceRecordModal({ source, open, onClose }) {
       else if (type === 'task') endpoint = `${API_BASE}/tasks/${source.id}`
       else if (type === 'vendor') endpoint = `${API_BASE}/vendors/${source.id}`
       else if (type === 'site') endpoint = `${API_BASE}/sites/${source.id}`
+      else if (type === 'alert') endpoint = `${API_BASE}/alerts/${source.id}`
       else endpoint = `${API_BASE}/inventory/${source.id}`
 
       try {

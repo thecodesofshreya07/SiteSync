@@ -89,6 +89,7 @@ export default function Inventory() {
       })
       if (created && created.id) {
         setItems((prev) => [...prev, created])
+        if (refreshAlerts) refreshAlerts()
       }
     } catch (err) {
       console.warn('Create inventory item API error, applying local fallback:', err)
@@ -117,6 +118,7 @@ export default function Inventory() {
         method: 'DELETE',
       })
       setItems((prev) => prev.filter((i) => i.id !== id))
+      if (refreshAlerts) refreshAlerts()
     } catch (err) {
       console.warn('Delete API error, applying local removal fallback:', err)
       setItems((prev) => prev.filter((i) => i.id !== id))
@@ -134,6 +136,7 @@ export default function Inventory() {
 
       if (updatedItem && updatedItem.id) {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
+        if (refreshAlerts) refreshAlerts()
       }
     } catch (err) {
       console.warn('Transaction API call failed, applying optimistic local update:', err)

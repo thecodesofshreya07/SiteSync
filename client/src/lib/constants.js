@@ -100,6 +100,9 @@ export const ALERT_STATUS = {
   APPROVED: 'approved',
   DISMISSED: 'dismissed',
   SNOOZED: 'snoozed',
+  TRANSFER_REQUESTED: 'transfer_requested',
+  TRANSFER_REJECTED: 'transfer_rejected',
+  RESOLVED: 'resolved',
 }
 
 export const AGENT_EVENT_TYPE = {

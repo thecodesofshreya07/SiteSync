@@ -41,6 +41,18 @@ export function AlertsProvider({ children }) {
     }
   }, [])
 
+  const refreshAlerts = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/alerts`)
+      if (res.ok) {
+        const data = await res.json()
+        setAlerts(Array.isArray(data) ? data : [])
+      }
+    } catch (err) {
+      console.error('Failed to refresh alerts:', err.message)
+    }
+  }, [])
+
   const updateAlertStatus = useCallback(async (alertId, status) => {
     // Optimistic local state update
     setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, status } : a)))
@@ -53,6 +65,12 @@ export function AlertsProvider({ children }) {
       })
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`)
+      }
+      // Re-fetch all alerts to synchronize newly created / updated cross-site alerts
+      const refreshRes = await fetch(`${API_BASE}/alerts`)
+      if (refreshRes.ok) {
+        const freshAlerts = await refreshRes.json()
+        setAlerts(Array.isArray(freshAlerts) ? freshAlerts : [])
       }
     } catch (err) {
       console.error(`Failed to persist alert ${alertId} status to backend:`, err.message)
@@ -72,7 +90,7 @@ export function AlertsProvider({ children }) {
     })
   }, [])
 
-  const value = { alerts, updateAlertStatus, addAlert, setAlerts, loading, error }
+  const value = { alerts, updateAlertStatus, addAlert, refreshAlerts, setAlerts, loading, error }
 
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>
 }

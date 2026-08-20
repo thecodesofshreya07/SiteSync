@@ -1,5 +1,5 @@
-const API_BASE = 'http://127.0.0.1:4000/api'
-const API_FALLBACK = 'http://127.0.0.1:5000/api'
+const API_BASE = 'http://localhost:4000/api'
+const API_FALLBACK = 'http://127.0.0.1:4000/api'
 
 export function getToken() {
   return localStorage.getItem('sitesync_token') || ''
@@ -30,21 +30,19 @@ export async function apiRequest(endpoint, options = {}) {
     headers,
   }
 
-  let url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+  let url = `${API_BASE}${cleanEndpoint}`
 
   try {
     let response = await fetch(url, config).catch(() => null)
 
-    if (!response || (!response.ok && (response.status === 404 || response.status >= 500))) {
-      const fallbackUrl = `${API_FALLBACK}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
-      const fallbackRes = await fetch(fallbackUrl, config).catch(() => null)
-      if (fallbackRes) {
-        response = fallbackRes
-      }
+    if (!response) {
+      const fallbackUrl = `${API_FALLBACK}${cleanEndpoint}`
+      response = await fetch(fallbackUrl, config).catch(() => null)
     }
 
     if (!response) {
-      throw new Error('Backend server is unavailable.')
+      throw new Error('Backend server is unavailable on port 4000.')
     }
 
     if (response.status === 401) {
