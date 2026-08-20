@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCollection, findById, getPool, getCollectionDirect } from '../db.js'
+import { getCollection, findById, getPool } from '../db.js'
 
 const router = Router()
 
@@ -31,11 +31,11 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const vendors = await getCollectionDirect('vendors')
+    const vendors = getCollection('vendors') || []
     res.json(vendors)
   } catch (err) {
     console.error('Error in GET /api/vendors:', err)
-    return res.status(500).json({ error: 'Failed to retrieve vendors' })
+    res.status(500).json({ error: 'Failed to retrieve vendors' })
   }
 })
 
@@ -55,8 +55,7 @@ router.get('/:id', async (req, res) => {
       }
     }
 
-    const vendors = await getCollectionDirect('vendors')
-    const vendor = vendors.find((v) => v.id === id)
+    const vendor = findById('vendors', id)
     if (!vendor) {
       return res.status(404).json({ error: 'Vendor not found' })
     }

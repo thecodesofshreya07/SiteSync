@@ -6,6 +6,7 @@ export const sites = [
     type: 'Residential High-Rise',
     status: 'On Track',
     manager: 'Shreya Mishra',
+    projectId: '1',
     budgetPlanned: 62000000, // ₹6.20 Cr
     budgetActual: 48200000, // ₹4.82 Cr
     progress: 58,
@@ -15,11 +16,12 @@ export const sites = [
   },
   {
     id: 'SITE-002',
-    name: 'Site B — Warehouse Expansion',
+    name: 'Warehouse Expansion',
     location: 'Bhiwandi, Thane',
     type: 'Industrial / Warehouse',
     status: 'At Risk',
     manager: 'Shreya Mishra',
+    projectId: '1',
     budgetPlanned: 31000000, // ₹3.10 Cr
     budgetActual: 34658000, // 11.8% over plan
     progress: 41,
@@ -33,7 +35,8 @@ export const sites = [
     location: 'Powai, Mumbai',
     type: 'Commercial Mixed-Use',
     status: 'On Track',
-    manager: 'Arjun Kulkarni',
+    manager: 'Shreya Mishra',
+    projectId: '1',
     budgetPlanned: 89000000, // ₹8.90 Cr
     budgetActual: 52000000,
     progress: 34,
@@ -48,6 +51,7 @@ export const sites = [
     type: 'Commercial Mixed-Use',
     status: 'On Track',
     manager: 'Neha Patwardhan',
+    projectId: '2',
     budgetPlanned: 45500000,
     budgetActual: 19800000,
     progress: 19,

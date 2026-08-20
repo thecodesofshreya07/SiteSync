@@ -73,14 +73,14 @@ async function triggerShortageAlertIfNeeded(item) {
       status: 'pending',
       transferDetails: transferSource
         ? {
-            sourceSiteId: transferSource.siteId,
-            sourceSiteName: transferSite,
-            targetSiteId: item.siteId,
-            targetSiteName: currentSite.name,
-            item: item.item,
-            quantity: recQty,
-            unit: item.unit || 'bags',
-          }
+          sourceSiteId: transferSource.siteId,
+          sourceSiteName: transferSite,
+          targetSiteId: item.siteId,
+          targetSiteName: currentSite.name,
+          item: item.item,
+          quantity: recQty,
+          unit: item.unit || 'bags',
+        }
         : null,
     }
 
@@ -138,10 +138,10 @@ router.get('/', async (req, res) => {
   if (siteId) {
     return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
-  return res.json(inventory)
+  res.json(inventory)
 })
 
-// GET /api/inventory/:id - Single inventory item
+// GET /api/inventory/:id - Single inventory item by ID or Site ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params
   const pool = getPool()
@@ -158,10 +158,17 @@ router.get('/:id', async (req, res) => {
   }
 
   const item = findById('inventory', id)
-  if (!item) {
-    return res.status(404).json({ error: 'Inventory item not found' })
+  if (item) {
+    return res.json(item)
   }
-  return res.json(item)
+
+  const inventory = getCollection('inventory') || []
+  const siteItems = inventory.filter((i) => i.siteId === id)
+  if (siteItems.length > 0) {
+    return res.json(siteItems)
+  }
+
+  return res.status(404).json({ error: `Inventory item or site '${id}' not found` })
 })
 
 // POST /api/inventory - Create a new inventory item
@@ -246,111 +253,111 @@ router.post('/', async (req, res) => {
 
 // POST /api/inventory/:id/transaction - Log a stock transaction (Stock In, Stock Out, Transfer)
 router.post('/:id/transaction', async (req, res) => {
-  const { id } = req.params
-  const { type = 'Stock In', quantity, note } = req.body
+  try {
+    const { id } = req.params
+    const { type = 'Stock In', quantity, note } = req.body
 
-  const qty = Number(quantity)
-  if (!qty || qty <= 0 || isNaN(qty)) {
-    return res.status(400).json({ error: 'Invalid transaction quantity' })
-  }
+    const qty = Number(quantity)
+    if (!qty || qty <= 0 || isNaN(qty)) {
+      return res.status(400).json({ error: 'Invalid transaction quantity' })
+    }
 
-  const pool = getPool()
-  let currentItem = null
+    const pool = getPool()
+    let currentItem = null
 
-  if (pool) {
-    try {
-      const result = await pool.query('SELECT * FROM inventory WHERE id = $1', [id])
-      if (result.rows.length > 0) {
-        currentItem = formatInventoryRow(result.rows[0])
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM inventory WHERE id = $1', [id])
+        if (result.rows.length > 0) {
+          currentItem = formatInventoryRow(result.rows[0])
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL query error for item ${id}:`, err.message)
       }
-    } catch (err) {
-      console.warn(`PostgreSQL query error for item ${id}:`, err.message)
     }
-  }
 
-  if (!currentItem) {
-    currentItem = findById('inventory', id)
-  }
-
-  if (!currentItem) {
-    return res.status(404).json({ error: 'Inventory item not found' })
-  }
-
-  let newQuantity = currentItem.quantity
-  if (type === 'Stock In') {
-    newQuantity += qty
-  } else if (type === 'Stock Out' || type === 'Transfer') {
-    newQuantity -= qty
-  }
-  newQuantity = Math.max(0, Math.round(newQuantity * 100) / 100)
-
-  // Status calculation based on reorder threshold
-  const threshold = currentItem.reorderThreshold || 0
-  let status = 'OK'
-  if (newQuantity <= threshold * 0.5) {
-    status = 'CRITICAL'
-  } else if (newQuantity <= threshold) {
-    status = 'LOW'
-  } else {
-    status = 'OK'
-  }
-
-  const now = new Date()
-  const lastUpdated = now.toISOString()
-  const lastTransaction = {
-    type,
-    quantity: qty,
-    date: now.toISOString().slice(0, 10),
-    relatedPO: currentItem.lastTransaction?.relatedPO || null,
-    ...(note ? { note } : {}),
-  }
-
-  const updatedPayload = {
-    ...currentItem,
-    quantity: newQuantity,
-    status,
-    lastUpdated,
-    lastTransaction,
-  }
-
-  // Update in PostgreSQL
-  if (pool) {
-    try {
-      await pool.query(
-        `UPDATE inventory 
-         SET quantity = $1, status = $2, last_updated = $3, last_transaction = $4, data = $5 
-         WHERE id = $6`,
-        [
-          newQuantity,
-          status,
-          lastUpdated,
-          JSON.stringify(lastTransaction),
-          JSON.stringify(updatedPayload),
-          id,
-        ]
-      )
-    } catch (err) {
-      console.warn(`PostgreSQL update error for item ${id}:`, err.message)
+    if (!currentItem) {
+      currentItem = findById('inventory', id)
     }
+
+    if (!currentItem) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    let newQuantity = currentItem.quantity
+    if (type === 'Stock In') {
+      newQuantity += qty
+    } else if (type === 'Stock Out' || type === 'Transfer') {
+      newQuantity -= qty
+    }
+    newQuantity = Math.max(0, Math.round(newQuantity * 100) / 100)
+
+    // Status calculation based on reorder threshold
+    const threshold = currentItem.reorderThreshold || 0
+    let status = 'OK'
+    if (newQuantity <= threshold * 0.5) {
+      status = 'CRITICAL'
+    } else if (newQuantity <= threshold) {
+      status = 'LOW'
+    } else {
+      status = 'OK'
+    }
+
+    const now = new Date()
+    const lastUpdated = now.toISOString()
+    const lastTransaction = {
+      type,
+      quantity: qty,
+      date: now.toISOString().slice(0, 10),
+      relatedPO: currentItem.lastTransaction?.relatedPO || null,
+      ...(note ? { note } : {}),
+    }
+
+    const updatedPayload = {
+      ...currentItem,
+      quantity: newQuantity,
+      status,
+      lastUpdated,
+      lastTransaction,
+    }
+
+    // Update in PostgreSQL
+    if (pool) {
+      try {
+        await pool.query(
+          `UPDATE inventory 
+           SET quantity = $1, status = $2, last_updated = $3, last_transaction = $4, data = $5 
+           WHERE id = $6`,
+          [
+            newQuantity,
+            status,
+            lastUpdated,
+            JSON.stringify(lastTransaction),
+            JSON.stringify(updatedPayload),
+            id,
+          ]
+        )
+      } catch (err) {
+        console.warn(`PostgreSQL update error for item ${id}:`, err.message)
+      }
+    }
+
+    // Always update local cache
+    updateById('inventory', id, {
+      quantity: newQuantity,
+      status,
+      lastUpdated,
+      lastTransaction,
+    })
+
+    res.json(updatedPayload)
+  } catch (err) {
+    console.error(`Error in POST /api/inventory/${req.params.id}/transaction:`, err)
+    res.status(500).json({ error: 'Failed to process transaction' })
   }
-
-  // Always update local cache
-  updateById('inventory', id, {
-    quantity: newQuantity,
-    status,
-    lastUpdated,
-    lastTransaction,
-  })
-
-  // Dynamically trigger AI shortage alert if critical
-  triggerShortageAlertIfNeeded(updatedPayload).catch((e) =>
-    console.warn('[INVENTORY] Shortage trigger warning:', e.message)
-  )
-
-  res.json(updatedPayload)
 })
 
-// PATCH /api/inventory/:id - Direct field edits (e.g. reorderThreshold, consumptionPerDay, unit, item)
+// PATCH /api/inventory/:id - Direct field edits
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params

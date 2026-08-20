@@ -41,6 +41,7 @@ let memoryDb = {
   tasks: [],
   vendors: [],
   alerts: [],
+  users: [],
 }
 
 // Table mapping to relational tables
@@ -53,6 +54,7 @@ const TABLE_MAP = {
   tasks: 'tasks',
   vendors: 'vendors',
   alerts: 'alerts',
+  users: 'users',
 }
 
 /**
@@ -82,10 +84,10 @@ export async function initDbFromPostgres() {
         }
       }
 
-      // 2. Fetch other non-relational collections from collections table (e.g. budgetByCategory, timelines)
+      // 2. Fetch other non-relational collections from collections table
       try {
         const collectionsRes = await client.query(
-          `SELECT name, data FROM collections WHERE name NOT IN ('sites', 'inventory', 'procurement_orders', 'procurementOrders', 'deliveries', 'equipment', 'tasks', 'vendors', 'alerts')`
+          `SELECT name, data FROM collections WHERE name NOT IN ('sites', 'inventory', 'procurement_orders', 'procurementOrders', 'deliveries', 'equipment', 'tasks', 'vendors', 'alerts', 'users')`
         )
         for (const row of collectionsRes.rows) {
           newDb[row.name] = row.data
@@ -265,6 +267,17 @@ export function findById(collectionName, id) {
   return null
 }
 
+export function updateById(collectionName, id, updateFields) {
+  const collection = memoryDb[collectionName] || []
+  const index = collection.findIndex((item) => item.id === id)
+  if (index === -1) return null
+
+  collection[index] = { ...collection[index], ...updateFields }
+  const updatedItem = collection[index]
+  setCollection(collectionName, collection)
+  return updatedItem
+}
+
 export async function insertAlertDirect(alert) {
   const alerts = memoryDb.alerts || []
   const idx = alerts.findIndex((a) => a.id === alert.id)
@@ -335,6 +348,4 @@ export async function updateByIdDirect(collectionName, id, updateFields) {
 
   return updatedItem
 }
-
-export const updateById = updateByIdDirect
 

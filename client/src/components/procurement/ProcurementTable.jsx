@@ -1,6 +1,6 @@
-import { ClipboardList, Trash2 } from 'lucide-react'
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import EmptyState from '../common/EmptyState'
+import { ClipboardList, Trash2 } from 'lucide-react'
 import { useSite } from '../../hooks/useSite'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
@@ -8,7 +8,7 @@ export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder 
   const { sites } = useSite()
 
   if (!orders || orders.length === 0) {
-    return <EmptyState icon={ClipboardList} title="No purchase orders" description="No procurement orders found for this view." />
+    return <EmptyState icon={ClipboardList} title="No purchase orders" description="Nothing matches the current view." />
   }
 
   return (

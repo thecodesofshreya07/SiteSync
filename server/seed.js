@@ -1,6 +1,6 @@
 import pg from 'pg'
 import { config } from './config.js'
-import { writeDb } from './db.js'
+import { setCollection } from './db.js'
 
 // Import mock data directly from client data files
 import { inventory } from '../client/src/data/inventory.js'
@@ -36,7 +36,9 @@ export async function runSeed() {
     users: initialUsers,
   }
 
-  writeDb(fullData)
+  for (const [colName, colData] of Object.entries(fullData)) {
+    setCollection(colName, colData)
+  }
   console.log('✓ Updated local db.json cache')
 
   // 2. Connect to PostgreSQL if database URL is configured
@@ -63,6 +65,22 @@ export async function runSeed() {
         name TEXT PRIMARY KEY,
         data JSONB NOT NULL,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS sites (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        location TEXT,
+        type TEXT,
+        status TEXT,
+        manager TEXT,
+        budget_planned NUMERIC,
+        budget_actual NUMERIC,
+        progress NUMERIC,
+        start_date TEXT,
+        target_date TEXT,
+        last_scan TEXT,
+        data JSONB
       );
 
       CREATE TABLE IF NOT EXISTS inventory (
@@ -123,6 +141,7 @@ export async function runSeed() {
         phone TEXT,
         role TEXT,
         site_id TEXT,
+        project_id TEXT,
         status TEXT DEFAULT 'Active',
         created_at TEXT,
         data JSONB
@@ -130,12 +149,50 @@ export async function runSeed() {
     `)
 
     // Clear existing rows before inserting
+    await client.query('DELETE FROM sites')
     await client.query('DELETE FROM inventory')
     await client.query('DELETE FROM procurement_orders')
     await client.query('DELETE FROM vendors')
     await client.query('DELETE FROM deliveries')
     await client.query('DELETE FROM users')
     console.log('✓ Cleared existing rows in tables')
+
+    // Seed Sites Table
+    for (const site of sites) {
+      await client.query(
+        `INSERT INTO sites (
+          id, name, location, type, status, manager, budget_planned, budget_actual, progress, start_date, target_date, last_scan, data
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (id) DO UPDATE SET
+          name = $2,
+          location = $3,
+          type = $4,
+          status = $5,
+          manager = $6,
+          budget_planned = $7,
+          budget_actual = $8,
+          progress = $9,
+          start_date = $10,
+          target_date = $11,
+          last_scan = $12,
+          data = $13`,
+        [
+          site.id,
+          site.name,
+          site.location,
+          site.type,
+          site.status,
+          site.manager,
+          site.budgetPlanned,
+          site.budgetActual,
+          site.progress,
+          site.startDate,
+          site.targetDate,
+          site.lastScan,
+          JSON.stringify(site),
+        ]
+      )
+    }
 
     // Seed Inventory Table
     for (const item of inventory) {
@@ -256,18 +313,30 @@ export async function runSeed() {
     for (const u of initialUsers) {
       await client.query(
         `INSERT INTO users (
-          id, name, email, phone, role, site_id, status, created_at, data
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          id, name, email, phone, role, site_id, project_id, status, created_at, data
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (id) DO UPDATE SET
           name = $2,
           email = $3,
           phone = $4,
           role = $5,
           site_id = $6,
-          status = $7,
-          created_at = $8,
-          data = $9`,
-        [u.id, u.name, u.email, u.phone, u.role, u.siteId, u.status, u.createdAt, JSON.stringify(u)]
+          project_id = $7,
+          status = $8,
+          created_at = $9,
+          data = $10`,
+        [
+          u.id,
+          u.name,
+          u.email,
+          u.phone,
+          u.role,
+          u.siteId || null,
+          u.projectId || null,
+          u.status,
+          u.createdAt,
+          JSON.stringify(u),
+        ]
       )
     }
 
@@ -283,7 +352,7 @@ export async function runSeed() {
 
     console.log('--------------------------------------------------')
     console.log(
-      `✓ Seeded ${inventory.length} inventory items, ${procurementOrders.length} procurement orders, ${vendors.length} vendors, ${deliveries.length} deliveries, ${initialUsers.length} users`
+      `✓ Seeded ${sites.length} sites, ${inventory.length} inventory items, ${procurementOrders.length} procurement orders, ${vendors.length} vendors, ${deliveries.length} deliveries, ${initialUsers.length} users`
     )
     console.log('✓ Seeded all document collections into PostgreSQL')
     console.log('--------------------------------------------------')

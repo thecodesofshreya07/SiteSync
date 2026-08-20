@@ -2,15 +2,31 @@ import { useState } from 'react'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 
+const PRESET_UNITS = [
+  'bags',
+  'cu.m',
+  'tonnes',
+  'units',
+  'meters',
+  'kg',
+  'liters',
+  'sq.m',
+  'truckloads',
+  'Custom...',
+]
+
 export default function CreateItemModal({ open, onClose, siteId, siteName, onCreate }) {
   const [item, setItem] = useState('')
-  const [unit, setUnit] = useState('bags')
+  const [selectedUnit, setSelectedUnit] = useState('bags')
+  const [customUnit, setCustomUnit] = useState('')
   const [quantity, setQuantity] = useState('')
   const [reorderThreshold, setReorderThreshold] = useState('')
   const [consumptionPerDay, setConsumptionPerDay] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   if (!open) return null
+
+  const effectiveUnit = selectedUnit === 'Custom...' ? customUnit.trim() || 'units' : selectedUnit
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -21,7 +37,7 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
       await onCreate({
         siteId,
         item: item.trim(),
-        unit: unit.trim() || 'units',
+        unit: effectiveUnit,
         quantity: Number(quantity) || 0,
         reorderThreshold: Number(reorderThreshold) || 0,
         consumptionPerDay: Number(consumptionPerDay) || 0,
@@ -30,6 +46,8 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
       setQuantity('')
       setReorderThreshold('')
       setConsumptionPerDay('')
+      setCustomUnit('')
+      setSelectedUnit('bags')
       onClose()
     } catch (err) {
       console.error('Failed to create inventory item:', err)
@@ -57,14 +75,18 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Unit</label>
-            <input
-              type="text"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="bags, tonnes, units, cu.m"
-              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Unit *</label>
+            <select
+              value={selectedUnit}
+              onChange={(e) => setSelectedUnit(e.target.value)}
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+            >
+              {PRESET_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -81,6 +103,22 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
             />
           </div>
         </div>
+
+        {selectedUnit === 'Custom...' && (
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Specify Custom Unit *
+            </label>
+            <input
+              type="text"
+              required
+              value={customUnit}
+              onChange={(e) => setCustomUnit(e.target.value)}
+              placeholder="e.g. drums, rolls, pallets"
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>

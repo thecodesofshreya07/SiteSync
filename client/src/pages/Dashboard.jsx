@@ -8,6 +8,7 @@ import ProjectTimeline from '../components/dashboard/ProjectTimeline'
 import Badge from '../components/common/Badge'
 import { useSite } from '../hooks/useSite'
 import { useRole } from '../hooks/useRole'
+import { useAuth } from '../hooks/useAuth'
 import { useAlerts } from '../hooks/useAlerts'
 import { formatINR, percentage, formatDate, formatTime } from '../lib/utils'
 
@@ -22,6 +23,7 @@ const STATUS_TONE = {
 export default function Dashboard() {
   const { selectedSite } = useSite()
   const { role } = useRole()
+  const { user } = useAuth()
   const { alerts } = useAlerts()
 
   const [siteTasks, setSiteTasks] = useState([])
@@ -29,6 +31,8 @@ export default function Dashboard() {
   const [categoryData, setCategoryData] = useState([])
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const canViewAI = user?.role === 'Admin' || user?.role === 'Project Manager'
 
   useEffect(() => {
     if (!selectedSite?.id) return
@@ -93,19 +97,21 @@ export default function Dashboard() {
             <Badge tone={STATUS_TONE[selectedSite.status] || 'neutral'}>{selectedSite.status}</Badge>
           </div>
           <p className="mt-1 text-sm font-medium text-slate-600">
-            {selectedSite.location} · <span className="text-slate-800 font-semibold">Viewing as {role}</span>
+            {selectedSite.location} · <span className="text-slate-800 font-semibold">Viewing as {user?.role || role}</span>
           </p>
         </div>
-        <div className="sm:text-right">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Agent Scan</p>
-          <p className="text-sm font-bold text-slate-800">
-            {formatDate(selectedSite.lastScan || new Date())} · {formatTime(selectedSite.lastScan || new Date())}
-          </p>
-        </div>
+        {canViewAI && (
+          <div className="sm:text-right">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Agent Scan</p>
+            <p className="text-sm font-bold text-slate-800">
+              {formatDate(selectedSite.lastScan || new Date())} · {formatTime(selectedSite.lastScan || new Date())}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Top stats */}
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 ${canViewAI ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
         <StatCard
           label="Budget Used"
           value={`${formatINR(selectedSite.budgetActual || 0)} / ${formatINR(selectedSite.budgetPlanned || 0)}`}
@@ -120,13 +126,15 @@ export default function Dashboard() {
           icon={ListChecks}
           accent="blue"
         />
-        <StatCard
-          label="Open AI Alerts"
-          value={openAlerts}
-          sublabel={openAlerts > 0 ? 'awaiting review' : 'all clear'}
-          icon={ShieldAlert}
-          accent="amber"
-        />
+        {canViewAI && (
+          <StatCard
+            label="Open AI Alerts"
+            value={openAlerts}
+            sublabel={openAlerts > 0 ? 'awaiting review' : 'all clear'}
+            icon={ShieldAlert}
+            accent="amber"
+          />
+        )}
         <StatCard
           label="Equipment Utilization"
           value={`${avgUtilization}%`}
@@ -138,18 +146,22 @@ export default function Dashboard() {
 
       {/* Main grid: budget + agent activity */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-3 min-w-0">
+        <div className={canViewAI ? 'lg:col-span-3 min-w-0' : 'lg:col-span-5 min-w-0'}>
           <BudgetOverview site={selectedSite} categoryData={categoryData} />
         </div>
-        <div className="lg:col-span-2 min-w-0">
-          <AgentActivityLog siteId={selectedSite.id} />
-        </div>
+        {canViewAI && (
+          <div className="lg:col-span-2 min-w-0">
+            <AgentActivityLog siteId={selectedSite.id} />
+          </div>
+        )}
       </div>
 
-      {/* Alerts */}
-      <div className="mb-5">
-        <AlertList siteId={selectedSite.id} />
-      </div>
+      {/* Alerts (Only for Admin & PM) */}
+      {canViewAI && (
+        <div className="mb-5">
+          <AlertList siteId={selectedSite.id} />
+        </div>
+      )}
 
       {/* Timeline */}
       <ProjectTimeline phases={timeline} />

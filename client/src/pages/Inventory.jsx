@@ -9,10 +9,9 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
-import { useAlerts } from '../hooks/useAlerts'
+import { useAuth } from '../hooks/useAuth'
+import { apiRequest } from '../lib/api'
 import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
-
-const API_BASE = 'http://localhost:4000/api'
 
 export function daysRemaining(item) {
   if (!item || !item.consumptionPerDay || item.consumptionPerDay <= 0) return 999
@@ -21,7 +20,7 @@ export function daysRemaining(item) {
 
 export default function Inventory() {
   const { selectedSite } = useSite()
-  const { refreshAlerts } = useAlerts()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,6 +31,8 @@ export default function Inventory() {
   const [txnModalOpen, setTxnModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
+  const canLogStock = user?.role === 'Contractor'
+
   useEffect(() => {
     let isMounted = true
     setLoading(true)
@@ -39,22 +40,15 @@ export default function Inventory() {
 
     const fetchInventory = async () => {
       try {
-        const res = await fetch(`${API_BASE}/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
-        if (!res.ok) {
-          throw new Error(`Server returned status ${res.status}`)
-        }
-        const data = await res.json()
-        if (!Array.isArray(data)) {
-          throw new Error('Server returned non-array data for inventory')
-        }
+        const data = await apiRequest(`/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (isMounted) {
-          setItems(data)
+          setItems(Array.isArray(data) ? data : [])
           setLoading(false)
         }
       } catch (err) {
         console.error('Inventory API fetch error:', err.message)
         if (isMounted) {
-          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve current inventory data from ${API_BASE}/inventory (${err.message})`)
+          setError(`⚠️ API error fetching inventory: ${err.message}`)
           setItems([])
           setLoading(false)
         }
@@ -68,34 +62,31 @@ export default function Inventory() {
     }
   }, [selectedSite.id])
 
-  const filtered = items.filter((item) => {
+  const safeItems = Array.isArray(items) ? items : []
+
+  const filtered = safeItems.filter((item) => {
     if (!item || !item.item) return false
     const matchesSearch = item.item.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = status === 'ALL' || item.status === status
     return matchesSearch && matchesStatus
   })
 
-  const criticalItem = items
+  const criticalItem = safeItems
     .filter((i) => i && (i.status === 'CRITICAL' || i.status === 'Critical'))
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
   function openTransactionModal(item) {
-    if (!item) return
+    if (!item || !canLogStock) return
     setTxnItem(item)
     setTxnModalOpen(true)
   }
 
   async function handleCreateItem(itemData) {
     try {
-      const res = await fetch(`${API_BASE}/inventory`, {
+      const created = await apiRequest('/inventory', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(itemData),
       })
-      if (!res.ok) {
-        throw new Error(`Create failed with status ${res.status}`)
-      }
-      const created = await res.json()
       if (created && created.id) {
         setItems((prev) => [...prev, created])
         if (refreshAlerts) refreshAlerts()
@@ -119,15 +110,13 @@ export default function Inventory() {
   }
 
   async function handleDeleteItem(id) {
+    if (!canLogStock) return
     if (!window.confirm('Are you sure you want to remove this material from inventory?')) return
 
     try {
-      const res = await fetch(`${API_BASE}/inventory/${id}`, {
+      await apiRequest(`/inventory/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) {
-        throw new Error(`Delete failed with status ${res.status}`)
-      }
       setItems((prev) => prev.filter((i) => i.id !== id))
       if (refreshAlerts) refreshAlerts()
     } catch (err) {
@@ -137,22 +126,14 @@ export default function Inventory() {
   }
 
   async function handleTransaction({ type, quantity, note }) {
-    if (!txnItem) return
+    if (!txnItem || !canLogStock) return
 
     try {
-      const res = await fetch(`${API_BASE}/inventory/${txnItem.id}/transaction`, {
+      const updatedItem = await apiRequest(`/inventory/${txnItem.id}/transaction`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ type, quantity, note }),
       })
 
-      if (!res.ok) {
-        throw new Error(`Transaction failed with status ${res.status}`)
-      }
-
-      const updatedItem = await res.json()
       if (updatedItem && updatedItem.id) {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
         if (refreshAlerts) refreshAlerts()
@@ -192,23 +173,25 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              icon={Plus}
-              onClick={() => setCreateModalOpen(true)}
-            >
-              Add Material
-            </Button>
-            <Button
-              variant="primary"
-              icon={PackagePlus}
-              onClick={() => items.length > 0 && openTransactionModal(items[0])}
-              disabled={items.length === 0}
-            >
-              Log Stock
-            </Button>
-          </div>
+          canLogStock ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                icon={Plus}
+                onClick={() => setCreateModalOpen(true)}
+              >
+                Add Material
+              </Button>
+              <Button
+                variant="primary"
+                icon={PackagePlus}
+                onClick={() => items.length > 0 && openTransactionModal(items[0])}
+                disabled={items.length === 0}
+              >
+                Log Stock
+              </Button>
+            </div>
+          ) : null
         }
       />
 
@@ -221,9 +204,9 @@ export default function Inventory() {
 
       {loading ? (
         <LoadingState label="Loading inventory from PostgreSQL..." />
-      ) : items.length === 0 && !error ? (
+      ) : safeItems.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-          NO REAL DATA FOUND — No inventory records exist in PostgreSQL for {selectedSite.name}.
+          No inventory records exist for {selectedSite.name}.
         </div>
       ) : (
         <>
@@ -231,7 +214,7 @@ export default function Inventory() {
             <div className="mb-5">
               <PredictiveProcurementCard
                 item={criticalItem}
-                onReview={() => openTransactionModal(criticalItem)}
+                onReview={() => canLogStock && openTransactionModal(criticalItem)}
                 onOpenProcurement={() => navigate('/procurement')}
               />
             </div>
@@ -243,26 +226,30 @@ export default function Inventory() {
 
           <InventoryTable
             items={filtered}
-            onLogTransaction={openTransactionModal}
-            onDeleteItem={handleDeleteItem}
+            onLogTransaction={canLogStock ? openTransactionModal : undefined}
+            onDeleteItem={canLogStock ? handleDeleteItem : undefined}
           />
         </>
       )}
 
-      <StockTransactionModal
-        open={txnModalOpen}
-        item={txnItem}
-        onClose={() => setTxnModalOpen(false)}
-        onSubmit={handleTransaction}
-      />
+      {canLogStock && (
+        <>
+          <StockTransactionModal
+            open={txnModalOpen}
+            item={txnItem}
+            onClose={() => setTxnModalOpen(false)}
+            onSubmit={handleTransaction}
+          />
 
-      <CreateItemModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        siteId={selectedSite.id}
-        siteName={selectedSite.name}
-        onCreate={handleCreateItem}
-      />
+          <CreateItemModal
+            open={createModalOpen}
+            onClose={() => setCreateModalOpen(false)}
+            siteId={selectedSite.id}
+            siteName={selectedSite.name}
+            onCreate={handleCreateItem}
+          />
+        </>
+      )}
     </div>
   )
 }

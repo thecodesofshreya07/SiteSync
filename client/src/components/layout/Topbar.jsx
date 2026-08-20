@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ChevronDown, Menu, Database, Cpu } from 'lucide-react'
+import { Bell, Menu, Database, Cpu, UserCheck } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import SiteSelector from './SiteSelector'
-import { useRole } from '../../hooks/useRole'
+import { useAuth } from '../../hooks/useAuth'
 import { useAlerts } from '../../hooks/useAlerts'
-import { ROLE_LIST, SEVERITY_STYLES } from '../../lib/constants'
+import { ROLES, SEVERITY_STYLES } from '../../lib/constants'
 import { cn, formatTime } from '../../lib/utils'
-import { Link } from 'react-router-dom'
+import Badge from '../common/Badge'
 
 const API_BASE = 'http://localhost:4000/api'
+const ALLOWED_SITE_PATHS = ['/', '/inventory', '/procurement', '/tasks-equipment']
 
 function DataSourceBadge() {
-  const [status, setStatus] = useState('checking') // 'live' | 'error' | 'checking'
-  const [details, setDetails] = useState(null)
+  const [status, setStatus] = useState('checking')
 
   useEffect(() => {
     let isMounted = true
@@ -19,10 +20,8 @@ function DataSourceBadge() {
       try {
         const res = await fetch(`${API_BASE}/health`)
         if (res.ok) {
-          const data = await res.json()
           if (isMounted) {
             setStatus('live')
-            setDetails(data)
           }
         } else {
           if (isMounted) setStatus('error')
@@ -41,9 +40,9 @@ function DataSourceBadge() {
 
   if (status === 'error') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-300 px-2.5 py-1 text-xs font-bold text-red-700 shadow-sm shrink-0">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-300 px-2.5 py-1 text-xs font-bold text-red-700 shadow-xs shrink-0">
         <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-        🔴 ERROR — Backend Unavailable (localhost:4000)
+        🔴 ERROR — Backend Unavailable
       </span>
     )
   }
@@ -51,7 +50,7 @@ function DataSourceBadge() {
   return (
     <div className="hidden sm:flex items-center gap-2 shrink-0">
       <span
-        title="Connected to Supabase PostgreSQL on port 4000"
+        title="Connected to Supabase PostgreSQL"
         className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-2xs font-bold text-emerald-800 shadow-xs"
       >
         <Database size={11} className="text-emerald-600" />
@@ -59,7 +58,7 @@ function DataSourceBadge() {
         LIVE: PostgreSQL
       </span>
       <span
-        title="Agentic LLM powered by Groq openai/gpt-oss-120b"
+        title="Agentic LLM powered by Groq"
         className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-300 px-2.5 py-0.5 text-2xs font-bold text-indigo-800 shadow-xs"
       >
         <Cpu size={11} className="text-indigo-600" />
@@ -70,47 +69,15 @@ function DataSourceBadge() {
   )
 }
 
-function RoleSelector() {
-  const { role, setRole } = useRole()
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    function onClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [])
-
+function UserIdentityBadge() {
+  const { user } = useAuth()
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 rounded-lg border border-surface-border bg-white px-2.5 py-1.5 text-xs sm:text-sm font-medium text-navy-800 hover:border-navy-600/30"
-      >
-        <span className="truncate max-w-[90px] sm:max-w-none">{role}</span>
-        <ChevronDown size={14} className={cn('text-navy-400 shrink-0 transition-transform', open && 'rotate-180')} />
-      </button>
-      {open && (
-        <div className="absolute right-0 z-30 mt-1.5 w-44 rounded-lg border border-surface-border bg-white p-1.5 shadow-pop">
-          {ROLE_LIST.map((r) => (
-            <button
-              key={r}
-              onClick={() => {
-                setRole(r)
-                setOpen(false)
-              }}
-              className={cn(
-                'w-full rounded-md px-2.5 py-1.5 text-left text-sm hover:bg-surface-bg',
-                r === role ? 'font-semibold text-teal-700' : 'text-navy-700'
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="flex items-center gap-2 rounded-lg border border-surface-border bg-white px-2.5 py-1 text-xs sm:text-sm font-medium text-navy-800 shadow-xs">
+      <UserCheck size={15} className="text-teal-600 shrink-0" />
+      <span className="truncate max-w-[100px] sm:max-w-[140px] font-semibold">{user?.name || 'User'}</span>
+      <Badge tone="teal" className="text-2xs py-0.5 px-1.5">
+        {user?.role || 'Guest'}
+      </Badge>
     </div>
   )
 }
@@ -132,6 +99,7 @@ function NotificationBell() {
   return (
     <div className="relative" ref={ref}>
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-surface-border bg-white text-navy-600 hover:border-navy-600/30"
       >
@@ -177,10 +145,17 @@ function NotificationBell() {
 }
 
 export default function Topbar({ onMenuClick }) {
+  const location = useLocation()
+  const { user } = useAuth()
+
+  const showSiteSelector = ALLOWED_SITE_PATHS.includes(location.pathname)
+  const canViewAIAlerts = user?.role === ROLES.ADMIN || user?.role === ROLES.PROJECT_MANAGER
+
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-surface-border bg-white px-3 sm:px-5">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
+          type="button"
           onClick={onMenuClick}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-surface-border bg-white text-navy-700 hover:bg-surface-bg md:hidden"
           aria-label="Open menu"
@@ -189,15 +164,15 @@ export default function Topbar({ onMenuClick }) {
         </button>
 
         <div className="min-w-0 flex-1">
-          <SiteSelector />
+          {showSiteSelector && <SiteSelector />}
         </div>
 
         <DataSourceBadge />
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        <RoleSelector />
-        <NotificationBell />
+        <UserIdentityBadge />
+        {canViewAIAlerts && <NotificationBell />}
       </div>
     </header>
   )

@@ -1,17 +1,19 @@
 export const ROLES = {
   PROJECT_MANAGER: 'Project Manager',
   CONTRACTOR: 'Contractor',
-  FINANCE: 'Finance',
+  FINANCE: 'Accountant',
+  ACCOUNTANT: 'Accountant',
   ADMIN: 'Admin',
 }
 
-export const ROLE_LIST = [ROLES.PROJECT_MANAGER, ROLES.CONTRACTOR, ROLES.FINANCE, ROLES.ADMIN]
+export const ROLE_LIST = [ROLES.PROJECT_MANAGER, ROLES.CONTRACTOR, ROLES.ACCOUNTANT, ROLES.ADMIN]
 
 // Which nav routes each role is allowed to see.
 export const ROLE_NAV_ACCESS = {
   [ROLES.PROJECT_MANAGER]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings'],
-  [ROLES.CONTRACTOR]: ['dashboard', 'inventory', 'tasks-equipment', 'assistant', 'settings'],
-  [ROLES.FINANCE]: ['dashboard', 'procurement', 'assistant', 'settings'],
+  [ROLES.CONTRACTOR]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'settings'],
+  [ROLES.ACCOUNTANT]: ['dashboard', 'procurement', 'settings'],
+  [ROLES.FINANCE]: ['dashboard', 'procurement', 'settings'],
   [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings', 'user-management'],
 }
 

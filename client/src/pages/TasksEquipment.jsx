@@ -9,7 +9,7 @@ import { useSite } from '../hooks/useSite'
 import { cn } from '../lib/utils'
 
 const TABS = ['Tasks', 'Equipment']
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://127.0.0.1:5000/api'
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()
@@ -48,7 +48,7 @@ export default function TasksEquipment() {
       } catch (err) {
         console.error('Tasks & Equipment API fetch error:', err.message)
         if (isMounted) {
-          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve tasks/equipment from ${API_BASE} (${err.message})`)
+          setError(`⚠️ API error fetching operational data: ${err.message}`)
           setTasks([])
           setEquipment([])
           setLoading(false)
@@ -99,14 +99,14 @@ export default function TasksEquipment() {
       ) : tab === 'Tasks' ? (
         tasks.length === 0 && !error ? (
           <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-            NO REAL DATA FOUND — No tasks exist in PostgreSQL for {selectedSite.name}.
+            No tasks exist for {selectedSite.name}.
           </div>
         ) : (
           <TaskBoard tasks={filteredTasks} />
         )
       ) : equipment.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-          NO REAL DATA FOUND — No equipment records exist in PostgreSQL for {selectedSite.name}.
+          No equipment records exist for {selectedSite.name}.
         </div>
       ) : (
         <EquipmentGrid equipment={equipment} />
