@@ -50,7 +50,7 @@ export default function PredictiveProcurementCard({ item, onReview, onOpenProcur
             variant="primary"
             onClick={() => onAutoRaisePO(item, recommendedOrder)}
           >
-            ⚡ 1-Click Raise Auto-PO ({recommendedOrder} {item.unit})
+            Auto-Raise Purchase Order ({recommendedOrder} {item.unit})
           </Button>
         )}
         {onReview && (

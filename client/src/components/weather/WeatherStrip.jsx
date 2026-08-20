@@ -66,7 +66,7 @@ export default function WeatherStrip({ siteId }) {
         </div>
         {hasHighRisk ? (
           <Badge tone="red" className="animate-pulse">
-            ⚠️ Weather Risk for Outdoor Tasks
+            Weather Risk Detected for Outdoor Tasks
           </Badge>
         ) : (
           <Badge tone="green">Favorable Weather Conditions</Badge>

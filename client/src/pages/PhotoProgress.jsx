@@ -24,6 +24,7 @@ export default function PhotoProgress() {
   const [formFileUrl, setFormFileUrl] = useState('')
   const [formCaption, setFormCaption] = useState('')
   const [formLocationTag, setFormLocationTag] = useState('')
+  const [formTakenAt, setFormTakenAt] = useState(new Date().toISOString().slice(0, 10))
   const [submitting, setSubmitting] = useState(false)
   const [fileName, setFileName] = useState('')
 
@@ -78,6 +79,7 @@ export default function PhotoProgress() {
           fileUrl: formFileUrl,
           caption: formCaption,
           locationTag: formLocationTag,
+          takenAt: formTakenAt ? new Date(formTakenAt).toISOString() : new Date().toISOString(),
         }),
       })
 
@@ -86,6 +88,7 @@ export default function PhotoProgress() {
         setFormFileUrl('')
         setFormCaption('')
         setFormLocationTag('')
+        setFormTakenAt(new Date().toISOString().slice(0, 10))
         fetchPhotos()
       }
     } catch (err) {
@@ -218,21 +221,34 @@ export default function PhotoProgress() {
       {/* Upload Modal */}
       <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title="Upload Site Progress Photo">
         <form onSubmit={handleUploadSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 font-public mb-1">
-              Project Site
-            </label>
-            <select
-              value={formSiteId}
-              onChange={(e) => setFormSiteId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 font-ibm focus:border-teal-500 focus:outline-none"
-            >
-              {sites?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.location})
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 font-public mb-1">
+                Project Site
+              </label>
+              <select
+                value={formSiteId}
+                onChange={(e) => setFormSiteId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 font-ibm focus:border-teal-500 focus:outline-none"
+              >
+                {sites?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.location})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 font-public mb-1">
+                Capture / Inspection Date
+              </label>
+              <input
+                type="date"
+                value={formTakenAt}
+                onChange={(e) => setFormTakenAt(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 font-ibm focus:border-teal-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           {/* Choose File from Local Device */}
@@ -381,7 +397,7 @@ export default function PhotoProgress() {
               Cancel
             </Button>
             <Button variant="primary" type="submit" disabled={submitting}>
-              {submitting ? 'Uploading...' : 'Save Photo'}
+              {submitting ? 'Analyzing & Saving...' : 'Save & Predict Milestone'}
             </Button>
           </div>
         </form>
@@ -394,7 +410,7 @@ export default function PhotoProgress() {
           onClick={() => setLightboxPhoto(null)}
         >
           <div
-            className="relative max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl bg-navy-950 shadow-2xl border border-white/10"
+            className="relative max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl bg-slate-900 shadow-2xl border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -407,18 +423,36 @@ export default function PhotoProgress() {
             <img
               src={lightboxPhoto.fileUrl || lightboxPhoto.file_url}
               alt={lightboxPhoto.caption}
-              className="max-h-[65vh] w-full object-contain bg-black"
+              className="max-h-[55vh] w-full object-contain bg-black"
             />
 
-            <div className="p-5 text-white font-public">
+            <div className="p-5 text-white font-public space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Badge tone="teal">{lightboxPhoto.locationTag || lightboxPhoto.location_tag || 'Job Site'}</Badge>
                 <span className="text-xs font-medium text-slate-400 font-ibm">
                   {formatDate(lightboxPhoto.takenAt || lightboxPhoto.taken_at)} · {formatTime(lightboxPhoto.takenAt || lightboxPhoto.taken_at)}
                 </span>
               </div>
-              <h3 className="mt-2 text-base font-bold text-white">{lightboxPhoto.caption}</h3>
-              <p className="mt-1 text-xs text-slate-300 font-ibm flex items-center gap-1.5">
+              <h3 className="text-base font-bold text-white">{lightboxPhoto.caption}</h3>
+              
+              {/* AI Work-Progress Prediction Banner */}
+              {(lightboxPhoto.workPrediction || lightboxPhoto.work_prediction) && (
+                <div className="rounded-xl border border-teal-500/30 bg-teal-950/60 p-3.5 backdrop-blur-xs">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-400 text-slate-950 uppercase tracking-wide">
+                      AI Estimate
+                    </span>
+                    <span className="text-[11px] font-medium text-teal-300">
+                      Next 3 Days Work Plan
+                    </span>
+                  </div>
+                  <p className="text-xs text-teal-100/90 leading-relaxed font-ibm">
+                    {lightboxPhoto.workPrediction || lightboxPhoto.work_prediction}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs text-slate-400 font-ibm flex items-center gap-1.5 pt-1">
                 <User size={13} className="text-teal-400" />
                 Uploaded by: <span className="font-semibold text-white">{lightboxPhoto.uploadedBy || lightboxPhoto.uploaded_by || 'Supervisor'}</span>
               </p>

@@ -107,8 +107,17 @@ export async function runMonitoringStream(siteId, res) {
   const currentSite = sites.find((s) => s.id === siteId) || { id: siteId, name: siteId }
 
   try {
+    // Update live site lastScan timestamp
+    const nowScanIso = new Date().toISOString()
+    try {
+      const pool = (await import('../db.js')).getPool()
+      if (pool) {
+        await pool.query('UPDATE sites SET last_scan = $1 WHERE id = $2', [nowScanIso, siteId])
+      }
+    } catch (_) {}
+
     // 1. Initial greeting
-    emit({ type: 'checking', message: `Initializing AI monitoring cycle for ${currentSite.name}...` })
+    emit({ type: 'checking', message: `Initializing AI monitoring cycle for ${currentSite.name}...`, lastScan: nowScanIso })
     await sleep(400)
     if (isClosed) return
 
@@ -323,6 +332,19 @@ export async function runMonitoringStream(siteId, res) {
 
         await insertAlertDirect(alert)
         console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
+
+        // Send Brevo email to Project Manager (mirlubaib51005@gmail.com) on new alert
+        if (!matchedAlert) {
+          import('./emailService.js').then(({ sendPMAlertEmail }) => {
+            sendPMAlertEmail({
+              pmEmail: 'mirlubaib51005@gmail.com',
+              alert,
+              site: currentSite,
+              reasoningSummary: alert.explanation,
+              recommendation: alert.recommendation,
+            }).catch((e) => console.warn('PM Alert Email notice:', e.message))
+          })
+        }
 
         // STEP B: Update subtask to resolved with parent alert link
         await updateSubtaskDirect(subtaskId, {

@@ -45,27 +45,33 @@ export default function Inventory() {
     setLoading(true)
     setError(null)
 
-    const fetchInventory = async () => {
+    const fetchInventory = async (isBackground = false) => {
       try {
         const data = await apiRequest(`/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (isMounted) {
           setItems(Array.isArray(data) ? data : [])
-          setLoading(false)
+          if (!isBackground) setLoading(false)
         }
       } catch (err) {
-        console.error('Inventory API fetch error:', err.message)
-        if (isMounted) {
-          setError(`⚠️ API error fetching inventory: ${err.message}`)
-          setItems([])
-          setLoading(false)
+        if (!isBackground) {
+          console.error('Inventory API fetch error:', err.message)
+          if (isMounted) {
+            setError(`⚠️ API error fetching inventory: ${err.message}`)
+            setItems([])
+            setLoading(false)
+          }
         }
       }
     }
 
     fetchInventory()
+    const interval = setInterval(() => fetchInventory(true), 3000)
+    window.addEventListener('focus', () => fetchInventory(true))
 
     return () => {
       isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('focus', () => fetchInventory(true))
     }
   }, [selectedSite.id])
 
@@ -208,12 +214,22 @@ export default function Inventory() {
         }
       />
 
-      {error && (
+      {user && (user.role === 'Accountant' || user.role === 'Finance' || user.role === 'Finance Manager') ? (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-8 text-center max-w-2xl mx-auto my-12 font-public">
+          <div className="mx-auto w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 mb-3">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="text-base font-bold text-indigo-950">Field Material Tracking Restricted</h3>
+          <p className="mt-1.5 text-xs text-indigo-900/80 leading-relaxed font-ibm">
+            Material barcode scanning and stock-level operations are restricted strictly to Field Contractors, Project Managers, and System Admins. Finance Managers can monitor financial commitments and review PO approvals in the <strong>Procurement</strong> and <strong>Dashboard</strong> portals.
+          </p>
+        </div>
+      ) : error ? (
         <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
           <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
           <span>{error}</span>
         </div>
-      )}
+      ) : null}
 
       {loading ? (
         <LoadingState label="Loading inventory from PostgreSQL..." />

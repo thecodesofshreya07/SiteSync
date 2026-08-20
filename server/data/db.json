@@ -12,7 +12,7 @@
       "progress": 58,
       "startDate": "2025-11-04",
       "targetDate": "2027-02-28",
-      "lastScan": "2026-08-19T10:42:15"
+      "lastScan": "2026-08-21T03:35:00"
     },
     {
       "id": "SITE-002",
@@ -26,7 +26,7 @@
       "progress": 41,
       "startDate": "2026-02-10",
       "targetDate": "2026-11-15",
-      "lastScan": "2026-08-19T10:42:15"
+      "lastScan": "2026-08-21T03:36:15"
     },
     {
       "id": "SITE-003",
@@ -40,7 +40,7 @@
       "progress": 34,
       "startDate": "2026-01-20",
       "targetDate": "2027-09-30",
-      "lastScan": "2026-08-19T10:38:02"
+      "lastScan": "2026-08-21T03:34:20"
     },
     {
       "id": "SITE-004",
@@ -54,7 +54,7 @@
       "progress": 19,
       "startDate": "2026-05-01",
       "targetDate": "2027-12-31",
-      "lastScan": "2026-08-19T10:35:44"
+      "lastScan": "2026-08-21T03:30:00"
     }
   ],
   "budgetByCategory": {
@@ -263,113 +263,169 @@
     "SITE-001": [
       {
         "id": "PH-1",
-        "name": "Foundation",
+        "name": "Substructure & Raft Foundation (M40 Pour)",
         "start": "2025-11-04",
         "end": "2026-01-20",
         "progress": 100,
         "status": "Done",
-        "team": "Civil Crew A"
+        "team": "Larsen Geo Foundations / L&T"
       },
       {
         "id": "PH-2",
-        "name": "Structural Work",
+        "name": "Superstructure RCC Columns & Slab Casting (L1–L18)",
         "start": "2026-01-21",
         "end": "2026-09-15",
-        "progress": 55,
+        "progress": 58,
         "status": "In Progress",
-        "team": "Civil Crew B / TC-04"
+        "team": "Civil Core Crew B / Tower Crane TC-04"
       },
       {
         "id": "PH-3",
-        "name": "Electrical",
-        "start": "2026-06-01",
-        "end": "2026-11-30",
-        "progress": 12,
+        "name": "Internal AAC Block Masonry & Core Wall Plastering",
+        "start": "2026-04-10",
+        "end": "2026-11-15",
+        "progress": 42,
         "status": "In Progress",
-        "team": "Shakti Electricals crew"
+        "team": "Vishal Masonry Crew / S-4"
       },
       {
         "id": "PH-4",
-        "name": "Plumbing",
-        "start": "2026-07-01",
-        "end": "2026-12-15",
-        "progress": 8,
+        "name": "Concealed MEP Electrical Risers & Fire Hydrant Conduits",
+        "start": "2026-06-01",
+        "end": "2026-12-10",
+        "progress": 18,
         "status": "In Progress",
-        "team": "Plumbing Crew A"
+        "team": "Shakti Power & MEP Division"
       },
       {
         "id": "PH-5",
-        "name": "Interior",
+        "name": "External Façade Glazing, Gypsum Wallboards & Fit-out",
         "start": "2026-10-01",
-        "end": "2027-01-31",
+        "end": "2027-01-20",
         "progress": 0,
         "status": "Not Started",
-        "team": "Interior Fit-out Team"
+        "team": "SkyGlaze Façade Solutions"
       },
       {
         "id": "PH-6",
-        "name": "Final Inspection",
-        "start": "2027-02-01",
+        "name": "Passenger Lift Testing, Fire NOC & Municipal OC Inspection",
+        "start": "2027-01-21",
         "end": "2027-02-28",
         "progress": 0,
         "status": "Not Started",
-        "team": "QA & Compliance"
+        "team": "MCGM QA Bureau / Otis Engineers"
       }
     ],
     "SITE-002": [
       {
         "id": "PH-1",
-        "name": "Foundation",
+        "name": "PCC Sub-Base, Plinth Beams & Heavy Industrial Flooring (FM2)",
         "start": "2026-02-10",
         "end": "2026-04-30",
         "progress": 100,
         "status": "Done",
-        "team": "Civil Crew C"
+        "team": "Sterling Civil Infrastructure"
       },
       {
         "id": "PH-2",
-        "name": "Structural Work",
+        "name": "PEB Pre-Engineered Steel Portal Frame & Rafter Erection",
         "start": "2026-05-01",
         "end": "2026-09-20",
-        "progress": 62,
+        "progress": 64,
         "status": "In Progress",
-        "team": "Civil Crew C / CM-12"
+        "team": "Apex Heavy Steel / Mobile Crane MC-02"
       },
       {
         "id": "PH-3",
-        "name": "Electrical",
-        "start": "2026-08-15",
-        "end": "2026-10-15",
-        "progress": 5,
+        "name": "Insulated Polyurethane Sandwich Roof Cladding & Turbo Vents",
+        "start": "2026-07-15",
+        "end": "2026-10-10",
+        "progress": 30,
         "status": "In Progress",
-        "team": "Shakti Electricals crew"
+        "team": "Apex Industrial Roofing Team"
       },
       {
         "id": "PH-4",
-        "name": "Plumbing",
-        "start": "2026-09-01",
-        "end": "2026-10-20",
-        "progress": 0,
-        "status": "Not Started",
-        "team": "Plumbing Crew B"
+        "name": "High-Bay Industrial LED Lighting, HT Transformers & Switchgear",
+        "start": "2026-08-01",
+        "end": "2026-10-25",
+        "progress": 12,
+        "status": "In Progress",
+        "team": "Shakti Power Systems Crew"
       },
       {
         "id": "PH-5",
-        "name": "Interior",
-        "start": "2026-10-15",
+        "name": "Hydraulic Dock Levelers, Fire Sprinklers & Epoxy Floor Coat",
+        "start": "2026-09-20",
         "end": "2026-11-05",
         "progress": 0,
         "status": "Not Started",
-        "team": "Interior Fit-out Team"
+        "team": "LogiTech Warehouse Systems"
       },
       {
         "id": "PH-6",
-        "name": "Final Inspection",
+        "name": "Structural Load Testing, Fire NOC & Client Handover",
         "start": "2026-11-06",
         "end": "2026-11-15",
         "progress": 0,
         "status": "Not Started",
-        "team": "QA & Compliance"
+        "team": "MIDC QA & Safety Compliance"
+      }
+    ],
+    "SITE-003": [
+      {
+        "id": "PH-1",
+        "name": "Piling Work, Retaining Secant Walls & 3-Level Basement Dig",
+        "start": "2026-01-20",
+        "end": "2026-05-15",
+        "progress": 100,
+        "status": "Done",
+        "team": "GeoTech Ground Engineering"
+      },
+      {
+        "id": "PH-2",
+        "name": "Post-Tensioned (PT) Composite Slabs & Core Wall Casting (L1–L10)",
+        "start": "2026-05-16",
+        "end": "2026-11-20",
+        "progress": 42,
+        "status": "In Progress",
+        "team": "Civil Core Crew A / Boom Placer BP-01"
+      },
+      {
+        "id": "PH-3",
+        "name": "Central HVAC Chilled Water Piping & AHU Duct Installation",
+        "start": "2026-07-01",
+        "end": "2027-02-15",
+        "progress": 22,
+        "status": "In Progress",
+        "team": "Voltas Commercial MEP Division"
+      },
+      {
+        "id": "PH-4",
+        "name": "Double Glazed (DGU) Glass Curtain Wall & ACP Cladding",
+        "start": "2026-08-15",
+        "end": "2027-03-30",
+        "progress": 15,
+        "status": "In Progress",
+        "team": "GlassPro Enclosures Team"
+      },
+      {
+        "id": "PH-5",
+        "name": "High-Speed Elevators, BMS Automation & Acoustic Ceilings",
+        "start": "2026-11-01",
+        "end": "2027-07-31",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "Otis Mobility Solutions"
+      },
+      {
+        "id": "PH-6",
+        "name": "LEED Gold Green Certification & Statutory OC Inspection",
+        "start": "2027-08-01",
+        "end": "2027-09-30",
+        "progress": 0,
+        "status": "Not Started",
+        "team": "USGBC & Municipal Quality Bureau"
       }
     ]
   },
@@ -1489,63 +1545,66 @@
   "users": [
     {
       "id": "USR-001",
-      "name": "Aarav Mehta",
-      "email": "aarav.mehta@sitesync.com",
-      "phone": "+91 98765 43210",
-      "role": "Product Manager",
-      "projectId": "1",
+      "name": "System Administrator",
+      "email": "admin@sitesync.com",
+      "phone": "+91 98200 11111",
+      "role": "Admin",
+      "projectId": "NA",
+      "siteId": "NA",
       "status": "Active",
-      "createdAt": "2026-08-15"
+      "createdAt": "2026-01-01"
     },
     {
       "id": "USR-002",
-      "name": "Priya Sharma",
-      "email": "priya.sharma@sitesync.com",
-      "phone": "+91 98765 43211",
-      "role": "Product Manager",
-      "projectId": "NA",
-      "status": "Not Active",
-      "createdAt": "2026-08-16"
+      "name": "Project Manager",
+      "email": "mirlubaib51005@gmail.com",
+      "phone": "+91 98200 22222",
+      "role": "Project Manager",
+      "projectId": "1",
+      "siteId": "NA",
+      "status": "Active",
+      "createdAt": "2026-01-10"
     },
     {
       "id": "USR-003",
-      "name": "Rohan Kapoor",
-      "email": "rohan.kapoor@sitesync.com",
-      "phone": "+91 98765 43212",
-      "role": "Product Manager",
+      "name": "Finance Manager",
+      "email": "shreyamishra22042007@gmail.com",
+      "phone": "+91 98200 88888",
+      "role": "Accountant",
       "projectId": "NA",
-      "status": "Not Active",
-      "createdAt": "2026-08-17"
+      "siteId": "NA",
+      "status": "Active",
+      "createdAt": "2026-01-15"
     },
     {
       "id": "USR-004",
-      "name": "Vikram Construction",
-      "email": "contact@vikramconst.com",
+      "name": "Rohan Sharma",
+      "email": "contractor1@sitesync.com",
       "phone": "+91 98123 45678",
       "role": "Contractor",
       "siteId": "SITE-001",
       "status": "Active",
-      "createdAt": "2026-08-18"
+      "createdAt": "2026-02-01"
     },
     {
       "id": "USR-005",
-      "name": "BuildPro Contractors",
-      "email": "admin@buildpro.com",
+      "name": "Vikram Singh",
+      "email": "contractor@sitesync.com",
       "phone": "+91 98234 56789",
       "role": "Contractor",
       "siteId": "SITE-002",
       "status": "Active",
-      "createdAt": "2026-08-19"
+      "createdAt": "2026-02-05"
     },
     {
       "id": "USR-006",
-      "name": "Apex Infra Contractors",
-      "email": "contact@apexinfra.com",
+      "name": "Priya Joshi",
+      "email": "contractor3@sitesync.com",
       "phone": "+91 98345 67890",
       "role": "Contractor",
       "siteId": "SITE-003",
       "status": "Active",
-      "createdAt": "2026-08-20"
+      "createdAt": "2026-02-10"
     }
   ]
 }

@@ -145,7 +145,7 @@ export default function VendorIntelligence() {
                 </td>
                 <td className="px-4 py-3.5">
                   <span className={`text-xs font-semibold ${v.avgDelayDays === 0 ? 'text-green-700' : 'text-amber-700'}`}>
-                    {v.avgDelayDays === 0 ? '⚡ 0 days delay' : `+${v.avgDelayDays} days avg delay`}
+                    {v.avgDelayDays === 0 ? '0 days delay (On Time)' : `+${v.avgDelayDays} days avg delay`}
                   </span>
                   <p className="text-[11px] text-slate-500">{v.leadTimeDays}</p>
                 </td>

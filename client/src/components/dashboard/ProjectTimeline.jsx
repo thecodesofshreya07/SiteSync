@@ -46,26 +46,37 @@ export default function ProjectTimeline({ phases }) {
         <EmptyState icon={CalendarRange} title="No timeline data" description="This site has no phase schedule yet." />
       ) : (
         <div className="overflow-x-auto min-w-0 pb-1">
-          <div className="min-w-[500px] space-y-3">
+          <div className="min-w-[620px] space-y-3.5">
             {phases.map((phase) => (
-              <div key={phase.id} className="flex items-center gap-3">
-                <div className="w-32 shrink-0 sm:w-36">
-                  <p className="truncate text-xs font-medium text-navy-800">{phase.name}</p>
-                  <p className={cn('text-2xs font-medium', STATUS_TEXT[phase.status])}>{phase.status}</p>
+              <div key={phase.id} className="flex items-center gap-3 group">
+                <div className="w-48 shrink-0 sm:w-60 font-public">
+                  <p className="text-xs font-bold text-slate-800 leading-tight truncate" title={phase.name}>
+                    {phase.name}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={cn('text-[11px] font-bold', STATUS_TEXT[phase.status])}>
+                      {phase.status}
+                    </span>
+                    {phase.team && (
+                      <span className="text-[10px] text-slate-400 font-ibm truncate max-w-[140px]">
+                        · {phase.team}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="relative h-6 flex-1 rounded-md bg-surface-bg min-w-[150px]">
+                <div className="relative h-6 flex-1 rounded-md bg-slate-100 min-w-[180px]">
                   <div
                     className="absolute top-0 h-6 overflow-hidden rounded-md border border-black/5"
                     style={barStyle(phase)}
                   >
-                    <div className={cn('h-full opacity-25', STATUS_COLOR[phase.status])} />
+                    <div className={cn('h-full opacity-20', STATUS_COLOR[phase.status])} />
                     <div
-                      className={cn('absolute inset-y-0 left-0 rounded-md', STATUS_COLOR[phase.status])}
+                      className={cn('absolute inset-y-0 left-0 rounded-md transition-all duration-500', STATUS_COLOR[phase.status])}
                       style={{ width: `${phase.progress}%` }}
                     />
                   </div>
                 </div>
-                <div className="w-10 shrink-0 text-right text-2xs font-semibold tabular-nums text-navy-600">
+                <div className="w-12 shrink-0 text-right text-xs font-bold font-ibm tabular-nums text-slate-700">
                   {phase.progress}%
                 </div>
               </div>

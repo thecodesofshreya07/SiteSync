@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send, Sparkles } from 'lucide-react'
+import { Send, Sparkles, Mic, MicOff } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import SuggestedQuestions from './SuggestedQuestions'
 import SourceRecordModal from '../common/SourceRecordModal'
+import { cn } from '../../lib/utils'
 
 const SUGGESTED_PROMPTS = [
-  'What is the stock of Cement Portland Type I at Riverside Tower?',
+  'What is the stock of Fe-550D TMT Steel Rebar at Riverside Tower?',
   'Why is Site B at risk and what is causing the shortage?',
   'Which equipment is currently idle or under maintenance?',
   'What are the delayed deliveries and procurement purchase orders?',
@@ -37,6 +38,8 @@ export default function AssistantChat() {
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const [activeSource, setActiveSource] = useState(null)
+  const [listening, setListening] = useState(false)
+  const recognitionRef = useRef(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -50,6 +53,54 @@ export default function AssistantChat() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, thinking])
+
+  // Initialize Web Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = true
+      recognition.lang = 'en-IN'
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join('')
+        setInput(transcript)
+      }
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error)
+        setListening(false)
+      }
+
+      recognition.onend = () => {
+        setListening(false)
+      }
+
+      recognitionRef.current = recognition
+    }
+  }, [])
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported by your browser. Please use Google Chrome or Microsoft Edge.')
+      return
+    }
+
+    if (listening) {
+      recognitionRef.current.stop()
+      setListening(false)
+    } else {
+      try {
+        recognitionRef.current.start()
+        setListening(true)
+      } catch (err) {
+        console.warn('Speech recognition start notice:', err.message)
+      }
+    }
+  }
 
   async function send(question) {
     const q = question.trim()
@@ -87,7 +138,7 @@ export default function AssistantChat() {
         {
           id: `${Date.now()}-a`,
           role: 'assistant',
-          text: `⚠️ AI Service Error: ${err.message}`,
+          text: `AI Service Error: ${err.message}`,
           sources: [],
         },
       ])
@@ -124,9 +175,26 @@ export default function AssistantChat() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about sites, budgets, inventory, procurement..."
-            className="flex-1 rounded-lg border border-surface-border bg-white px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
+            placeholder={listening ? 'Listening to your voice...' : 'Ask about sites, budgets, inventory, procurement...'}
+            className={cn(
+              'flex-1 rounded-lg border border-surface-border bg-white px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm transition-all',
+              listening && 'border-red-400 ring-2 ring-red-400/30 bg-red-50/30'
+            )}
           />
+
+          {/* Voice Input Button */}
+          <button
+            type="button"
+            onClick={toggleListening}
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-teal-700 transition-colors shadow-xs',
+              listening && 'bg-red-500 text-white border-red-600 hover:bg-red-600 animate-pulse'
+            )}
+            title={listening ? 'Stop listening' : 'Voice search (Speech to Text)'}
+          >
+            {listening ? <MicOff size={16} /> : <Mic size={16} />}
+          </button>
+
           <button
             type="submit"
             disabled={!input.trim()}

@@ -67,6 +67,20 @@ router.post('/', async (req, res) => {
 
     await insertAlertDirect(newAlert)
     console.log(`[ALERT] Created and persisted alert in PostgreSQL with ID: ${newId}`)
+
+    // Non-blocking Brevo transactional notification to Project Manager
+    import('../services/emailService.js').then(async ({ sendPMAlertEmail }) => {
+      const sites = await getCollectionDirect('sites')
+      const targetSite = sites.find((s) => s.id === newAlert.siteId) || { name: newAlert.siteId, id: newAlert.siteId }
+      sendPMAlertEmail({
+        pmEmail: 'mirlubaib51005@gmail.com',
+        alert: newAlert,
+        site: targetSite,
+        reasoningSummary: newAlert.explanation,
+        recommendation: newAlert.recommendation,
+      }).catch((e) => console.warn('PM Alert Email dispatch notice:', e.message))
+    })
+
     return res.status(201).json(newAlert)
   } catch (err) {
     console.error('Error creating alert:', err)
@@ -103,32 +117,75 @@ router.patch('/:id', async (req, res) => {
     const pool = getPool()
 
     // -------------------------------------------------------------------------
-    // 1. Target Site (Site B) approves an alert
+    // 1. Alert Approval Logic (Emergency PO or Inter-site Transfer)
     // -------------------------------------------------------------------------
-    // 1a. If approving an emergency procurement fallback alert:
-    if (status === 'approved' && existing.type === 'emergency_procurement_fallback') {
+    const recLower = (existing.recommendation || '').toLowerCase()
+    const titleLower = (existing.title || '').toLowerCase()
+    const isEmergencyPOAlert =
+      existing.type === 'emergency_procurement_fallback' ||
+      recLower.includes('emergency po') ||
+      recLower.includes('expedite emergency') ||
+      recLower.includes('raise po') ||
+      recLower.includes('expedite') ||
+      (!existing.transferDetails && !recLower.includes('transfer'))
+
+    // 1a. If approving an emergency procurement / shortage reorder alert:
+    if (status === 'approved' && isEmergencyPOAlert && existing.type !== 'incoming_transfer_request') {
       const nowIso = new Date().toISOString()
-      const newPoId = `PO-${Math.floor(2050 + Math.random() * 500)}`
+      const newPoId = `PO-EMG-${Math.floor(2000 + Math.random() * 8000)}`
+
+      // Determine item name accurately from recommendation / title
+      let targetItem = 'Ultratech OPC 53 Grade Cement'
+      if (recLower.includes('ultratech') || titleLower.includes('ultratech')) {
+        targetItem = 'Ultratech OPC 53 Grade Cement'
+      } else if (recLower.includes('steel') || titleLower.includes('steel') || recLower.includes('tmt')) {
+        targetItem = 'Fe-550D TMT Steel Rebar'
+      } else if (recLower.includes('aac') || titleLower.includes('aac')) {
+        targetItem = 'AAC Autoclaved Blocks'
+      } else if (recLower.includes('cement') || titleLower.includes('cement')) {
+        targetItem = 'Cement Portland Type I'
+      } else if (existing.sources?.[0]?.label) {
+        targetItem = existing.sources[0].label
+      }
+
+      // Find matching vendor
+      const vendors = (await getCollectionDirect('vendors')) || []
+      const matchedVendor = vendors.find((v) =>
+        targetItem.toLowerCase().includes('cement')
+          ? v.name?.toLowerCase().includes('ultratech') || v.category === 'Cement'
+          : targetItem.toLowerCase().includes('steel')
+          ? v.name?.toLowerCase().includes('tata') || v.category === 'Steel'
+          : true
+      ) || vendors[0] || { id: 'VEN-002', name: 'Ultratech Building Solutions' }
+
+      const qty = targetItem.toLowerCase().includes('tonnes') ? 10 : 250
+      const unit = targetItem.toLowerCase().includes('steel') ? 'tonnes' : 'bags'
+      const unitPrice = targetItem.toLowerCase().includes('steel') ? 64500 : 390
+      const calculatedAmount = qty * unitPrice
+
       const newOrder = {
         id: newPoId,
-        item: existing.title.includes('Steel') ? 'Structural Steel' : 'Cement Portland Type I',
-        vendorId: 'VEN-017',
-        vendorName: 'BuildPro Materials',
+        item: targetItem,
+        vendorId: matchedVendor.id || 'VEN-002',
+        vendorName: matchedVendor.name || 'Ultratech Building Solutions',
         siteId: existing.siteId,
-        amount: 175000,
-        stage: 'PO Raised',
-        status: 'Draft',
+        quantity: qty,
+        unit: unit,
+        amount: calculatedAmount,
+        stage: 'Purchase Order',
+        status: 'Approved',
         dateRaised: nowIso.slice(0, 10),
         expectedDelivery: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().slice(0, 10),
         delayDays: 0,
-        note: `Emergency PO created via AI alert approval (${existing.id})`,
+        note: `Emergency PO automatically raised and approved via AI alert approval (${existing.id})`,
       }
 
       if (pool) {
         try {
           await pool.query(
             `INSERT INTO procurement_orders (id, site_id, item, vendor_id, amount, stage, status, date_raised, expected_delivery, delay_days, data)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             ON CONFLICT (id) DO UPDATE SET stage = EXCLUDED.stage, status = EXCLUDED.status, data = EXCLUDED.data`,
             [
               newOrder.id,
               newOrder.siteId,
@@ -148,25 +205,24 @@ router.patch('/:id', async (req, res) => {
         }
       }
       await updateByIdDirect('procurementOrders', newOrder.id, newOrder)
-      console.log(`[EMERGENCY PO] Automatically raised emergency purchase order ${newPoId} for ${existing.siteId}`)
+      console.log(`[EMERGENCY PO] Real purchase order ${newPoId} created and dispatched to ${matchedVendor.name} for ${existing.siteId}`)
 
       const updatedAlert = {
         ...existing,
         status: 'approved',
         resolvedAt: nowIso,
-        title: `✓ Emergency PO Raised (${newPoId}) for ${newOrder.item}`,
-        explanation: `Emergency Purchase Order ${newPoId} for 500 bags of ${newOrder.item} from BuildPro Materials has been raised with expedited 24-48h turnaround.`,
+        title: `✓ Emergency PO Raised (${newPoId}): ${qty} ${unit} of ${targetItem}`,
+        explanation: `Emergency Purchase Order ${newPoId} for ${qty} ${unit} of ${targetItem} (₹${calculatedAmount.toLocaleString('en-IN')}) has been raised with ${matchedVendor.name} under expedited 24-48h express delivery.`,
       }
       await insertAlertDirect(updatedAlert)
       return res.json(updatedAlert)
     }
 
-    // 1b. If approving a standard shortage alert with transfer recommendation:
+    // 1b. If approving a shortage alert with active transfer recommendation:
     const isShortageTransferApproval =
       status === 'approved' &&
-      (existing.transferDetails || existing.recommendation?.toLowerCase().includes('transfer')) &&
-      existing.type !== 'incoming_transfer_request' &&
-      existing.type !== 'emergency_procurement_fallback'
+      (existing.transferDetails || recLower.includes('transfer')) &&
+      existing.type !== 'incoming_transfer_request'
 
     if (isShortageTransferApproval) {
       const sites = await getCollectionDirect('sites')

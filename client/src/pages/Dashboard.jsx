@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { IndianRupee, ListChecks, ShieldAlert, Gauge } from 'lucide-react'
 import StatCard from '../components/dashboard/StatCard'
 import BudgetOverview from '../components/dashboard/BudgetOverview'
+import BudgetPredictionChart from '../components/dashboard/BudgetPredictionChart'
 import AgentActivity from '../components/dashboard/AgentActivity'
 import AlertList from '../components/dashboard/AlertList'
 import ProjectTimeline from '../components/dashboard/ProjectTimeline'
@@ -32,8 +33,23 @@ export default function Dashboard() {
   const [categoryData, setCategoryData] = useState([])
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
+  const [lastScanTime, setLastScanTime] = useState(() => selectedSite?.lastScan || new Date().toISOString())
 
   const canViewAI = user?.role === 'Admin' || user?.role === 'Project Manager'
+
+  useEffect(() => {
+    setLastScanTime(selectedSite?.lastScan || new Date().toISOString())
+  }, [selectedSite?.id, selectedSite?.lastScan])
+
+  useEffect(() => {
+    const handleScan = (e) => {
+      if (!e.detail?.siteId || e.detail.siteId === selectedSite?.id) {
+        setLastScanTime(e.detail?.timestamp || new Date().toISOString())
+      }
+    }
+    window.addEventListener('sitesync_agent_scan', handleScan)
+    return () => window.removeEventListener('sitesync_agent_scan', handleScan)
+  }, [selectedSite?.id])
 
   useEffect(() => {
     if (!selectedSite?.id) return
@@ -103,9 +119,12 @@ export default function Dashboard() {
         </div>
         {canViewAI && (
           <div className="sm:text-right">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Agent Scan</p>
-            <p className="text-sm font-bold text-slate-800">
-              {formatDate(selectedSite.lastScan || new Date())} · {formatTime(selectedSite.lastScan || new Date())}
+            <div className="flex items-center sm:justify-end gap-1.5 mb-0.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Live Agent Telemetry</p>
+            </div>
+            <p className="text-sm font-bold text-slate-800 font-ibm">
+              {formatDate(lastScanTime)} · {formatTime(lastScanTime)}
             </p>
           </div>
         )}
@@ -150,10 +169,10 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Main grid: budget + agent activity */}
+      {/* Main grid: budget prediction + agent activity */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-5">
         <div className={canViewAI ? 'lg:col-span-3 min-w-0' : 'lg:col-span-5 min-w-0'}>
-          <BudgetOverview site={selectedSite} categoryData={categoryData} />
+          <BudgetPredictionChart site={selectedSite} categoryData={categoryData} />
         </div>
         {canViewAI && (
           <div className="lg:col-span-2 min-w-0">

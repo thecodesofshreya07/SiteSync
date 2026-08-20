@@ -12,8 +12,8 @@ const DEMO_ACCOUNTS = [
   },
   {
     role: 'Project Manager',
-    email: 'pm@sitesync.com',
-    desc: 'Assigned to Project ID 1 (Views all 3 sites: Riverside, Warehouse, Metro)',
+    email: 'mirlubaib51005@gmail.com',
+    desc: 'Assigned to Project ID 1 (Cross-site view across Riverside, Warehouse, Metro)',
     badgeTone: 'bg-teal-100 text-teal-800 border-teal-200',
   },
   {
@@ -35,9 +35,9 @@ const DEMO_ACCOUNTS = [
     badgeTone: 'bg-amber-100 text-amber-800 border-amber-200',
   },
   {
-    role: 'Accountant',
-    email: 'finance@sitesync.com',
-    desc: 'Global financial approvals, budget checking & payment management',
+    role: 'Finance Manager',
+    email: 'shreyamishra22042007@gmail.com',
+    desc: 'Global financial approvals, budget overrun review & PO management',
     badgeTone: 'bg-indigo-100 text-indigo-800 border-indigo-200',
   },
 ]

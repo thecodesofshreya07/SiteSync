@@ -25,12 +25,14 @@ function sanitizeUser(user) {
 
 const SHORTHAND_MAP = {
   admin: 'admin@sitesync.com',
-  pm: 'pm@sitesync.com',
+  pm: 'mirlubaib51005@gmail.com',
+  'pm@sitesync.com': 'mirlubaib51005@gmail.com',
   contractor: 'contractor@sitesync.com',
   contractor1: 'contractor1@sitesync.com',
   contractor2: 'contractor@sitesync.com',
   contractor3: 'contractor3@sitesync.com',
-  finance: 'finance@sitesync.com',
+  finance: 'shreyamishra22042007@gmail.com',
+  'finance@sitesync.com': 'shreyamishra22042007@gmail.com',
 }
 
 // POST /api/auth/login - Authenticate user credentials and return signed JWT

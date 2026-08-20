@@ -161,6 +161,15 @@ export default function AgentActivity({ siteId }) {
             if (data.type === 'resolved' || data.type === 'idle' || data.type === 'waiting') {
               setIsScanning(false)
             }
+
+            // Dispatch global event with live scan timestamp
+            try {
+              window.dispatchEvent(
+                new CustomEvent('sitesync_agent_scan', {
+                  detail: { siteId, timestamp: data.lastScan || new Date().toISOString() },
+                })
+              )
+            } catch (_) {}
           }
         } catch (err) {
           console.warn('Error parsing SSE event:', err)
@@ -298,10 +307,10 @@ export default function AgentActivity({ siteId }) {
                         }
                       >
                         {isInvestigating
-                          ? '⚡ INVESTIGATING'
+                          ? 'INVESTIGATING'
                           : st.parent_alert_id || st.parentAlertId
-                          ? '🚨 ALERT GENERATED'
-                          : '✓ VERIFIED NOMINAL'}
+                          ? 'ALERT GENERATED'
+                          : 'VERIFIED NOMINAL'}
                       </Badge>
                       <span className="text-[11px] font-medium text-slate-400">
                         {formatTime(st.created_at || st.createdAt)}

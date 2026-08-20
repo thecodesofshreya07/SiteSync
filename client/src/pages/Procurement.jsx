@@ -29,27 +29,33 @@ export default function Procurement() {
     setLoading(true)
     setError(null)
 
-    const fetchProcurement = async () => {
+    const fetchProcurement = async (isBackground = false) => {
       try {
         const data = await apiRequest(`/procurement?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (isMounted) {
           setOrders(Array.isArray(data) ? data : [])
-          setLoading(false)
+          if (!isBackground) setLoading(false)
         }
       } catch (err) {
-        console.error('Procurement API fetch error:', err.message)
-        if (isMounted) {
-          setError(`⚠️ API error fetching procurement: ${err.message}`)
-          setOrders([])
-          setLoading(false)
+        if (!isBackground) {
+          console.error('Procurement API fetch error:', err.message)
+          if (isMounted) {
+            setError(`⚠️ API error fetching procurement: ${err.message}`)
+            setOrders([])
+            setLoading(false)
+          }
         }
       }
     }
 
     fetchProcurement()
+    const interval = setInterval(() => fetchProcurement(true), 3000)
+    window.addEventListener('focus', () => fetchProcurement(true))
 
     return () => {
       isMounted = false
+      clearInterval(interval)
+      window.removeEventListener('focus', () => fetchProcurement(true))
     }
   }, [selectedSite.id])
 

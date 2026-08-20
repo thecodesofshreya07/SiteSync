@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import PMValidationModal from './PMValidationModal'
 import FinanceReviewModal from './FinanceReviewModal'
+import AIRejectionReviewModal from './AIRejectionReviewModal'
 import { formatFullINR, formatDate } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import { CheckCircle2, PackageCheck, Layers, Wallet } from 'lucide-react'
@@ -10,6 +11,7 @@ export default function ProcurementCard({ po, onUpdateOrder }) {
   const { user } = useAuth()
   const [pmModalOpen, setPmModalOpen] = useState(false)
   const [financeModalOpen, setFinanceModalOpen] = useState(false)
+  const [aiReviewOpen, setAiReviewOpen] = useState(false)
 
   const vendorName = po.vendorName || po.vendor || (po.vendorId ? `Vendor ${po.vendorId}` : '—')
   const role = user?.role || 'Guest'
@@ -91,6 +93,18 @@ export default function ProcurementCard({ po, onUpdateOrder }) {
                 Mark Delivered & Update Inventory
               </button>
             )}
+          {/* AI Auto-Rejection Review for Finance / Accountant / Admin */}
+          {(role === 'Accountant' || role === 'Finance' || role === 'Admin') &&
+            po.status === 'ai_rejected' && (
+              <button
+                type="button"
+                onClick={() => setAiReviewOpen(true)}
+                className="flex w-full items-center justify-center gap-1 rounded-md bg-red-600 px-2 py-1.5 text-2xs font-semibold text-white shadow-xs hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer animate-pulse"
+              >
+                <Wallet size={12} />
+                Review AI Rejection (Override / Confirm)
+              </button>
+            )}
         </div>
       </div>
 
@@ -109,6 +123,22 @@ export default function ProcurementCard({ po, onUpdateOrder }) {
         onClose={() => setFinanceModalOpen(false)}
         onApprove={(id, payload) => handleAction(payload.stage, payload.status, payload)}
         onReject={(id, payload) => handleAction(payload.stage, payload.status, payload)}
+      />
+
+      <AIRejectionReviewModal
+        open={aiReviewOpen}
+        order={po}
+        onClose={() => setAiReviewOpen(false)}
+        onAction={async (orderId, action, note) => {
+          const { apiRequest } = await import('../../lib/api')
+          const updated = await apiRequest(`/procurement/${orderId}/ai-review`, {
+            method: 'PATCH',
+            body: JSON.stringify({ action, note }),
+          })
+          if (updated && onUpdateOrder) {
+            onUpdateOrder(orderId, updated)
+          }
+        }}
       />
     </>
   )

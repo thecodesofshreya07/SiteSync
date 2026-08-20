@@ -15,8 +15,8 @@ export const initialUsers = [
   },
   {
     id: 'USR-002',
-    name: 'Shreya Mishra',
-    email: 'pm@sitesync.com',
+    name: 'Project Manager',
+    email: 'mirlubaib51005@gmail.com',
     phone: '+91 98200 22222',
     role: 'Project Manager',
     siteId: 'NA',
@@ -87,8 +87,8 @@ export const initialUsers = [
   },
   {
     id: 'USR-008',
-    name: 'Aniket Verma',
-    email: 'finance@sitesync.com',
+    name: 'Finance Manager',
+    email: 'shreyamishra22042007@gmail.com',
     phone: '+91 98200 88888',
     role: 'Accountant',
     siteId: 'NA',

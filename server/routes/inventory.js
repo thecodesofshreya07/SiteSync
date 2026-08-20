@@ -1,7 +1,53 @@
 import { Router } from 'express'
+import jwt from 'jsonwebtoken'
 import { getCollection, findById, updateById, setCollection, getPool, getCollectionDirect, insertAlertDirect, insertSubtaskDirect } from '../db.js'
+import { JWT_SECRET } from '../middleware/auth.js'
 
 const router = Router()
+
+/**
+ * Phase 7: Strict Role-Based Visibility for Material QR & Inventory Tracking
+ * - Contractor: Can ONLY view/scan assigned site materials (403 for cross-site access)
+ * - PM & Admin: Cross-site access allowed
+ * - Finance Manager: Strictly forbidden from material-level inventory (403 Forbidden)
+ */
+router.use((req, res, next) => {
+  let user = req.user
+  const authHeader = req.headers['authorization'] || req.headers['Authorization']
+
+  if (!user && authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1]
+      user = jwt.verify(token, JWT_SECRET)
+    } catch (_) {
+      try {
+        user = jwt.decode(authHeader.split(' ')[1])
+      } catch (_) {}
+    }
+  }
+
+  const role = (user?.role || req.headers['x-user-role'] || '').trim().toLowerCase()
+  const userSiteId = (user?.siteId || user?.site_id || req.headers['x-user-site-id'] || '').trim()
+
+  // 1. Finance / Accountant is strictly forbidden from material inventory
+  if (['accountant', 'finance', 'finance manager'].includes(role)) {
+    return res.status(403).json({
+      error: 'Access Denied (403): Finance Manager role is strictly restricted from material-level inventory tracking.',
+    })
+  }
+
+  // 2. Contractor is strictly restricted to assigned site
+  if (role === 'contractor') {
+    const requestedSiteId = (req.query.siteId || req.query.site_id || req.body?.siteId || req.body?.site_id || '').trim()
+    if (requestedSiteId && userSiteId && userSiteId !== 'NA' && requestedSiteId.toLowerCase() !== userSiteId.toLowerCase()) {
+      return res.status(403).json({
+        error: `Access Denied (403): Contractor is restricted to assigned site (${userSiteId}) and cannot access materials for ${requestedSiteId}.`,
+      })
+    }
+  }
+
+  next()
+})
 
 async function triggerShortageAlertIfNeeded(item) {
   try {
@@ -86,6 +132,17 @@ async function triggerShortageAlertIfNeeded(item) {
 
     await insertAlertDirect(alert)
     console.log(`[DYNAMIC ALERT] Created dynamic shortage alert for ${item.item} at ${item.siteId} (ID: ${alertId})`)
+
+    // Phase 3: Non-blocking Brevo transactional notification to Project Manager
+    import('../services/emailService.js').then(({ sendPMAlertEmail }) => {
+      sendPMAlertEmail({
+        pmEmail: 'mirlubaib51005@gmail.com',
+        alert,
+        site: currentSite,
+        reasoningSummary: alert.explanation,
+        recommendation: alert.recommendation,
+      }).catch((e) => console.warn('PM Alert Email dispatch notice:', e.message))
+    })
   } catch (err) {
     console.warn('[DYNAMIC ALERT] Warning creating shortage alert:', err.message)
   }

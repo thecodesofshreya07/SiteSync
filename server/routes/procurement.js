@@ -316,6 +316,72 @@ router.post('/', async (req, res) => {
       },
     ]
 
+    let sites = []
+    try {
+      const { getCollectionDirect } = await import('../db.js')
+      sites = await getCollectionDirect('sites')
+    } catch (_) {
+      sites = getCollection('sites') || []
+    }
+    const targetSite = sites.find((s) => s.id === siteId) || { id: siteId, name: siteId, budgetPlanned: 31000000, budgetActual: 34658000 }
+    const plannedBudget = Number(targetSite.budgetPlanned || targetSite.budget_planned || 31000000)
+    const actualSpend = Number(targetSite.budgetActual || targetSite.budget_actual || 34658000)
+
+    let finalStatus = status
+    let finalStage = stage
+    let aiRejectionReason = null
+
+    // Agentic Budget Overrun Auto-Rejection Check
+    if (actualSpend + calculatedAmount > plannedBudget) {
+      const projectedSpend = actualSpend + calculatedAmount
+      const overrunPct = (((projectedSpend / plannedBudget) - 1) * 100).toFixed(1)
+      finalStatus = 'ai_rejected'
+      finalStage = 'AI Review Required'
+      aiRejectionReason = `PO-${id.replace('PO-', '')} for ₹${calculatedAmount.toLocaleString('en-IN')} would push ${targetSite.name} actual spend to ₹${projectedSpend.toLocaleString('en-IN')} against a ₹${plannedBudget.toLocaleString('en-IN')} budget (+${overrunPct}% over) — auto-rejected pending finance review.`
+
+      // Create linked agent subtask
+      const subtaskId = `TSK-BO-${Date.now().toString().slice(-4)}`
+      const subtask = {
+        id: subtaskId,
+        site_id: siteId,
+        siteId,
+        type: 'budget_overrun_check',
+        status: 'resolved',
+        reasoning_summary: aiRejectionReason,
+        related_record_type: 'procurement',
+        related_record_id: id,
+        relatedRecordType: 'procurement',
+        relatedRecordId: id,
+        created_at: now.toISOString(),
+        resolved_at: now.toISOString(),
+      }
+      try {
+        const { insertSubtaskDirect } = await import('../db.js')
+        await insertSubtaskDirect(subtask)
+      } catch (stErr) {
+        console.warn('Subtask direct insert notice:', stErr.message)
+      }
+
+      initialHistory.push({
+        action: 'AI Auto-Rejected (Budget Overrun)',
+        actor: 'Autonomous Operations Agent',
+        role: 'AI Agent',
+        timestamp: now.toISOString(),
+        status: 'ai_rejected',
+        note: aiRejectionReason,
+      })
+
+      // Non-blocking Brevo transactional email notification to Finance Manager
+      import('../services/emailService.js').then(({ sendPORejectionEmail }) => {
+        sendPORejectionEmail({
+          financeEmail: 'shreyamishra22042007@gmail.com',
+          po: { id, item, quantity, unit, amount: calculatedAmount },
+          site: targetSite,
+          reasoningSummary: aiRejectionReason,
+        }).catch((e) => console.warn('PO Rejection Email dispatch notice:', e.message))
+      })
+    }
+
     const newOrder = {
       id,
       siteId,
@@ -327,8 +393,9 @@ router.post('/', async (req, res) => {
       amount: calculatedAmount,
       dateRaised,
       expectedDelivery: targetDelivery,
-      stage,
-      status,
+      stage: finalStage,
+      status: finalStatus,
+      aiRejectionReason,
       deliveryId: null,
       delayDays: 0,
       history: initialHistory,
@@ -351,8 +418,8 @@ router.post('/', async (req, res) => {
             newOrder.amount,
             dateRaised,
             targetDelivery,
-            stage,
-            status,
+            finalStage,
+            finalStatus,
             null,
             0,
             JSON.stringify(newOrder),
@@ -371,6 +438,92 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Error creating procurement order:', err)
     res.status(500).json({ error: 'Failed to create procurement order' })
+  }
+})
+
+// PATCH /api/procurement/:id/ai-review - Finance Manager review & overrule loop
+router.patch('/:id/ai-review', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { action, note = '' } = req.body || {}
+    const userRole = (req.user?.role || req.headers['x-user-role'] || '').toLowerCase()
+    const userEmail = req.user?.email || req.headers['x-user-email'] || 'shreyamishra22042007@gmail.com'
+
+    // Server-side role enforcement: Only Finance / Accountant or Admin can overrule AI
+    if (userRole && !['accountant', 'finance', 'admin', 'finance manager'].includes(userRole)) {
+      return res.status(403).json({
+        error: 'Forbidden: Only Finance Manager is authorized to review and override AI budget rejections.',
+      })
+    }
+
+    if (!['approve_override', 'confirm_rejection'].includes(action)) {
+      return res.status(400).json({
+        error: "Invalid action. Must be 'approve_override' or 'confirm_rejection'.",
+      })
+    }
+
+    let order = findById('procurementOrders', id) || findById('procurement', id)
+    const pool = getPool()
+    if (pool && !order) {
+      const r = await pool.query('SELECT data FROM procurement_orders WHERE id = $1', [id])
+      if (r.rows.length > 0) order = r.rows[0].data
+    }
+
+    if (!order) {
+      return res.status(404).json({ error: `Purchase order '${id}' not found.` })
+    }
+
+    const nowIso = new Date().toISOString()
+    let updatedStatus = order.status
+    let updatedStage = order.stage
+    let auditAction = ''
+
+    if (action === 'approve_override') {
+      updatedStatus = 'Approved'
+      updatedStage = 'Purchase Order'
+      auditAction = 'AI Budget Rejection Overruled by Finance Manager'
+    } else {
+      updatedStatus = 'Rejected'
+      updatedStage = 'Closed'
+      auditAction = 'AI Budget Rejection Formally Confirmed by Finance Manager'
+    }
+
+    const newHistory = Array.isArray(order.history) ? [...order.history] : []
+    newHistory.push({
+      action: auditAction,
+      actor: userEmail,
+      role: 'Finance Manager',
+      timestamp: nowIso,
+      note: note || (action === 'approve_override' ? 'Budget overrun override approved by Finance.' : 'Rejection confirmed.'),
+      status: updatedStatus,
+    })
+
+    const updatedOrder = {
+      ...order,
+      status: updatedStatus,
+      stage: updatedStage,
+      history: newHistory,
+      lastReviewedAt: nowIso,
+      reviewedBy: userEmail,
+    }
+
+    updateById('procurementOrders', id, updatedOrder)
+    if (pool) {
+      try {
+        await pool.query(
+          'UPDATE procurement_orders SET stage = $1, status = $2, data = $3 WHERE id = $4',
+          [updatedStage, updatedStatus, JSON.stringify(updatedOrder), id]
+        )
+      } catch (pErr) {
+        console.warn('PostgreSQL update PO notice:', pErr.message)
+      }
+    }
+
+    console.log(`[FINANCE REVIEW] PO ${id} decision '${action}' executed by ${userEmail}`)
+    return res.json(updatedOrder)
+  } catch (err) {
+    console.error('Error in /api/procurement/:id/ai-review:', err)
+    return res.status(500).json({ error: 'Failed to process Finance review.' })
   }
 })
 
@@ -436,6 +589,50 @@ router.patch('/:id', async (req, res) => {
 
     if (!merged.amount || merged.amount === 250000) {
       merged.amount = calculateBackendAmount(merged.item, merged.quantity, merged.unit)
+    }
+
+    // Agentic Budget Overrun Check on Stage Advancement
+    const userRole = (req.user?.role || req.headers['x-user-role'] || '').toLowerCase()
+    const isFinanceAction = ['accountant', 'finance', 'finance manager'].includes(userRole)
+    
+    if (!isFinanceAction && merged.status !== 'Approved' && merged.status !== 'Rejected') {
+      let sites = []
+      try {
+        const { getCollectionDirect } = await import('../db.js')
+        sites = await getCollectionDirect('sites')
+      } catch (_) {
+        sites = getCollection('sites') || []
+      }
+      const targetSite = sites.find((s) => s.id === merged.siteId) || { id: merged.siteId, name: merged.siteId, budgetPlanned: 31000000, budgetActual: 34658000 }
+      const plannedBudget = Number(targetSite.budgetPlanned || targetSite.budget_planned || 31000000)
+      const actualSpend = Number(targetSite.budgetActual || targetSite.budget_actual || 34658000)
+
+      if (actualSpend + merged.amount > plannedBudget) {
+        const projectedSpend = actualSpend + merged.amount
+        const overrunPct = (((projectedSpend / plannedBudget) - 1) * 100).toFixed(1)
+        merged.status = 'ai_rejected'
+        merged.stage = 'AI Review Required'
+        merged.aiRejectionReason = `PO-${id.replace('PO-', '')} for ₹${merged.amount.toLocaleString('en-IN')} would push ${targetSite.name} actual spend to ₹${projectedSpend.toLocaleString('en-IN')} against a ₹${plannedBudget.toLocaleString('en-IN')} budget (+${overrunPct}% over) — auto-rejected pending finance review.`
+
+        merged.history.push({
+          action: 'AI Auto-Rejected (Budget Overrun)',
+          actor: 'Autonomous Operations Agent',
+          role: 'AI Agent',
+          timestamp: new Date().toISOString(),
+          status: 'ai_rejected',
+          note: merged.aiRejectionReason,
+        })
+
+        // Dispatch Brevo email notification
+        import('../services/emailService.js').then(({ sendPORejectionEmail }) => {
+          sendPORejectionEmail({
+            financeEmail: 'shreyamishra22042007@gmail.com',
+            po: { id, item: merged.item, quantity: merged.quantity, unit: merged.unit, amount: merged.amount },
+            site: targetSite,
+            reasoningSummary: merged.aiRejectionReason,
+          }).catch((e) => console.warn('PO Rejection Email dispatch notice:', e.message))
+        })
+      }
     }
 
     if (pool) {

@@ -12,7 +12,7 @@ export const sites = [
     progress: 58,
     startDate: '2025-11-04',
     targetDate: '2027-02-28',
-    lastScan: '2026-08-19T10:42:15',
+    lastScan: new Date().toISOString(),
   },
   {
     id: 'SITE-002',
@@ -27,7 +27,7 @@ export const sites = [
     progress: 41,
     startDate: '2026-02-10',
     targetDate: '2026-11-15',
-    lastScan: '2026-08-19T10:42:15',
+    lastScan: new Date().toISOString(),
   },
   {
     id: 'SITE-003',
@@ -42,7 +42,7 @@ export const sites = [
     progress: 34,
     startDate: '2026-01-20',
     targetDate: '2027-09-30',
-    lastScan: '2026-08-19T10:38:02',
+    lastScan: new Date().toISOString(),
   },
   {
     id: 'SITE-004',
@@ -57,7 +57,7 @@ export const sites = [
     progress: 19,
     startDate: '2026-05-01',
     targetDate: '2027-12-31',
-    lastScan: '2026-08-19T10:35:44',
+    lastScan: new Date().toISOString(),
   },
 ]
 

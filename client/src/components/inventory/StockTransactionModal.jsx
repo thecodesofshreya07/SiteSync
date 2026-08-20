@@ -36,8 +36,8 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
     <Modal open={open} onClose={onClose} title="Log Transaction" subtitle={`${item.item} · ${item.id}`}>
       <div className="space-y-4 font-public min-w-0">
         {validationError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700">
-            ⚠️ {validationError}
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
+            {validationError}
           </div>
         )}
         <div>
