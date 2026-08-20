@@ -33,8 +33,9 @@ export default function Inventory() {
   const [txnModalOpen, setTxnModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const canLogStock = !user || user.role === 'Admin' || user.role === 'Project Manager' || user.role === 'Contractor'
+  const canLogStock = Boolean(user && user.role !== 'Admin' && (user.role === 'Project Manager' || user.role === 'Contractor'))
   const canAddMaterial = !user || user.role === 'Admin' || user.role === 'Project Manager'
+  const canDeleteMaterial = !user || user.role === 'Admin' || user.role === 'Project Manager'
 
   useEffect(() => {
     let isMounted = true
@@ -173,23 +174,27 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          canLogStock ? (
+          (canAddMaterial || canLogStock) ? (
             <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                icon={Plus}
-                onClick={() => setCreateModalOpen(true)}
-              >
-                Add Material
-              </Button>
-              <Button
-                variant="primary"
-                icon={PackagePlus}
-                onClick={() => items.length > 0 && openTransactionModal(items[0])}
-                disabled={items.length === 0}
-              >
-                Log Stock
-              </Button>
+              {canAddMaterial && (
+                <Button
+                  variant="secondary"
+                  icon={Plus}
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  Add Material
+                </Button>
+              )}
+              {canLogStock && (
+                <Button
+                  variant="primary"
+                  icon={PackagePlus}
+                  onClick={() => items.length > 0 && openTransactionModal(items[0])}
+                  disabled={items.length === 0}
+                >
+                  Log Stock
+                </Button>
+              )}
             </div>
           ) : null
         }
@@ -227,28 +232,28 @@ export default function Inventory() {
           <InventoryTable
             items={filtered}
             onLogTransaction={canLogStock ? openTransactionModal : undefined}
-            onDeleteItem={canLogStock ? handleDeleteItem : undefined}
+            onDeleteItem={canDeleteMaterial ? handleDeleteItem : undefined}
           />
         </>
       )}
 
       {canLogStock && (
-        <>
-          <StockTransactionModal
-            open={txnModalOpen}
-            item={txnItem}
-            onClose={() => setTxnModalOpen(false)}
-            onSubmit={handleTransaction}
-          />
+        <StockTransactionModal
+          open={txnModalOpen}
+          item={txnItem}
+          onClose={() => setTxnModalOpen(false)}
+          onSubmit={handleTransaction}
+        />
+      )}
 
-          <CreateItemModal
-            open={createModalOpen}
-            onClose={() => setCreateModalOpen(false)}
-            siteId={selectedSite.id}
-            siteName={selectedSite.name}
-            onCreate={handleCreateItem}
-          />
-        </>
+      {canAddMaterial && (
+        <CreateItemModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          siteId={selectedSite.id}
+          siteName={selectedSite.name}
+          onCreate={handleCreateItem}
+        />
       )}
     </div>
   )

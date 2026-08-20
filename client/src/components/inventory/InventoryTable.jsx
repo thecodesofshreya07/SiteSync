@@ -20,6 +20,8 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
   }
 
   const canLog = typeof onLogTransaction === 'function'
+  const canDelete = typeof onDeleteItem === 'function'
+  const showActions = canLog || canDelete
 
   return (
     <div className="overflow-x-auto rounded-xl border border-surface-border bg-white shadow-card">
@@ -33,7 +35,7 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
             <th className="px-4 py-3">Days Remaining</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Last Updated</th>
-            {canLog && <th className="px-4 py-3 text-right">Action</th>}
+            {showActions && <th className="px-4 py-3 text-right">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -61,18 +63,20 @@ export default function InventoryTable({ items, onLogTransaction, onDeleteItem }
                   <InventoryStatusBadge status={item.status} />
                 </td>
                 <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">{formatDate(item.lastUpdated || item.lastTransaction?.date || new Date())}</td>
-                {canLog && (
+                {showActions && (
                   <td className="px-4 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => onLogTransaction(item)}
-                        className="inline-flex items-center gap-1 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm transition-colors cursor-pointer"
-                        title="Log Stock In/Out"
-                      >
-                        <PackagePlus size={13} className="text-teal-600" />
-                        Log
-                      </button>
-                      {onDeleteItem && (
+                      {canLog && (
+                        <button
+                          onClick={() => onLogTransaction(item)}
+                          className="inline-flex items-center gap-1 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm transition-colors cursor-pointer"
+                          title="Log Stock In/Out"
+                        >
+                          <PackagePlus size={13} className="text-teal-600" />
+                          Log
+                        </button>
+                      )}
+                      {canDelete && (
                         <button
                           onClick={() => onDeleteItem(item.id)}
                           className="inline-flex items-center justify-center rounded-md border border-transparent p-1 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
