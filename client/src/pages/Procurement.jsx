@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react'
-import { LayoutGrid, Table2 } from 'lucide-react'
+import { LayoutGrid, Table2, Plus } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
+import Button from '../components/common/Button'
 import ProcurementPipeline from '../components/procurement/ProcurementPipeline'
 import ProcurementTable from '../components/procurement/ProcurementTable'
+import CreatePOModal from '../components/procurement/CreatePOModal'
 import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
 import { getProcurementBySite } from '../data/procurement'
 import { cn } from '../lib/utils'
 
-const API_BASE = 'http://127.0.0.1:5000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -52,6 +55,56 @@ export default function Procurement() {
 
   const safeOrders = Array.isArray(orders) ? orders : getProcurementBySite(selectedSite.id)
 
+  const handleCreateOrder = async (orderData) => {
+    try {
+      const res = await fetch(`${API_BASE}/procurement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      })
+      if (!res.ok) {
+        throw new Error(`Create PO failed with status ${res.status}`)
+      }
+      const created = await res.json()
+      if (created && created.id) {
+        setOrders((prev) => [...(Array.isArray(prev) ? prev : safeOrders), created])
+      }
+    } catch (err) {
+      console.warn('Create PO API error, applying local fallback:', err)
+      const newOrder = {
+        ...orderData,
+        id: `PO-${Math.floor(2050 + Math.random() * 500)}`,
+        dateRaised: new Date().toISOString().slice(0, 10),
+        status: 'Draft',
+        delayDays: 0,
+      }
+      setOrders((prev) => [...(Array.isArray(prev) ? prev : safeOrders), newOrder])
+    }
+  }
+
+  const handleDeleteOrder = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this purchase order?')) return
+
+    try {
+      const res = await fetch(`${API_BASE}/procurement/${id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error(`Delete failed with status ${res.status}`)
+      }
+      setOrders((prev) => {
+        const list = Array.isArray(prev) ? prev : safeOrders
+        return list.filter((o) => o.id !== id)
+      })
+    } catch (err) {
+      console.warn('Delete PO API error, applying local fallback:', err)
+      setOrders((prev) => {
+        const list = Array.isArray(prev) ? prev : safeOrders
+        return list.filter((o) => o.id !== id)
+      })
+    }
+  }
+
   const handleUpdateOrder = async (id, updateFields) => {
     try {
       const res = await fetch(`${API_BASE}/procurement/${id}`, {
@@ -85,27 +138,36 @@ export default function Procurement() {
         title="Procurement"
         subtitle={`Purchase pipeline for ${selectedSite.name}`}
         actions={
-          <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
-            <button
-              onClick={() => setView('pipeline')}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
-                view === 'pipeline' ? 'bg-teal-600 text-white' : 'text-navy-600 hover:bg-surface-bg'
-              )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              icon={Plus}
+              onClick={() => setCreateModalOpen(true)}
             >
-              <LayoutGrid size={13} />
-              Pipeline
-            </button>
-            <button
-              onClick={() => setView('table')}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
-                view === 'table' ? 'bg-teal-600 text-white' : 'text-navy-600 hover:bg-surface-bg'
-              )}
-            >
-              <Table2 size={13} />
-              Table
-            </button>
+              Raise PO
+            </Button>
+            <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
+              <button
+                onClick={() => setView('pipeline')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  view === 'pipeline' ? 'bg-teal-600 text-white' : 'text-navy-600 hover:bg-surface-bg'
+                )}
+              >
+                <LayoutGrid size={13} />
+                Pipeline
+              </button>
+              <button
+                onClick={() => setView('table')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  view === 'table' ? 'bg-teal-600 text-white' : 'text-navy-600 hover:bg-surface-bg'
+                )}
+              >
+                <Table2 size={13} />
+                Table
+              </button>
+            </div>
           </div>
         }
       />
@@ -115,8 +177,16 @@ export default function Procurement() {
       ) : view === 'pipeline' ? (
         <ProcurementPipeline orders={safeOrders} onUpdateOrder={handleUpdateOrder} />
       ) : (
-        <ProcurementTable orders={safeOrders} onUpdateOrder={handleUpdateOrder} />
+        <ProcurementTable orders={safeOrders} onUpdateOrder={handleUpdateOrder} onDeleteOrder={handleDeleteOrder} />
       )}
+
+      <CreatePOModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        siteId={selectedSite.id}
+        siteName={selectedSite.name}
+        onCreate={handleCreateOrder}
+      />
     </div>
   )
 }

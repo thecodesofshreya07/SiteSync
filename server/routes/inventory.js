@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCollection, findById, updateById, getPool } from '../db.js'
+import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
 
 const router = Router()
 
@@ -73,6 +73,86 @@ router.get('/:id', async (req, res) => {
     return res.status(404).json({ error: 'Inventory item not found' })
   }
   res.json(item)
+})
+
+// POST /api/inventory - Create a new inventory item
+router.post('/', async (req, res) => {
+  try {
+    const { siteId, item, unit = 'units', quantity = 0, reorderThreshold = 0, consumptionPerDay = 0 } = req.body
+
+    if (!siteId || !item) {
+      return res.status(400).json({ error: 'siteId and item name are required' })
+    }
+
+    const pool = getPool()
+    const numQty = Math.max(0, Number(quantity) || 0)
+    const numThreshold = Math.max(0, Number(reorderThreshold) || 0)
+    const numConsumption = Math.max(0, Number(consumptionPerDay) || 0)
+
+    let status = 'OK'
+    if (numQty <= numThreshold * 0.5) {
+      status = 'CRITICAL'
+    } else if (numQty <= numThreshold) {
+      status = 'LOW'
+    }
+
+    const now = new Date()
+    const id = `INV-${Math.floor(100 + Math.random() * 900)}`
+    const lastUpdated = now.toISOString()
+    const lastTransaction = {
+      type: 'Stock In',
+      quantity: numQty,
+      date: now.toISOString().slice(0, 10),
+      note: 'Initial inventory creation',
+    }
+
+    const newItem = {
+      id,
+      siteId,
+      item,
+      unit,
+      quantity: numQty,
+      reorderThreshold: numThreshold,
+      consumptionPerDay: numConsumption,
+      status,
+      lastUpdated,
+      lastTransaction,
+    }
+
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO inventory (
+            id, site_id, item, unit, quantity, reorder_threshold, consumption_per_day, status, last_updated, last_transaction, data
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            id,
+            siteId,
+            item,
+            unit,
+            numQty,
+            numThreshold,
+            numConsumption,
+            status,
+            lastUpdated,
+            JSON.stringify(lastTransaction),
+            JSON.stringify(newItem),
+          ]
+        )
+      } catch (err) {
+        console.warn('PostgreSQL insert inventory item warning:', err.message)
+      }
+    }
+
+    const list = getCollection('inventory')
+    list.push(newItem)
+    setCollection('inventory', list)
+
+    res.status(201).json(newItem)
+  } catch (err) {
+    console.error('Error creating inventory item:', err)
+    res.status(500).json({ error: 'Failed to create inventory item' })
+  }
 })
 
 // POST /api/inventory/:id/transaction - Log a stock transaction (Stock In, Stock Out, Transfer)
@@ -174,6 +254,136 @@ router.post('/:id/transaction', async (req, res) => {
   })
 
   res.json(updatedPayload)
+})
+
+// PATCH /api/inventory/:id - Direct field edits (e.g. reorderThreshold, consumptionPerDay, unit, item)
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+    let currentItem = null
+
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM inventory WHERE id = $1', [id])
+        if (result.rows.length > 0) {
+          currentItem = formatInventoryRow(result.rows[0])
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL lookup failed for item ${id}:`, err.message)
+      }
+    }
+
+    if (!currentItem) {
+      currentItem = findById('inventory', id)
+    }
+
+    if (!currentItem) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    const payload = req.body
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'Invalid update body' })
+    }
+
+    const updatedQty = payload.quantity !== undefined ? Number(payload.quantity) : currentItem.quantity
+    const updatedThreshold =
+      payload.reorderThreshold !== undefined ? Number(payload.reorderThreshold) : currentItem.reorderThreshold
+
+    let updatedStatus = payload.status || currentItem.status
+    if (payload.quantity !== undefined || payload.reorderThreshold !== undefined) {
+      if (!payload.status) {
+        if (updatedQty <= updatedThreshold * 0.5) {
+          updatedStatus = 'CRITICAL'
+        } else if (updatedQty <= updatedThreshold) {
+          updatedStatus = 'LOW'
+        } else {
+          updatedStatus = 'OK'
+        }
+      }
+    }
+
+    const now = new Date()
+    const lastUpdated = now.toISOString()
+
+    const merged = {
+      ...currentItem,
+      ...payload,
+      quantity: updatedQty,
+      reorderThreshold: updatedThreshold,
+      consumptionPerDay:
+        payload.consumptionPerDay !== undefined ? Number(payload.consumptionPerDay) : currentItem.consumptionPerDay,
+      status: updatedStatus,
+      lastUpdated,
+    }
+
+    if (pool) {
+      try {
+        await pool.query(
+          `UPDATE inventory 
+           SET item = $1, unit = $2, quantity = $3, reorder_threshold = $4, consumption_per_day = $5, status = $6, last_updated = $7, data = $8
+           WHERE id = $9`,
+          [
+            merged.item,
+            merged.unit,
+            merged.quantity,
+            merged.reorderThreshold,
+            merged.consumptionPerDay,
+            merged.status,
+            merged.lastUpdated,
+            JSON.stringify(merged),
+            id,
+          ]
+        )
+      } catch (err) {
+        console.warn(`PostgreSQL PATCH error for item ${id}:`, err.message)
+      }
+    }
+
+    updateById('inventory', id, merged)
+    res.json(merged)
+  } catch (err) {
+    console.error('Error updating inventory item:', err)
+    res.status(500).json({ error: 'Failed to update inventory item' })
+  }
+})
+
+// DELETE /api/inventory/:id - Delete an inventory item
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+    let found = false
+
+    if (pool) {
+      try {
+        const result = await pool.query('DELETE FROM inventory WHERE id = $1 RETURNING id', [id])
+        if (result.rows.length > 0) {
+          found = true
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL DELETE error for item ${id}:`, err.message)
+      }
+    }
+
+    const list = getCollection('inventory')
+    const idx = list.findIndex((i) => i.id === id)
+    if (idx !== -1) {
+      found = true
+      list.splice(idx, 1)
+      setCollection('inventory', list)
+    }
+
+    if (!found) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    res.json({ message: 'Inventory item deleted successfully', id })
+  } catch (err) {
+    console.error('Error deleting inventory item:', err)
+    res.status(500).json({ error: 'Failed to delete inventory item' })
+  }
 })
 
 export default router
