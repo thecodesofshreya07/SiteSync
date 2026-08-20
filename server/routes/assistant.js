@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { runAgent } from '../services/agent.js'
-import { getCollection, readDb } from '../db.js'
+import { runRagAssistant } from '../rag/assistant.js'
+import { readDb } from '../db.js'
 
 const router = Router()
 
@@ -23,7 +23,7 @@ router.get('/activity', (req, res) => {
   res.json(activity[siteId] || activity['SITE-002'] || [])
 })
 
-// POST /api/assistant/chat (or POST /api/assistant) - Execute Agentic loop
+// POST /api/assistant/chat (or POST /api/assistant) - Execute RAG + LLM synthesis
 async function handleChat(req, res) {
   try {
     const { message, question, siteId, conversationHistory = [] } = req.body || {}
@@ -33,17 +33,21 @@ async function handleChat(req, res) {
       return res.status(400).json({ error: 'Message or question is required.' })
     }
 
-    const result = await runAgent({
+    const result = await runRagAssistant({
       message: query,
+      question: query,
       siteId,
       conversationHistory,
     })
 
-    return res.json(result)
+    // Guaranteed { answer: string, sources: Array<{ type, id, label }> }
+    return res.json({
+      answer: result.answer,
+      sources: result.sources || [],
+    })
   } catch (err) {
-    console.error('Agent route error:', err.message)
+    console.error('Assistant route error:', err.message)
 
-    // Sanitize error response without leaking keys or internal traces
     const statusCode = err.message?.includes('rate limit')
       ? 429
       : err.message?.includes('not configured')
@@ -51,8 +55,9 @@ async function handleChat(req, res) {
       : 500
 
     return res.status(statusCode).json({
-      error: 'Agent query failed',
-      message: err.message || 'An error occurred during agent execution.',
+      answer: 'The assistant encountered an issue while processing your request. Please try again.',
+      sources: [],
+      error: err.message,
     })
   }
 }
