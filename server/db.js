@@ -336,7 +336,7 @@ export async function updateByIdDirect(collectionName, id, updateFields) {
       try {
         await pgPool.query(
           `UPDATE ${tableName} 
-           SET data = $1, updated_at = NOW() 
+           SET data = $1 
            WHERE id = $2`,
           [JSON.stringify(updatedItem), id]
         )
