@@ -1,5 +1,4 @@
 import { Router } from 'express'
-<<<<<<< HEAD
 import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
 
 const router = Router()
@@ -80,19 +79,6 @@ router.get('/', async (req, res) => {
     if (siteId) {
       const filtered = orders.filter((o) => String(o.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase())
       return res.json(filtered)
-=======
-import { getCollectionDirect, updateByIdDirect } from '../db.js'
-
-const router = Router()
-
-// GET /api/procurement - List procurement orders (optional ?siteId=...)
-router.get('/', async (req, res) => {
-  try {
-    const { siteId } = req.query
-    const orders = await getCollectionDirect('procurementOrders')
-    if (siteId) {
-      return res.json(orders.filter((o) => o.siteId === siteId))
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
     return res.json(orders)
   } catch (err) {
@@ -101,8 +87,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-<<<<<<< HEAD
-// GET /api/procurement/:id - Single procurement order
+// GET /api/procurement/:id - Single procurement order or list by Site ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -120,36 +105,23 @@ router.get('/:id', async (req, res) => {
     }
 
     const order = findById('procurementOrders', id) || findById('procurement', id)
-    if (!order) {
-      return res.status(404).json({ error: 'Procurement order not found' })
-=======
-// GET /api/procurement/:idOrSiteId - Single order OR list of orders for a siteId
-router.get('/:idOrSiteId', async (req, res) => {
-  try {
-    const { idOrSiteId } = req.params
-    const orders = await getCollectionDirect('procurementOrders')
-
-    // 1. Check if ID matches a purchase order (e.g. PO-2041)
-    const order = orders.find((o) => o.id === idOrSiteId)
     if (order) {
       return res.json(order)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
 
-    // 2. Check if ID matches a site ID (e.g. SITE-002)
-    const siteOrders = orders.filter((o) => o.siteId === idOrSiteId)
+    const orders = getCollection('procurementOrders') || getCollection('procurement') || []
+    const siteOrders = orders.filter((o) => o.siteId === id)
     if (siteOrders.length > 0) {
       return res.json(siteOrders)
     }
 
-    return res.status(404).json({ error: `Purchase order or site '${idOrSiteId}' not found` })
+    return res.status(404).json({ error: `Purchase order or site '${id}' not found` })
   } catch (err) {
-    console.error(`Error in GET /api/procurement/${req.params.idOrSiteId}:`, err)
+    console.error(`Error in GET /api/procurement/${req.params.id}:`, err)
     return res.status(500).json({ error: 'Failed to retrieve procurement orders' })
   }
 })
 
-<<<<<<< HEAD
 // POST /api/procurement - Create a new procurement order
 router.post('/', async (req, res) => {
   try {
@@ -305,16 +277,6 @@ router.patch('/:id', async (req, res) => {
     }
 
     res.json(finalResult)
-=======
-// PATCH /api/procurement/:id - Advance procurement stage or update status
-router.patch('/:id', async (req, res) => {
-  try {
-    const updated = await updateByIdDirect('procurementOrders', req.params.id, req.body)
-    if (!updated) {
-      return res.status(404).json({ error: 'Procurement order not found' })
-    }
-    return res.json(updated)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
   } catch (err) {
     console.error(`Error in PATCH /api/procurement/${req.params.id}:`, err)
     return res.status(500).json({ error: 'Failed to update procurement order' })

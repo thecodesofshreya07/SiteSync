@@ -1,9 +1,5 @@
 import { Router } from 'express'
-<<<<<<< HEAD
 import { getCollection, findById, getPool } from '../db.js'
-=======
-import { getCollectionDirect } from '../db.js'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
 const router = Router()
 
@@ -23,7 +19,6 @@ function formatVendorRow(row) {
 // GET /api/vendors - List all vendors
 router.get('/', async (req, res) => {
   try {
-<<<<<<< HEAD
     const pool = getPool()
     if (pool) {
       try {
@@ -36,10 +31,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const vendors = getCollection('vendors')
-=======
-    const vendors = await getCollectionDirect('vendors')
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+    const vendors = getCollection('vendors') || []
     res.json(vendors)
   } catch (err) {
     console.error('Error in GET /api/vendors:', err)
@@ -47,7 +39,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-<<<<<<< HEAD
 // GET /api/vendors/:id - Single vendor by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -65,13 +56,6 @@ router.get('/:id', async (req, res) => {
     }
 
     const vendor = findById('vendors', id)
-=======
-// GET /api/vendors/:id - Single vendor
-router.get('/:id', async (req, res) => {
-  try {
-    const vendors = await getCollectionDirect('vendors')
-    const vendor = vendors.find((v) => v.id === req.params.id)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     if (!vendor) {
       return res.status(404).json({ error: 'Vendor not found' })
     }

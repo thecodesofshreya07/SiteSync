@@ -1,51 +1,53 @@
 import { createContext, useEffect, useState } from 'react'
+import { sites as mockSites } from '../data/sites'
 
 export const SiteContext = createContext(null)
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE_5000 = 'http://127.0.0.1:5000/api'
+const API_BASE_4000 = 'http://127.0.0.1:4000/api'
 
 export function SiteProvider({ children }) {
-  const [sites, setSites] = useState([])
+  const [sites, setSites] = useState(mockSites)
   const [selectedSiteId, setSelectedSiteId] = useState('SITE-002') // default to Site B
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
     async function loadSites() {
       try {
-        const res = await fetch(`${API_BASE}/sites`)
-        if (res.ok) {
+        let res = await fetch(`${API_BASE_5000}/sites`).catch(() => null)
+        if (!res || !res.ok) {
+          res = await fetch(`${API_BASE_4000}/sites`).catch(() => null)
+        }
+
+        if (res && res.ok) {
           const data = await res.json()
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0 && isMounted) {
             setSites(data)
-            if (!selectedSiteId) {
-              setSelectedSiteId(data[0].id)
-            }
           }
         }
       } catch (err) {
-        console.warn('Failed to load sites from backend API:', err.message)
-      } finally {
-        setLoading(false)
+        console.warn('Failed to load sites from backend API, using mock fallback:', err.message)
       }
     }
+
     loadSites()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
+  const effectiveSites = Array.isArray(sites) && sites.length > 0 ? sites : mockSites
+
   const selectedSite =
-    sites.find((s) => s.id === selectedSiteId) ||
-    sites[0] || {
-      id: selectedSiteId || 'SITE-002',
-      name: 'Site B — Warehouse Expansion',
-      location: 'Bhiwandi, Thane',
-      status: 'At Risk',
-      budgetPlanned: 31000000,
-      budgetActual: 34658000,
-      progress: 41,
-      lastScan: new Date().toISOString(),
-    }
+    effectiveSites.find((s) => s.id === selectedSiteId) ||
+    effectiveSites[0] ||
+    mockSites[1]
 
   const value = {
-    sites,
+    sites: effectiveSites,
     selectedSiteId,
     selectedSite,
     setSelectedSiteId,

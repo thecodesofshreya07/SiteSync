@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react'
-<<<<<<< HEAD
-import { LayoutGrid, Table2, Plus } from 'lucide-react'
-=======
-import { LayoutGrid, Table2, AlertTriangle } from 'lucide-react'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+import { LayoutGrid, Table2, Plus, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import Button from '../components/common/Button'
 import ProcurementPipeline from '../components/procurement/ProcurementPipeline'
@@ -13,18 +9,15 @@ import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
 import { cn } from '../lib/utils'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://127.0.0.1:5000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-<<<<<<< HEAD
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-=======
   const [error, setError] = useState(null)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -35,20 +28,20 @@ export default function Procurement() {
       try {
         const res = await fetch(`${API_BASE}/procurement?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (!res.ok) {
-          throw new Error(`API server returned ${res.status}`)
+          throw new Error(`API server returned status ${res.status}`)
         }
         const data = await res.json()
         if (!Array.isArray(data)) {
           throw new Error('Server returned non-array data for procurement')
         }
         if (isMounted) {
-          setOrders(Array.isArray(data) ? data : [])
+          setOrders(data)
           setLoading(false)
         }
       } catch (err) {
         console.error('Procurement API fetch error:', err.message)
         if (isMounted) {
-          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve procurement data from ${API_BASE}/procurement (${err.message})`)
+          setError(`⚠️ API error fetching procurement: ${err.message}`)
           setOrders([])
           setLoading(false)
         }
@@ -62,7 +55,7 @@ export default function Procurement() {
     }
   }, [selectedSite.id])
 
-  const safeOrders = Array.isArray(orders) ? orders : getProcurementBySite(selectedSite.id)
+  const safeOrders = Array.isArray(orders) ? orders : []
 
   const handleCreateOrder = async (orderData) => {
     try {
@@ -133,16 +126,11 @@ export default function Procurement() {
         return updated
       }
     } catch (err) {
-<<<<<<< HEAD
       console.warn('Procurement PATCH failed, applying optimistic update:', err)
       setOrders((prev) => {
         const list = Array.isArray(prev) ? prev : safeOrders
         return list.map((o) => (o.id === id ? { ...o, ...updateFields } : o))
       })
-=======
-      console.error('Procurement update error:', err.message)
-      alert(`Update failed: ${err.message}`)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
   }
 
@@ -195,9 +183,9 @@ export default function Procurement() {
 
       {loading ? (
         <LoadingState label="Loading procurement orders from PostgreSQL..." />
-      ) : orders.length === 0 && !error ? (
+      ) : safeOrders.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-          NO REAL DATA FOUND — No procurement orders exist in PostgreSQL for {selectedSite.name}.
+          No procurement orders exist for {selectedSite.name}. Click "Raise PO" to create one.
         </div>
       ) : view === 'pipeline' ? (
         <ProcurementPipeline orders={safeOrders} onUpdateOrder={handleUpdateOrder} />

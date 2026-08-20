@@ -9,14 +9,9 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
-<<<<<<< HEAD
-import { getInventoryBySite, daysRemaining } from '../data/inventory'
-import { Plus, PackagePlus } from 'lucide-react'
-=======
-import { PackagePlus, AlertTriangle } from 'lucide-react'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://127.0.0.1:5000/api'
 
 export function daysRemaining(item) {
   if (!item || !item.consumptionPerDay || item.consumptionPerDay <= 0) return 999
@@ -57,7 +52,7 @@ export default function Inventory() {
       } catch (err) {
         console.error('Inventory API fetch error:', err.message)
         if (isMounted) {
-          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve current inventory data from ${API_BASE}/inventory (${err.message})`)
+          setError(`⚠️ API error fetching inventory: ${err.message}`)
           setItems([])
           setLoading(false)
         }
@@ -71,14 +66,16 @@ export default function Inventory() {
     }
   }, [selectedSite.id])
 
-  const filtered = items.filter((item) => {
+  const safeItems = Array.isArray(items) ? items : []
+
+  const filtered = safeItems.filter((item) => {
     if (!item || !item.item) return false
     const matchesSearch = item.item.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = status === 'ALL' || item.status === status
     return matchesSearch && matchesStatus
   })
 
-  const criticalItem = items
+  const criticalItem = safeItems
     .filter((i) => i && (i.status === 'CRITICAL' || i.status === 'Critical'))
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
@@ -158,7 +155,6 @@ export default function Inventory() {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
       }
     } catch (err) {
-<<<<<<< HEAD
       console.warn('Transaction API call failed, applying optimistic local update:', err)
       setItems((prev) => {
         const list = Array.isArray(prev) ? prev : safeItems
@@ -185,10 +181,6 @@ export default function Inventory() {
           }
         })
       })
-=======
-      console.error('Transaction API call error:', err.message)
-      alert(`Transaction failed: ${err.message}`)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
   }
 
@@ -198,7 +190,6 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-<<<<<<< HEAD
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -216,16 +207,6 @@ export default function Inventory() {
               Log Stock
             </Button>
           </div>
-=======
-          <Button
-            variant="primary"
-            icon={PackagePlus}
-            onClick={() => items.length > 0 && openTransactionModal(items[0])}
-            disabled={items.length === 0}
-          >
-            Add Stock
-          </Button>
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
         }
       />
 
@@ -238,9 +219,9 @@ export default function Inventory() {
 
       {loading ? (
         <LoadingState label="Loading inventory from PostgreSQL..." />
-      ) : items.length === 0 && !error ? (
+      ) : safeItems.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-          NO REAL DATA FOUND — No inventory records exist in PostgreSQL for {selectedSite.name}.
+          No inventory records exist for {selectedSite.name}.
         </div>
       ) : (
         <>
