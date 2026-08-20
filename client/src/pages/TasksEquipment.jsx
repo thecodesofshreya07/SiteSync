@@ -10,7 +10,11 @@ import { getEquipmentBySite } from '../data/equipment'
 import { cn } from '../lib/utils'
 
 const TABS = ['Tasks', 'Equipment']
+<<<<<<< HEAD
 const API_BASE = 'http://127.0.0.1:5000/api'
+=======
+const API_BASE = 'http://localhost:4000/api'
+>>>>>>> ab99af4f5a0b5b66a1c8ec9e535c54a0d8e7d613
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()

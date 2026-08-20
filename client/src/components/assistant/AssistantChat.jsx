@@ -33,17 +33,17 @@ export default function AssistantChat() {
     setThinking(true)
 
     try {
-      const res = await fetch('http://localhost:5000/api/assistant/chat', {
+      const res = await fetch('http://localhost:4000/api/assistant/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: q }),
       })
 
+      const data = await res.json()
       if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`)
+        throw new Error(data.message || data.error || `Server returned ${res.status}`)
       }
 
-      const data = await res.json()
       setMessages((prev) => [
         ...prev,
         {
@@ -54,11 +54,15 @@ export default function AssistantChat() {
         },
       ])
     } catch (err) {
-      console.warn('Backend assistant request error, using fallback:', err.message)
-      const fallback = getAssistantResponse(q)
+      console.error('Backend assistant error:', err.message)
       setMessages((prev) => [
         ...prev,
-        { id: `${Date.now()}-a`, role: 'assistant', text: fallback.answer, sources: fallback.sources || [] },
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          text: `⚠️ AI Query Error: ${err.message}`,
+          sources: [],
+        },
       ])
     } finally {
       setThinking(false)

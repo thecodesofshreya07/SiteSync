@@ -461,6 +461,7 @@
       "siteId": "SITE-002",
       "item": "Cement Portland Type I",
       "unit": "bags",
+<<<<<<< HEAD
       "quantity": 140,
       "reorderThreshold": 400,
       "consumptionPerDay": 55,
@@ -470,6 +471,17 @@
         "type": "Stock Out",
         "quantity": 40,
         "date": "2026-08-20",
+=======
+      "quantity": 180,
+      "reorderThreshold": 400,
+      "consumptionPerDay": 55,
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-19T09:10:00",
+      "lastTransaction": {
+        "type": "Stock Out",
+        "quantity": 120,
+        "date": "2026-08-18",
+>>>>>>> ab99af4f5a0b5b66a1c8ec9e535c54a0d8e7d613
         "relatedPO": "PO-2041"
       }
     },
@@ -857,6 +869,43 @@
   ],
   "alerts": [
     {
+      "id": "ALT-5908",
+      "siteId": "SITE-002",
+      "severity": "critical",
+      "title": "Cement Portland Type I stock at Site B — Warehouse Expansion is projected to become critical in 3.3 days.",
+      "timestamp": "2026-08-20T10:43:15.650Z",
+      "explanation": "Current consumption is 55 bags/day against remaining stock of 180 bags. Pending replenishment is delayed by 4 days, causing a potential supply gap.",
+      "reasonPoints": [
+        "Current consumption is 55 bags/day.",
+        "Current stock is 180 bags.",
+        "Pending delivery (PO-2041) is delayed by 4 days."
+      ],
+      "recommendation": "transfer 150 bags of Cement Portland Type I from Riverside Tower",
+      "sources": [
+        {
+          "type": "inventory",
+          "id": "INV-104",
+          "label": "Inventory Record INV-104"
+        },
+        {
+          "type": "procurement",
+          "id": "PO-2041",
+          "label": "Purchase Order PO-2041"
+        },
+        {
+          "type": "delivery",
+          "id": "DEL-882",
+          "label": "Delivery DEL-882"
+        },
+        {
+          "type": "vendor",
+          "id": "VEN-017",
+          "label": "Vendor Record VEN-017"
+        }
+      ],
+      "status": "pending"
+    },
+    {
       "id": "ALT-009",
       "siteId": "SITE-002",
       "severity": "critical",
@@ -891,7 +940,7 @@
           "label": "Historical Vendor Record VEN-017"
         }
       ],
-      "status": "pending"
+      "status": "approved"
     },
     {
       "id": "ALT-010",

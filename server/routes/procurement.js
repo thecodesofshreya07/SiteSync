@@ -80,38 +80,35 @@ router.get('/', async (req, res) => {
       const filtered = (orders || []).filter((o) => o.siteId === siteId)
       return res.json(filtered)
     }
-    res.json(orders || [])
+    return res.json(orders)
   } catch (err) {
     console.error('Error fetching procurement orders:', err)
-    res.status(500).json({ error: 'Failed to retrieve procurement orders' })
+    return res.status(500).json({ error: 'Failed to retrieve procurement orders' })
   }
 })
 
-// GET /api/procurement/:id - Single procurement order
-router.get('/:id', async (req, res) => {
+// GET /api/procurement/:idOrSiteId - Single PO by ID OR list of POs for a siteId
+router.get('/:idOrSiteId', (req, res) => {
   try {
-    const { id } = req.params
-    const pool = getPool()
+    const { idOrSiteId } = req.params
+    const orders = getCollection('procurementOrders')
 
-    if (pool) {
-      try {
-        const result = await pool.query('SELECT * FROM procurement_orders WHERE id = $1', [id])
-        if (result.rows.length > 0) {
-          return res.json(formatOrderRow(result.rows[0]))
-        }
-      } catch (err) {
-        console.warn(`PostgreSQL procurement lookup failed for ${id}:`, err.message)
-      }
+    // 1. Check if ID matches a PO (e.g. PO-2041)
+    const order = orders.find((o) => o.id === idOrSiteId)
+    if (order) {
+      return res.json(order)
     }
 
-    const order = findById('procurementOrders', id) || findById('procurement', id)
-    if (!order) {
-      return res.status(404).json({ error: 'Procurement order not found' })
+    // 2. Check if ID matches a site (e.g. SITE-002)
+    const siteOrders = orders.filter((o) => o.siteId === idOrSiteId)
+    if (siteOrders.length > 0) {
+      return res.json(siteOrders)
     }
-    res.json(order)
+
+    return res.status(404).json({ error: `Procurement order or site '${idOrSiteId}' not found` })
   } catch (err) {
-    console.error(`Error fetching procurement order ${req.params.id}:`, err)
-    res.status(500).json({ error: 'Failed to retrieve procurement order' })
+    console.error(`Error fetching procurement order ${req.params.idOrSiteId}:`, err)
+    return res.status(500).json({ error: 'Failed to retrieve procurement order' })
   }
 })
 
@@ -261,18 +258,10 @@ router.patch('/:id', async (req, res) => {
       }
     }
 
-    const localUpdated =
-      updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
-
-    const finalResult = updated || localUpdated
-    if (!finalResult) {
-      return res.status(404).json({ error: 'Procurement order not found' })
-    }
-
-    res.json(finalResult)
+    return res.json(updated)
   } catch (err) {
     console.error(`Error updating procurement order ${req.params.id}:`, err)
-    res.status(500).json({ error: 'Failed to update procurement order' })
+    return res.status(500).json({ error: 'Failed to update procurement order' })
   }
 })
 

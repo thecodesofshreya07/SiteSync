@@ -12,6 +12,7 @@ import deliveriesRouter from './routes/deliveries.js'
 import alertsRouter from './routes/alerts.js'
 import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
+import agentRouter from './routes/agent.js'
 
 import { getPool } from './db.js'
 
@@ -25,6 +26,16 @@ app.use(
   })
 )
 app.use(express.json())
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'SiteSync API',
+    version: '1.0.0',
+    port: config.port,
+    status: 'running',
+    health: '/api/health',
+  })
+})
 
 // Health check with DB status
 app.get('/api/health', async (req, res) => {
@@ -51,6 +62,7 @@ app.use('/api/deliveries', deliveriesRouter)
 app.use('/api/alerts', alertsRouter)
 app.use('/api/assistant', assistantRouter)
 app.use('/api/timeline', timelineRouter)
+app.use('/api/agent', agentRouter)
 
 const PORT = config.port
 
