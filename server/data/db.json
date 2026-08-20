@@ -694,6 +694,23 @@
       },
       "reorderThreshold": 40,
       "consumptionPerDay": 10
+    },
+    {
+      "id": "INV-559",
+      "item": "ultratech wala cement : desh ka number 1 choice",
+      "unit": "bags",
+      "siteId": "SITE-001",
+      "status": "OK",
+      "quantity": 100,
+      "lastUpdated": "2026-08-20T12:51:54.364Z",
+      "lastTransaction": {
+        "date": "2026-08-20",
+        "note": "Initial inventory creation",
+        "type": "Stock In",
+        "quantity": 100
+      },
+      "reorderThreshold": 90,
+      "consumptionPerDay": 10
     }
   ],
   "vendors": [
