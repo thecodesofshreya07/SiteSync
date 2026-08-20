@@ -7,17 +7,21 @@ import ProcurementTable from '../components/procurement/ProcurementTable'
 import CreatePOModal from '../components/procurement/CreatePOModal'
 import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
+import { useAuth } from '../hooks/useAuth'
+import { apiRequest } from '../lib/api'
 import { cn } from '../lib/utils'
-
-const API_BASE = 'http://127.0.0.1:5000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()
+  const { user } = useAuth()
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [error, setError] = useState(null)
+
+  const role = user?.role || 'Guest'
+  const canCreateRequest = role === 'Contractor' || role === 'Admin' || role === 'Project Manager'
 
   useEffect(() => {
     let isMounted = true
@@ -26,16 +30,9 @@ export default function Procurement() {
 
     const fetchProcurement = async () => {
       try {
-        const res = await fetch(`${API_BASE}/procurement?siteId=${encodeURIComponent(selectedSite.id)}`)
-        if (!res.ok) {
-          throw new Error(`API server returned status ${res.status}`)
-        }
-        const data = await res.json()
-        if (!Array.isArray(data)) {
-          throw new Error('Server returned non-array data for procurement')
-        }
+        const data = await apiRequest(`/procurement?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (isMounted) {
-          setOrders(data)
+          setOrders(Array.isArray(data) ? data : [])
           setLoading(false)
         }
       } catch (err) {
@@ -59,15 +56,10 @@ export default function Procurement() {
 
   const handleCreateOrder = async (orderData) => {
     try {
-      const res = await fetch(`${API_BASE}/procurement`, {
+      const created = await apiRequest('/procurement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       })
-      if (!res.ok) {
-        throw new Error(`Create PO failed with status ${res.status}`)
-      }
-      const created = await res.json()
       if (created && created.id) {
         setOrders((prev) => [...(Array.isArray(prev) ? prev : safeOrders), created])
       }
@@ -77,7 +69,7 @@ export default function Procurement() {
         ...orderData,
         id: `PO-${Math.floor(2050 + Math.random() * 500)}`,
         dateRaised: new Date().toISOString().slice(0, 10),
-        status: 'Draft',
+        status: 'Pending PM Validation',
         delayDays: 0,
       }
       setOrders((prev) => [...(Array.isArray(prev) ? prev : safeOrders), newOrder])
@@ -88,12 +80,9 @@ export default function Procurement() {
     if (!window.confirm('Are you sure you want to delete this purchase order?')) return
 
     try {
-      const res = await fetch(`${API_BASE}/procurement/${id}`, {
+      await apiRequest(`/procurement/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) {
-        throw new Error(`Delete failed with status ${res.status}`)
-      }
       setOrders((prev) => {
         const list = Array.isArray(prev) ? prev : safeOrders
         return list.filter((o) => o.id !== id)
@@ -109,15 +98,10 @@ export default function Procurement() {
 
   const handleUpdateOrder = async (id, updateFields) => {
     try {
-      const res = await fetch(`${API_BASE}/procurement/${id}`, {
+      const updated = await apiRequest(`/procurement/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateFields),
       })
-      if (!res.ok) {
-        throw new Error(`PATCH failed with status ${res.status}`)
-      }
-      const updated = await res.json()
       if (updated && updated.id) {
         setOrders((prev) => {
           const list = Array.isArray(prev) ? prev : safeOrders
@@ -138,16 +122,18 @@ export default function Procurement() {
     <div>
       <PageHeader
         title="Procurement"
-        subtitle={`Purchase pipeline for ${selectedSite.name}`}
+        subtitle={`Purchase pipeline & material workflow for ${selectedSite.name}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              variant="primary"
-              icon={Plus}
-              onClick={() => setCreateModalOpen(true)}
-            >
-              Raise PO
-            </Button>
+            {canCreateRequest && (
+              <Button
+                variant="primary"
+                icon={Plus}
+                onClick={() => setCreateModalOpen(true)}
+              >
+                {role === 'Contractor' ? '+ Material Request' : 'Raise PO'}
+              </Button>
+            )}
             <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
               <button
                 onClick={() => setView('pipeline')}
@@ -185,7 +171,7 @@ export default function Procurement() {
         <LoadingState label="Loading procurement orders from PostgreSQL..." />
       ) : safeOrders.length === 0 && !error ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
-          No procurement orders exist for {selectedSite.name}. Click "Raise PO" to create one.
+          No procurement orders exist for {selectedSite.name}. {canCreateRequest ? 'Click "+ Material Request" to create one.' : ''}
         </div>
       ) : view === 'pipeline' ? (
         <ProcurementPipeline orders={safeOrders} onUpdateOrder={handleUpdateOrder} />

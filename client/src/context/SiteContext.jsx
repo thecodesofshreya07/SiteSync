@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from 'react'
 import { sites as mockSites } from '../data/sites'
+import { useAuth } from '../hooks/useAuth'
 
 export const SiteContext = createContext(null)
 
@@ -7,8 +8,9 @@ const API_BASE_5000 = 'http://127.0.0.1:5000/api'
 const API_BASE_4000 = 'http://127.0.0.1:4000/api'
 
 export function SiteProvider({ children }) {
+  const { user } = useAuth()
   const [sites, setSites] = useState(mockSites)
-  const [selectedSiteId, setSelectedSiteId] = useState('SITE-002') // default to Site B
+  const [selectedSiteId, setSelectedSiteId] = useState('SITE-002')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -39,18 +41,36 @@ export function SiteProvider({ children }) {
     }
   }, [])
 
+  // Lock site selection for Contractor or PM
+  useEffect(() => {
+    if (user?.role === 'Contractor' && user?.siteId && user.siteId !== 'NA') {
+      setSelectedSiteId(user.siteId)
+    }
+  }, [user])
+
   const effectiveSites = Array.isArray(sites) && sites.length > 0 ? sites : mockSites
 
+  const activeSiteId =
+    user?.role === 'Contractor' && user?.siteId && user.siteId !== 'NA'
+      ? user.siteId
+      : selectedSiteId
+
   const selectedSite =
-    effectiveSites.find((s) => s.id === selectedSiteId) ||
+    effectiveSites.find((s) => s.id === activeSiteId) ||
     effectiveSites[0] ||
     mockSites[1]
 
   const value = {
     sites: effectiveSites,
-    selectedSiteId,
+    selectedSiteId: activeSiteId,
     selectedSite,
-    setSelectedSiteId,
+    setSelectedSiteId: (newId) => {
+      if (user?.role === 'Admin') {
+        setSelectedSiteId(newId)
+      } else {
+        console.warn('Site selection is restricted for your authenticated role.')
+      }
+    },
     loading,
   }
 

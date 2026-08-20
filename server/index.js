@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { config } from './config.js'
 
+import authRouter from './routes/auth.js'
 import sitesRouter from './routes/sites.js'
 import tasksRouter from './routes/tasks.js'
 import equipmentRouter from './routes/equipment.js'
@@ -38,7 +39,7 @@ app.get('/', (req, res) => {
   })
 })
 
-// Health check with DB status
+// Health check with DB status (Public)
 app.get('/api/health', async (req, res) => {
   const pool = getPool()
   if (!pool) {
@@ -52,7 +53,10 @@ app.get('/api/health', async (req, res) => {
   }
 })
 
-// Mount routers
+// Public Auth Router
+app.use('/api/auth', authRouter)
+
+// Protected Routers
 app.use('/api/sites', sitesRouter)
 app.use('/api/tasks', tasksRouter)
 app.use('/api/equipment', equipmentRouter)

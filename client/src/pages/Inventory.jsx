@@ -9,9 +9,8 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
+import { apiRequest } from '../lib/api'
 import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
-
-const API_BASE = 'http://127.0.0.1:5000/api'
 
 export function daysRemaining(item) {
   if (!item || !item.consumptionPerDay || item.consumptionPerDay <= 0) return 999
@@ -37,16 +36,9 @@ export default function Inventory() {
 
     const fetchInventory = async () => {
       try {
-        const res = await fetch(`${API_BASE}/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
-        if (!res.ok) {
-          throw new Error(`Server returned status ${res.status}`)
-        }
-        const data = await res.json()
-        if (!Array.isArray(data)) {
-          throw new Error('Server returned non-array data for inventory')
-        }
+        const data = await apiRequest(`/inventory?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (isMounted) {
-          setItems(data)
+          setItems(Array.isArray(data) ? data : [])
           setLoading(false)
         }
       } catch (err) {
@@ -87,15 +79,10 @@ export default function Inventory() {
 
   async function handleCreateItem(itemData) {
     try {
-      const res = await fetch(`${API_BASE}/inventory`, {
+      const created = await apiRequest('/inventory', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(itemData),
       })
-      if (!res.ok) {
-        throw new Error(`Create failed with status ${res.status}`)
-      }
-      const created = await res.json()
       if (created && created.id) {
         setItems((prev) => [...prev, created])
       }
@@ -121,12 +108,9 @@ export default function Inventory() {
     if (!window.confirm('Are you sure you want to remove this material from inventory?')) return
 
     try {
-      const res = await fetch(`${API_BASE}/inventory/${id}`, {
+      await apiRequest(`/inventory/${id}`, {
         method: 'DELETE',
       })
-      if (!res.ok) {
-        throw new Error(`Delete failed with status ${res.status}`)
-      }
       setItems((prev) => prev.filter((i) => i.id !== id))
     } catch (err) {
       console.warn('Delete API error, applying local removal fallback:', err)
@@ -138,19 +122,11 @@ export default function Inventory() {
     if (!txnItem) return
 
     try {
-      const res = await fetch(`${API_BASE}/inventory/${txnItem.id}/transaction`, {
+      const updatedItem = await apiRequest(`/inventory/${txnItem.id}/transaction`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ type, quantity, note }),
       })
 
-      if (!res.ok) {
-        throw new Error(`Transaction failed with status ${res.status}`)
-      }
-
-      const updatedItem = await res.json()
       if (updatedItem && updatedItem.id) {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
       }

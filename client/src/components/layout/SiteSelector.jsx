@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, MapPin, Check } from 'lucide-react'
 import { useSite } from '../../hooks/useSite'
+import { useAuth } from '../../hooks/useAuth'
 import { sites as defaultMockSites } from '../../data/sites'
 import { cn } from '../../lib/utils'
 
@@ -11,11 +12,13 @@ const STATUS_TONE = {
 }
 
 export default function SiteSelector() {
+  const { user } = useAuth()
   const { sites, selectedSite, setSelectedSiteId } = useSite()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
   const activeSites = Array.isArray(sites) && sites.length > 0 ? sites : defaultMockSites
+  const isAdmin = user?.role === 'Admin'
 
   useEffect(() => {
     function onClick(e) {
@@ -24,6 +27,19 @@ export default function SiteSelector() {
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-slate-50 px-2.5 sm:px-3 py-1.5 text-left max-w-[200px] sm:max-w-xs shadow-xs">
+        <MapPin size={15} className="shrink-0 text-teal-600" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs sm:text-sm font-semibold leading-tight text-navy-900">
+            {selectedSite?.name || 'Assigned Site'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-w-0" ref={ref}>

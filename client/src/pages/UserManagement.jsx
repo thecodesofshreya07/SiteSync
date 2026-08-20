@@ -9,14 +9,13 @@ import UserTable from '../components/users/UserTable'
 import UserFilters from '../components/users/UserFilters'
 import AddUserModal from '../components/users/AddUserModal'
 import UserDetailsModal from '../components/users/UserDetailsModal'
-import { useRole } from '../hooks/useRole'
+import { useAuth } from '../hooks/useAuth'
 import { ROLES } from '../lib/constants'
-import { getUsers as getMockUsers } from '../data/users'
-
-const API_BASE = 'http://127.0.0.1:5000/api'
+import { apiRequest } from '../lib/api'
+import { initialUsers as getMockUsers } from '../data/users'
 
 export default function UserManagement() {
-  const { role } = useRole()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   const [users, setUsers] = useState([])
@@ -30,7 +29,7 @@ export default function UserManagement() {
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
 
-  const isAdmin = role === ROLES.ADMIN
+  const isAdmin = user?.role === ROLES.ADMIN
 
   useEffect(() => {
     if (!isAdmin) {
@@ -43,22 +42,15 @@ export default function UserManagement() {
 
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API_BASE}/users`)
-        if (!res.ok) {
-          throw new Error(`API server returned status ${res.status}`)
-        }
-        const data = await res.json()
-        if (!Array.isArray(data)) {
-          throw new Error('Server returned non-array data for users')
-        }
+        const data = await apiRequest('/users')
         if (isMounted) {
-          setUsers(data)
+          setUsers(Array.isArray(data) ? data : [])
           setLoading(false)
         }
       } catch (err) {
         console.warn('Users API fetch failed, falling back to initial demo data:', err)
         if (isMounted) {
-          setUsers(getMockUsers())
+          setUsers(getMockUsers)
           setLoading(false)
         }
       }
@@ -78,9 +70,9 @@ export default function UserManagement() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600 mb-4">
           <ShieldAlert size={32} />
         </div>
-        <h1 className="text-xl font-bold text-slate-900 font-public">Access Denied</h1>
-        <p className="mt-2 text-sm text-slate-600 font-ibm max-w-md">
-          Only administrators can access User Management.
+        <h1 className="text-xl font-bold text-slate-900">Access Denied</h1>
+        <p className="mt-2 text-sm text-slate-600 max-w-md">
+          Only administrators are authorized to access User Management.
         </p>
         <div className="mt-6">
           <Button variant="primary" onClick={() => navigate('/')}>
@@ -91,8 +83,8 @@ export default function UserManagement() {
     )
   }
 
-  const safeUsers = Array.isArray(users) ? users : getMockUsers()
-  
+  const safeUsers = Array.isArray(users) && users.length > 0 ? users : getMockUsers
+
   // Sort users so Product Managers appear first, Contractors second
   const sortedUsers = [...safeUsers].sort((a, b) => {
     if (a.role === 'Product Manager' && b.role !== 'Product Manager') return -1
@@ -121,31 +113,24 @@ export default function UserManagement() {
 
   const handleCreateUser = async (userPayload) => {
     try {
-      const res = await fetch(`${API_BASE}/users`, {
+      const newUser = await apiRequest('/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userPayload),
       })
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}))
-        throw new Error(errData.error || `Failed to create user (Status ${res.status})`)
+      if (newUser && newUser.id) {
+        setUsers((prev) => {
+          const list = Array.isArray(prev) ? prev : safeUsers
+          return [...list, newUser]
+        })
       }
 
-      const newUser = await res.json()
-      setUsers((prev) => {
-        const list = Array.isArray(prev) ? prev : safeUsers
-        return [...list, newUser]
-      })
-
-      // Close modal and show success toast
       setAddModalOpen(false)
       setToastMessage('User created successfully')
       setTimeout(() => setToastMessage(''), 4000)
     } catch (err) {
       console.warn('User creation API failed, applying local update:', err)
 
-      // Fallback local update if backend error or offline
       const newUser = {
         ...userPayload,
         id: `USR-${Math.floor(100 + Math.random() * 900)}`,
@@ -157,7 +142,6 @@ export default function UserManagement() {
         return [...list, newUser]
       })
 
-      // Close modal and show success toast
       setAddModalOpen(false)
       setToastMessage('User created successfully')
       setTimeout(() => setToastMessage(''), 4000)

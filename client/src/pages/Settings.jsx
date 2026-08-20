@@ -1,8 +1,8 @@
-import { Bell, Radio, ShieldCheck } from 'lucide-react'
+import { User, Mail, ShieldCheck, FolderGit2, MapPin, LogOut } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import Badge from '../components/common/Badge'
-import { useSite } from '../hooks/useSite'
-import { useRole } from '../hooks/useRole'
+import Button from '../components/common/Button'
+import { useAuth } from '../hooks/useAuth'
 
 function SettingRow({ icon: Icon, label, value, right }) {
   return (
@@ -22,29 +22,49 @@ function SettingRow({ icon: Icon, label, value, right }) {
 }
 
 export default function Settings() {
-  const { selectedSite } = useSite()
-  const { role } = useRole()
+  const { user, logout } = useAuth()
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="System configuration and environment preferences" />
+      <PageHeader title="Settings" subtitle="Authenticated user account and environment preferences" />
 
-      <div className="max-w-xl space-y-5">
-        <div className="rounded-xl border border-surface-border bg-white shadow-card">
-          <SettingRow icon={ShieldCheck} label="Current Role" value="Controls visible navigation and workflows" right={<Badge tone="teal">{role}</Badge>} />
-          <SettingRow icon={Radio} label="Current Site" value={selectedSite.location} right={<Badge tone="blue">{selectedSite.name}</Badge>} />
-          <SettingRow
-            icon={Bell}
-            label="Notification Preferences"
-            value="Critical and high-severity alerts"
-            right={<Badge tone="green">Enabled</Badge>}
-          />
-          <SettingRow
-            icon={Radio}
-            label="AI Monitoring Status"
-            value="Continuous background scan across active sites"
-            right={<Badge tone="teal" dot>● Monitoring</Badge>}
-          />
+      <div className="max-w-xl space-y-6">
+        <div className="rounded-xl border border-surface-border bg-white shadow-card p-5 space-y-4">
+          <div className="border-b border-surface-border pb-3">
+            <h3 className="text-base font-bold text-navy-900">Authenticated Account Profile</h3>
+            <p className="text-xs text-navy-500">JWT identity verified by Express backend</p>
+          </div>
+
+          <div className="divide-y divide-surface-border">
+            <SettingRow icon={User} label="Full Name" value={user?.name || '—'} />
+            <SettingRow icon={Mail} label="Email Address" value={user?.email || '—'} />
+            <SettingRow
+              icon={ShieldCheck}
+              label="Assigned Role"
+              right={<Badge tone="teal">{user?.role || 'Guest'}</Badge>}
+            />
+            <SettingRow
+              icon={FolderGit2}
+              label="Assigned Project UID"
+              value={user?.projectUid && user.projectUid !== 'NA' ? user.projectUid : 'N/A'}
+            />
+            <SettingRow
+              icon={MapPin}
+              label="Assigned Site ID"
+              value={user?.siteId && user.siteId !== 'NA' ? user.siteId : 'N/A'}
+            />
+          </div>
+
+          <div className="pt-3 border-t border-surface-border flex justify-end">
+            <Button
+              variant="danger"
+              icon={LogOut}
+              onClick={logout}
+              className="cursor-pointer"
+            >
+              Log Out
+            </Button>
+          </div>
         </div>
       </div>
     </div>

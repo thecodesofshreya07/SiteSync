@@ -18,31 +18,33 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
     if (!item.trim()) return
 
     setSubmitting(true)
+    const selectedVendor = vendors.find((v) => v.id === vendorId)
     try {
       await onCreate({
         siteId,
         item: item.trim(),
         vendorId,
+        vendorName: selectedVendor?.name || '—',
         quantity: Number(quantity) || 1,
         unit: unit.trim() || 'units',
-        amount: 0, // Amount is initialized to 0 and populated during Vendor Quote / Approval stage
+        amount: 0,
         expectedDelivery: expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-        stage: 'Material Request', // All new PO requests automatically start in the Material Request stage
-        status: 'Draft',
+        stage: 'Material Request',
+        status: 'Pending PM Validation',
       })
       setItem('')
       setQuantity('')
       setExpectedDelivery('')
       onClose()
     } catch (err) {
-      console.error('Failed to create purchase order:', err)
+      console.error('Failed to create material request:', err)
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Raise Purchase Order" subtitle={`New procurement order for ${siteName || 'site'}`}>
+    <Modal open={open} onClose={onClose} title="Create Material Request" subtitle={`New material request for ${siteName || 'site'}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -53,14 +55,14 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
             required
             value={item}
             onChange={(e) => setItem(e.target.value)}
-            placeholder="e.g. Structural Steel TMT Bars"
+            placeholder="e.g. Portland Cement Type I"
             className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
 
         <div>
           <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-            Select Vendor *
+            Preferred Vendor
           </label>
           <select
             value={vendorId}
@@ -84,7 +86,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
               required
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="e.g. 500"
+              placeholder="e.g. 100"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
@@ -102,7 +104,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
 
         <div>
           <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-            Expected Delivery Date
+            Required Delivery Date
           </label>
           <input
             type="date"
@@ -117,7 +119,7 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
             Cancel
           </Button>
           <Button type="submit" variant="primary" disabled={!item.trim() || submitting}>
-            {submitting ? 'Raising PO...' : 'Create Purchase Order'}
+            {submitting ? 'Submitting Request...' : 'Submit Material Request'}
           </Button>
         </div>
       </form>

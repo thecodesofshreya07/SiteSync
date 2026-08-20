@@ -1,9 +1,11 @@
 import { Router } from 'express'
+import bcrypt from 'bcryptjs'
 import { getCollection, findById, setCollection, getPool } from '../db.js'
+import { authenticateToken, requireRole } from '../middleware/auth.js'
 
 const router = Router()
 
-const ALLOWED_ROLES = ['Product Manager', 'Contractor']
+const ALLOWED_CREATION_ROLES = ['Project Manager', 'Contractor', 'Finance']
 
 function formatUserRow(row) {
   if (!row) return null
@@ -15,15 +17,15 @@ function formatUserRow(row) {
     email: row.email || baseData.email,
     phone: row.phone || baseData.phone,
     role: row.role || baseData.role,
-    projectId: row.project_id || baseData.projectId || (baseData.role === 'Product Manager' ? 'NA' : undefined),
+    projectId: row.project_id || baseData.projectId || (baseData.role === 'Project Manager' ? 'NA' : undefined),
     siteId: row.site_id || baseData.siteId || (baseData.role === 'Contractor' ? 'NA' : undefined),
     status: row.status || baseData.status || 'Not Active',
     createdAt: row.created_at || baseData.createdAt || new Date().toISOString().slice(0, 10),
   }
 }
 
-// GET /api/users - List all users
-router.get('/', async (req, res) => {
+// GET /api/users - List all users (Authenticated)
+router.get('/', authenticateToken, async (req, res) => {
   try {
     const pool = getPool()
 
@@ -39,7 +41,7 @@ router.get('/', async (req, res) => {
     }
 
     const users = getCollection('users') || []
-    res.json(users)
+    res.json(users.map(formatUserRow))
   } catch (err) {
     console.error('Error fetching users:', err)
     res.status(500).json({ error: 'Failed to retrieve users' })
@@ -47,7 +49,7 @@ router.get('/', async (req, res) => {
 })
 
 // GET /api/users/:id - Get single user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params
     const pool = getPool()
@@ -67,17 +69,17 @@ router.get('/:id', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
     }
-    res.json(user)
+    res.json(formatUserRow(user))
   } catch (err) {
     console.error(`Error fetching user ${req.params.id}:`, err)
     res.status(500).json({ error: 'Failed to retrieve user' })
   }
 })
 
-// POST /api/users - Create new Product Manager or Contractor account
-router.post('/', async (req, res) => {
+// POST /api/users - Create new Project Manager, Contractor, or Finance account (Admin Only)
+router.post('/', authenticateToken, requireRole('Admin'), async (req, res) => {
   try {
-    const { name, email, phone, role, siteId, projectId, status } = req.body
+    const { name, email, phone, role, siteId, projectId, status, password } = req.body
 
     // Required Validation: Name, Email, Phone, Role
     if (!name || !name.trim()) {
@@ -93,19 +95,19 @@ router.post('/', async (req, res) => {
     if (!phone || !phone.trim()) {
       return res.status(400).json({ error: 'Phone number is required' })
     }
-    if (!role || !ALLOWED_ROLES.includes(role)) {
-      return res.status(400).json({ error: 'Role must be either Product Manager or Contractor' })
+    if (!role || !ALLOWED_CREATION_ROLES.includes(role)) {
+      return res.status(400).json({ error: 'Role must be Project Manager, Contractor, or Finance. Admin accounts cannot be created.' })
     }
 
     // Optional fields with default fallbacks
-    const finalStatus = status && status.trim() ? status.trim() : 'Not Active'
-    let finalProjectId = undefined
-    let finalSiteId = undefined
+    const finalStatus = status && status.trim() ? status.trim() : 'Active'
+    let finalProjectId = 'NA'
+    let finalSiteId = 'NA'
 
-    if (role === 'Product Manager') {
-      finalProjectId = projectId && projectId.trim() ? projectId.trim() : 'NA'
-    } else {
-      finalSiteId = siteId && siteId.trim() ? siteId.trim() : 'NA'
+    if (role === 'Project Manager') {
+      finalProjectId = projectId && projectId.trim() ? projectId.trim() : 'PROJECT-001'
+    } else if (role === 'Contractor') {
+      finalSiteId = siteId && siteId.trim() ? siteId.trim() : 'SITE-002'
     }
 
     const normalizedEmail = email.trim().toLowerCase()
@@ -136,6 +138,8 @@ router.post('/', async (req, res) => {
 
     const id = `USR-${Math.floor(100 + Math.random() * 900)}`
     const createdAt = new Date().toISOString().slice(0, 10)
+    const rawPassword = password || 'password123'
+    const passwordHash = bcrypt.hashSync(rawPassword, 10)
 
     const newUser = {
       id,
@@ -143,8 +147,10 @@ router.post('/', async (req, res) => {
       email: email.trim(),
       phone: phone.trim(),
       role,
-      ...(role === 'Product Manager' ? { projectId: finalProjectId } : { siteId: finalSiteId }),
+      projectId: finalProjectId,
+      siteId: finalSiteId,
       status: finalStatus,
+      passwordHash,
       createdAt,
     }
 
@@ -152,34 +158,18 @@ router.post('/', async (req, res) => {
     if (pool) {
       try {
         await pool.query(
-          `CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            phone TEXT,
-            role TEXT,
-            site_id TEXT,
-            project_id TEXT,
-            status TEXT DEFAULT 'Not Active',
-            created_at TEXT,
-            data JSONB
-          );
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS project_id TEXT;
-          `
-        )
-
-        await pool.query(
-          `INSERT INTO users (id, name, email, phone, role, site_id, project_id, status, created_at, data)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          `INSERT INTO users (id, name, email, phone, role, site_id, project_id, status, password_hash, created_at, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
           [
             id,
             newUser.name,
             newUser.email,
             newUser.phone,
             role,
-            finalSiteId || null,
-            finalProjectId || null,
+            finalSiteId,
+            finalProjectId,
             finalStatus,
+            passwordHash,
             createdAt,
             JSON.stringify(newUser),
           ]
@@ -193,7 +183,7 @@ router.post('/', async (req, res) => {
     currentList.push(newUser)
     setCollection('users', currentList)
 
-    res.status(201).json(newUser)
+    res.status(201).json(formatUserRow(newUser))
   } catch (err) {
     console.error('Error creating user:', err)
     res.status(500).json({ error: 'Failed to create user account' })

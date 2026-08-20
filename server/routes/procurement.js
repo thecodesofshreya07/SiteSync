@@ -23,8 +23,10 @@ const ALLOWED_UPDATE_FIELDS = [
   'deliveryId',
   'delayDays',
   'vendorId',
+  'vendorName',
   'item',
   'siteId',
+  'history',
 ]
 
 function formatOrderRow(row) {
@@ -36,6 +38,7 @@ function formatOrderRow(row) {
     siteId: row.site_id || baseData.siteId,
     item: row.item || baseData.item,
     vendorId: row.vendor_id || baseData.vendorId,
+    vendorName: baseData.vendorName || row.vendor_name || '—',
     quantity: Number(row.quantity ?? baseData.quantity ?? 0),
     unit: row.unit || baseData.unit,
     amount: Number(row.amount ?? baseData.amount ?? 0),
@@ -45,6 +48,45 @@ function formatOrderRow(row) {
     status: row.status || baseData.status,
     deliveryId: row.delivery_id || baseData.deliveryId || null,
     delayDays: Number(row.delay_days ?? baseData.delayDays ?? 0),
+    history: Array.isArray(baseData.history) ? baseData.history : [],
+  }
+}
+
+async function autoUpdateSiteInventory(order) {
+  if (!order || !order.siteId || !order.item) return
+  const qtyToAdd = Number(order.quantity) || 0
+  if (qtyToAdd <= 0) return
+
+  const pool = getPool()
+  const inventoryList = getCollection('inventory') || []
+  let existingItem = inventoryList.find(
+    (inv) => inv.siteId === order.siteId && String(inv.item).trim().toLowerCase() === String(order.item).trim().toLowerCase()
+  )
+
+  if (existingItem) {
+    const updatedQty = Math.round((Number(existingItem.quantity) + qtyToAdd) * 100) / 100
+    const lastTransaction = {
+      type: 'Stock In',
+      quantity: qtyToAdd,
+      date: new Date().toISOString().slice(0, 10),
+      note: `Procurement delivery added to inventory (PO: ${order.id})`,
+    }
+    updateById('inventory', existingItem.id, {
+      quantity: updatedQty,
+      lastUpdated: new Date().toISOString(),
+      lastTransaction,
+    })
+
+    if (pool) {
+      try {
+        await pool.query(
+          `UPDATE inventory SET quantity = $1, last_updated = $2, last_transaction = $3 WHERE id = $4`,
+          [updatedQty, new Date().toISOString(), JSON.stringify(lastTransaction), existingItem.id]
+        )
+      } catch (err) {
+        console.warn('PostgreSQL inventory update error:', err.message)
+      }
+    }
   }
 }
 
@@ -122,29 +164,24 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// POST /api/procurement - Create a new procurement order
+// POST /api/procurement - Create a new procurement order / Material Request
 router.post('/', async (req, res) => {
   try {
     const {
       siteId,
-      vendorId,
+      vendorId = 'VEN-001',
+      vendorName = '—',
       item,
       quantity = 1,
       unit = 'units',
       amount = 0,
       expectedDelivery,
       stage = 'Material Request',
-      status = 'Draft',
+      status = 'Pending PM Validation',
     } = req.body
 
     if (!siteId || !item) {
       return res.status(400).json({ error: 'siteId and item are required fields' })
-    }
-
-    if (stage && !VALID_STAGES.includes(stage)) {
-      return res.status(400).json({
-        error: `Invalid stage '${stage}'. Must be one of: ${VALID_STAGES.join(', ')}`,
-      })
     }
 
     const now = new Date()
@@ -152,11 +189,22 @@ router.post('/', async (req, res) => {
     const dateRaised = now.toISOString().slice(0, 10)
     const targetDelivery = expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
 
+    const initialHistory = [
+      {
+        action: 'Material Request Created',
+        actor: req.user?.email || 'Contractor',
+        role: req.user?.role || 'Contractor',
+        timestamp: now.toISOString(),
+        status,
+      },
+    ]
+
     const newOrder = {
       id,
       siteId,
       item,
-      vendorId: vendorId || 'VEN-001',
+      vendorId,
+      vendorName,
       quantity: Number(quantity) || 1,
       unit,
       amount: Number(amount) || 0,
@@ -166,6 +214,7 @@ router.post('/', async (req, res) => {
       status,
       deliveryId: null,
       delayDays: 0,
+      history: initialHistory,
     }
 
     const pool = getPool()
@@ -208,7 +257,7 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PATCH /api/procurement/:id - Update procurement order
+// PATCH /api/procurement/:id - Advance procurement stage or update status
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -216,13 +265,6 @@ router.patch('/:id', async (req, res) => {
 
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return res.status(400).json({ error: 'Invalid update payload' })
-    }
-
-    // Validate stage if provided
-    if (payload.stage !== undefined && !VALID_STAGES.includes(payload.stage)) {
-      return res.status(400).json({
-        error: `Invalid stage '${payload.stage}'. Must be one of: ${VALID_STAGES.join(', ')}`,
-      })
     }
 
     // Filter to only allowed fields
@@ -238,45 +280,74 @@ router.patch('/:id', async (req, res) => {
     }
 
     const pool = getPool()
-    let updated = null
+    let currentOrder = null
 
     if (pool) {
       try {
         const existingRes = await pool.query('SELECT * FROM procurement_orders WHERE id = $1', [id])
         if (existingRes.rows.length > 0) {
-          const current = formatOrderRow(existingRes.rows[0])
-          const merged = { ...current, ...updateFields }
-          await pool.query(
-            `UPDATE procurement_orders
-             SET stage = $1, status = $2, quantity = $3, unit = $4, amount = $5, delay_days = $6, data = $7
-             WHERE id = $8`,
-            [
-              merged.stage,
-              merged.status,
-              merged.quantity,
-              merged.unit,
-              merged.amount,
-              merged.delayDays || 0,
-              JSON.stringify(merged),
-              id,
-            ]
-          )
-          updated = merged
+          currentOrder = formatOrderRow(existingRes.rows[0])
         }
       } catch (err) {
-        console.warn(`PostgreSQL update failed for procurement order ${id}:`, err.message)
+        console.warn(`PostgreSQL lookup failed for PO ${id}:`, err.message)
       }
     }
 
-    const localUpdated =
-      updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
+    if (!currentOrder) {
+      currentOrder = findById('procurementOrders', id) || findById('procurement', id)
+    }
 
-    const finalResult = updated || localUpdated
-    if (!finalResult) {
+    if (!currentOrder) {
       return res.status(404).json({ error: 'Procurement order not found' })
     }
 
-    res.json(finalResult)
+    const mergedHistory = Array.isArray(currentOrder.history) ? [...currentOrder.history] : []
+    mergedHistory.push({
+      action: `Status changed to ${payload.status || currentOrder.status}`,
+      actor: req.user?.email || 'System User',
+      role: req.user?.role || 'User',
+      timestamp: new Date().toISOString(),
+      previousStatus: currentOrder.status,
+      newStatus: payload.status || currentOrder.status,
+    })
+
+    const merged = {
+      ...currentOrder,
+      ...updateFields,
+      history: mergedHistory,
+    }
+
+    if (pool) {
+      try {
+        await pool.query(
+          `UPDATE procurement_orders
+           SET stage = $1, status = $2, quantity = $3, unit = $4, amount = $5, delay_days = $6, data = $7
+           WHERE id = $8`,
+          [
+            merged.stage,
+            merged.status,
+            merged.quantity,
+            merged.unit,
+            merged.amount,
+            merged.delayDays || 0,
+            JSON.stringify(merged),
+            id,
+          ]
+        )
+      } catch (err) {
+        console.warn(`PostgreSQL update failed for PO ${id}:`, err.message)
+      }
+    }
+
+    updateById('procurementOrders', id, merged)
+    updateById('procurement', id, merged)
+
+    // Auto-update site inventory if delivered
+    if (merged.status === 'Delivered' || merged.status === 'Inventory Updated' || merged.stage === 'Delivery') {
+      await autoUpdateSiteInventory(merged)
+    }
+
+    res.json(merged)
   } catch (err) {
     console.error(`Error in PATCH /api/procurement/${req.params.id}:`, err)
     return res.status(500).json({ error: 'Failed to update procurement order' })

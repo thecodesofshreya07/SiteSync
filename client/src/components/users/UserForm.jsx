@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Button from '../common/Button'
 import { useSite } from '../../hooks/useSite'
 
-const ALLOWED_ROLES = ['Product Manager', 'Contractor']
+const ALLOWED_ROLES = ['Project Manager', 'Contractor', 'Finance']
 
 export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
   const { sites } = useSite()
@@ -10,10 +10,10 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [role, setRole] = useState('Product Manager')
-  const [projectId, setProjectId] = useState('')
-  const [siteId, setSiteId] = useState('')
-  const [status, setStatus] = useState('Not Active')
+  const [role, setRole] = useState('Project Manager')
+  const [projectId, setProjectId] = useState('PROJECT-001')
+  const [siteId, setSiteId] = useState('SITE-002')
+  const [status, setStatus] = useState('Active')
 
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -62,9 +62,9 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
         email: email.trim(),
         phone: phone.trim(),
         role,
-        projectId: role === 'Product Manager' ? (projectId.trim() || 'NA') : undefined,
-        siteId: role === 'Contractor' ? (siteId.trim() || 'NA') : undefined,
-        status: status || 'Not Active',
+        projectId: role === 'Project Manager' ? (projectId.trim() || 'PROJECT-001') : 'NA',
+        siteId: role === 'Contractor' ? (siteId.trim() || 'SITE-002') : 'NA',
+        status: status || 'Active',
       })
     } catch (err) {
       setServerError(err.message || 'Failed to create user')
@@ -155,27 +155,26 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
           {role === 'Product Manager' ? (
             <>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700 font-public">
-                Assigned Project ID (Optional)
+                Assigned Project UID
               </label>
               <input
                 type="text"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                placeholder="e.g. 1 (Leave blank for NA)"
+                placeholder="e.g. PROJECT-001"
                 className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
               />
             </>
-          ) : (
+          ) : role === 'Contractor' ? (
             <>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700 font-public">
-                Assigned Site (Optional)
+                Assigned Site ID
               </label>
               <select
                 value={siteId}
                 onChange={(e) => setSiteId(e.target.value)}
                 className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white font-ibm"
               >
-                <option value="">NA (Default)</option>
                 {sites.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.id})
@@ -183,21 +182,25 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
                 ))}
               </select>
             </>
+          ) : (
+            <div className="pt-6 text-xs text-slate-500 font-medium">
+              Finance role has global procurement/budget permissions.
+            </div>
           )}
         </div>
       </div>
 
       <div>
         <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700 font-public">
-          Account Status (Optional)
+          Account Status
         </label>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white font-ibm"
         >
-          <option value="Not Active">Not Active (Default)</option>
           <option value="Active">Active</option>
+          <option value="Not Active">Not Active</option>
         </select>
       </div>
 
