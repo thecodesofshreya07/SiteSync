@@ -44,9 +44,11 @@ export default function PredictiveProcurementCard({ item, onReview, onOpenProcur
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="primary" onClick={onReview}>
-          Log Transaction
-        </Button>
+        {onReview && (
+          <Button size="sm" variant="primary" onClick={onReview}>
+            Log Transaction
+          </Button>
+        )}
         <Button size="sm" variant="secondary" onClick={onOpenProcurement}>
           Open Procurement
         </Button>
