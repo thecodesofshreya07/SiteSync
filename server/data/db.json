@@ -614,17 +614,51 @@
       "siteId": "SITE-001",
       "item": "Cement Portland Type I",
       "unit": "bags",
-      "quantity": 900,
+      "quantity": 10,
       "reorderThreshold": 400,
       "consumptionPerDay": 40,
-      "status": "OK",
-      "lastUpdated": "2026-08-20T09:39:16.983Z",
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-20T10:18:37.319Z",
       "lastTransaction": {
-        "type": "Stock In",
-        "quantity": 40,
         "date": "2026-08-20",
+        "type": "Stock Out",
+        "quantity": 900,
         "relatedPO": "PO-2015"
       }
+    },
+    {
+      "id": "INV-828",
+      "siteId": "SITE-002",
+      "item": "UltraTech Cement",
+      "unit": "bags",
+      "quantity": 100,
+      "reorderThreshold": 30,
+      "consumptionPerDay": 12,
+      "status": "OK",
+      "lastUpdated": "2026-08-20T10:02:23.308Z",
+      "lastTransaction": {
+        "type": "Stock In",
+        "quantity": 100,
+        "date": "2026-08-20",
+        "note": "Initial inventory creation"
+      }
+    },
+    {
+      "id": "INV-465",
+      "item": "ultratech cement",
+      "unit": "bags",
+      "siteId": "SITE-002",
+      "status": "OK",
+      "quantity": 100,
+      "lastUpdated": "2026-08-20T10:17:27.487Z",
+      "lastTransaction": {
+        "date": "2026-08-20",
+        "note": "Initial inventory creation",
+        "type": "Stock In",
+        "quantity": 100
+      },
+      "reorderThreshold": 30,
+      "consumptionPerDay": 10
     }
   ],
   "vendors": [

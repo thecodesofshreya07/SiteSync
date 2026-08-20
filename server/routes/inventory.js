@@ -21,6 +21,30 @@ function formatInventoryRow(row) {
   }
 }
 
+async function generateUniqueInventoryId(pool) {
+  if (pool) {
+    try {
+      const res = await pool.query("SELECT id FROM inventory WHERE id LIKE 'INV-%'")
+      const existingIds = new Set(res.rows.map((r) => r.id))
+      let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
+      while (existingIds.has(candidate)) {
+        candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
+      }
+      return candidate
+    } catch (err) {
+      console.warn('Could not query existing inventory IDs from Postgres:', err.message)
+    }
+  }
+
+  const localList = getCollection('inventory') || []
+  const localIds = new Set(localList.map((i) => i.id))
+  let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
+  while (localIds.has(candidate)) {
+    candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
+  }
+  return candidate
+}
+
 // GET /api/inventory - List inventory items (optionally filter by siteId)
 router.get('/', async (req, res) => {
   const { siteId } = req.query
@@ -80,7 +104,7 @@ router.post('/', async (req, res) => {
   try {
     const { siteId, item, unit = 'units', quantity = 0, reorderThreshold = 0, consumptionPerDay = 0 } = req.body
 
-    if (!siteId || !item) {
+    if (!siteId || !item || !item.trim()) {
       return res.status(400).json({ error: 'siteId and item name are required' })
     }
 
@@ -96,8 +120,8 @@ router.post('/', async (req, res) => {
       status = 'LOW'
     }
 
+    const id = await generateUniqueInventoryId(pool)
     const now = new Date()
-    const id = `INV-${Math.floor(100 + Math.random() * 900)}`
     const lastUpdated = now.toISOString()
     const lastTransaction = {
       type: 'Stock In',
@@ -109,8 +133,8 @@ router.post('/', async (req, res) => {
     const newItem = {
       id,
       siteId,
-      item,
-      unit,
+      item: item.trim(),
+      unit: unit.trim() || 'units',
       quantity: numQty,
       reorderThreshold: numThreshold,
       consumptionPerDay: numConsumption,
@@ -119,17 +143,20 @@ router.post('/', async (req, res) => {
       lastTransaction,
     }
 
+    let createdRecord = newItem
+
     if (pool) {
       try {
-        await pool.query(
+        const insertRes = await pool.query(
           `INSERT INTO inventory (
             id, site_id, item, unit, quantity, reorder_threshold, consumption_per_day, status, last_updated, last_transaction, data
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *`,
           [
             id,
             siteId,
-            item,
-            unit,
+            newItem.item,
+            newItem.unit,
             numQty,
             numThreshold,
             numConsumption,
@@ -139,19 +166,25 @@ router.post('/', async (req, res) => {
             JSON.stringify(newItem),
           ]
         )
+        if (insertRes.rows && insertRes.rows.length > 0) {
+          createdRecord = formatInventoryRow(insertRes.rows[0])
+        }
       } catch (err) {
-        console.warn('PostgreSQL insert inventory item warning:', err.message)
+        console.error('❌ PostgreSQL INSERT failed for inventory item:', err.message)
+        return res.status(500).json({ error: `Database insert failed: ${err.message}` })
       }
     }
 
-    const list = getCollection('inventory')
-    list.push(newItem)
+    // Update local cache
+    const list = getCollection('inventory') || []
+    list.push(createdRecord)
     setCollection('inventory', list)
 
-    res.status(201).json(newItem)
+    console.log(`✓ Created inventory item ${createdRecord.id} ("${createdRecord.item}") for site ${siteId}`)
+    res.status(201).json(createdRecord)
   } catch (err) {
     console.error('Error creating inventory item:', err)
-    res.status(500).json({ error: 'Failed to create inventory item' })
+    res.status(500).json({ error: 'Failed to create inventory item: ' + err.message })
   }
 })
 
@@ -227,10 +260,11 @@ router.post('/:id/transaction', async (req, res) => {
   // Update in PostgreSQL
   if (pool) {
     try {
-      await pool.query(
+      const updateRes = await pool.query(
         `UPDATE inventory 
          SET quantity = $1, status = $2, last_updated = $3, last_transaction = $4, data = $5 
-         WHERE id = $6`,
+         WHERE id = $6
+         RETURNING *`,
         [
           newQuantity,
           status,
@@ -240,19 +274,20 @@ router.post('/:id/transaction', async (req, res) => {
           id,
         ]
       )
+      if (updateRes.rows && updateRes.rows.length > 0) {
+        // Return confirmed row from database
+        const confirmed = formatInventoryRow(updateRes.rows[0])
+        updateById('inventory', id, confirmed)
+        return res.json(confirmed)
+      }
     } catch (err) {
-      console.warn(`PostgreSQL update error for item ${id}:`, err.message)
+      console.error(`❌ PostgreSQL update error for item ${id}:`, err.message)
+      return res.status(500).json({ error: `Database update failed: ${err.message}` })
     }
   }
 
   // Always update local cache
-  updateById('inventory', id, {
-    quantity: newQuantity,
-    status,
-    lastUpdated,
-    lastTransaction,
-  })
-
+  updateById('inventory', id, updatedPayload)
   res.json(updatedPayload)
 })
 
@@ -320,10 +355,11 @@ router.patch('/:id', async (req, res) => {
 
     if (pool) {
       try {
-        await pool.query(
+        const patchRes = await pool.query(
           `UPDATE inventory 
            SET item = $1, unit = $2, quantity = $3, reorder_threshold = $4, consumption_per_day = $5, status = $6, last_updated = $7, data = $8
-           WHERE id = $9`,
+           WHERE id = $9
+           RETURNING *`,
           [
             merged.item,
             merged.unit,
@@ -336,8 +372,14 @@ router.patch('/:id', async (req, res) => {
             id,
           ]
         )
+        if (patchRes.rows && patchRes.rows.length > 0) {
+          const confirmed = formatInventoryRow(patchRes.rows[0])
+          updateById('inventory', id, confirmed)
+          return res.json(confirmed)
+        }
       } catch (err) {
-        console.warn(`PostgreSQL PATCH error for item ${id}:`, err.message)
+        console.error(`❌ PostgreSQL PATCH error for item ${id}:`, err.message)
+        return res.status(500).json({ error: `Database patch failed: ${err.message}` })
       }
     }
 
@@ -345,7 +387,7 @@ router.patch('/:id', async (req, res) => {
     res.json(merged)
   } catch (err) {
     console.error('Error updating inventory item:', err)
-    res.status(500).json({ error: 'Failed to update inventory item' })
+    res.status(500).json({ error: 'Failed to update inventory item: ' + err.message })
   }
 })
 
@@ -363,7 +405,8 @@ router.delete('/:id', async (req, res) => {
           found = true
         }
       } catch (err) {
-        console.warn(`PostgreSQL DELETE error for item ${id}:`, err.message)
+        console.error(`❌ PostgreSQL DELETE error for item ${id}:`, err.message)
+        return res.status(500).json({ error: `Database delete failed: ${err.message}` })
       }
     }
 
@@ -382,7 +425,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Inventory item deleted successfully', id })
   } catch (err) {
     console.error('Error deleting inventory item:', err)
-    res.status(500).json({ error: 'Failed to delete inventory item' })
+    res.status(500).json({ error: 'Failed to delete inventory item: ' + err.message })
   }
 })
 

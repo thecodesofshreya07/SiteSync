@@ -81,34 +81,22 @@ export default function Inventory() {
   }
 
   async function handleCreateItem(itemData) {
-    try {
-      const res = await fetch(`${API_BASE}/inventory`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(itemData),
+    const res = await fetch(`${API_BASE}/inventory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || `Server failed with status ${res.status}`)
+    }
+
+    if (data && data.id) {
+      setItems((prev) => {
+        const currentList = Array.isArray(prev) ? prev : safeItems
+        return [...currentList, data]
       })
-      if (!res.ok) {
-        throw new Error(`Create failed with status ${res.status}`)
-      }
-      const created = await res.json()
-      if (created && created.id) {
-        setItems((prev) => [...prev, created])
-      }
-    } catch (err) {
-      console.warn('Create inventory item API error, applying local fallback:', err)
-      const newItem = {
-        ...itemData,
-        id: `INV-${Math.floor(100 + Math.random() * 900)}`,
-        status: itemData.quantity <= itemData.reorderThreshold * 0.5 ? 'CRITICAL' : itemData.quantity <= itemData.reorderThreshold ? 'LOW' : 'OK',
-        lastUpdated: new Date().toISOString(),
-        lastTransaction: {
-          type: 'Stock In',
-          quantity: itemData.quantity,
-          date: new Date().toISOString().slice(0, 10),
-          note: 'Initial creation',
-        },
-      }
-      setItems((prev) => [...prev, newItem])
     }
   }
 
@@ -122,10 +110,16 @@ export default function Inventory() {
       if (!res.ok) {
         throw new Error(`Delete failed with status ${res.status}`)
       }
-      setItems((prev) => prev.filter((i) => i.id !== id))
+      setItems((prev) => {
+        const currentList = Array.isArray(prev) ? prev : safeItems
+        return currentList.filter((i) => i.id !== id)
+      })
     } catch (err) {
       console.warn('Delete API error, applying local removal fallback:', err)
-      setItems((prev) => prev.filter((i) => i.id !== id))
+      setItems((prev) => {
+        const currentList = Array.isArray(prev) ? prev : safeItems
+        return currentList.filter((i) => i.id !== id)
+      })
     }
   }
 
