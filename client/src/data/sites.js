@@ -15,7 +15,7 @@ export const sites = [
   },
   {
     id: 'SITE-002',
-    name: 'Site B — Warehouse Expansion',
+    name: 'Warehouse Expansion',
     location: 'Bhiwandi, Thane',
     type: 'Industrial / Warehouse',
     status: 'At Risk',

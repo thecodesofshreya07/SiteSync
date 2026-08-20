@@ -1,4 +1,4 @@
-import { Bell, FlaskConical, Radio, ShieldCheck } from 'lucide-react'
+import { Bell, Radio, ShieldCheck } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import Badge from '../components/common/Badge'
 import { useSite } from '../hooks/useSite'
@@ -27,7 +27,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Demo environment and preferences" />
+      <PageHeader title="Settings" subtitle="System configuration and environment preferences" />
 
       <div className="max-w-xl space-y-5">
         <div className="rounded-xl border border-surface-border bg-white shadow-card">
@@ -42,20 +42,9 @@ export default function Settings() {
           <SettingRow
             icon={Radio}
             label="AI Monitoring Status"
-            value="Continuous background scan across all sites"
+            value="Continuous background scan across active sites"
             right={<Badge tone="teal" dot>● Monitoring</Badge>}
           />
-        </div>
-
-        <div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4 min-w-0">
-          <FlaskConical size={16} className="mt-0.5 shrink-0 text-amber-600" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-amber-800">Demo Environment</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-700 break-words">
-              This is a hackathon prototype running on static mock data. No real backend, database, or AI model
-              is connected — the Agentic AI layer here is a simulated preview of the intended architecture.
-            </p>
-          </div>
         </div>
       </div>
     </div>
