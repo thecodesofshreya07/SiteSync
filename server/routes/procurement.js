@@ -36,24 +36,35 @@ router.get('/', (req, res) => {
       const filtered = orders.filter((o) => o.siteId === siteId)
       return res.json(filtered)
     }
-    res.json(orders)
+    return res.json(orders)
   } catch (err) {
     console.error('Error fetching procurement orders:', err)
-    res.status(500).json({ error: 'Failed to retrieve procurement orders' })
+    return res.status(500).json({ error: 'Failed to retrieve procurement orders' })
   }
 })
 
-// GET /api/procurement/:id - Single procurement order
-router.get('/:id', (req, res) => {
+// GET /api/procurement/:idOrSiteId - Single PO by ID OR list of POs for a siteId
+router.get('/:idOrSiteId', (req, res) => {
   try {
-    const order = findById('procurementOrders', req.params.id)
-    if (!order) {
-      return res.status(404).json({ error: 'Procurement order not found' })
+    const { idOrSiteId } = req.params
+    const orders = getCollection('procurementOrders')
+
+    // 1. Check if ID matches a PO (e.g. PO-2041)
+    const order = orders.find((o) => o.id === idOrSiteId)
+    if (order) {
+      return res.json(order)
     }
-    res.json(order)
+
+    // 2. Check if ID matches a site (e.g. SITE-002)
+    const siteOrders = orders.filter((o) => o.siteId === idOrSiteId)
+    if (siteOrders.length > 0) {
+      return res.json(siteOrders)
+    }
+
+    return res.status(404).json({ error: `Procurement order or site '${idOrSiteId}' not found` })
   } catch (err) {
-    console.error(`Error fetching procurement order ${req.params.id}:`, err)
-    res.status(500).json({ error: 'Failed to retrieve procurement order' })
+    console.error(`Error fetching procurement order ${req.params.idOrSiteId}:`, err)
+    return res.status(500).json({ error: 'Failed to retrieve procurement order' })
   }
 })
 
@@ -95,10 +106,10 @@ router.patch('/:id', (req, res) => {
       return res.status(500).json({ error: 'Failed to update procurement order' })
     }
 
-    res.json(updated)
+    return res.json(updated)
   } catch (err) {
     console.error(`Error updating procurement order ${req.params.id}:`, err)
-    res.status(500).json({ error: 'Failed to update procurement order' })
+    return res.status(500).json({ error: 'Failed to update procurement order' })
   }
 })
 

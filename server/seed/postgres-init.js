@@ -127,7 +127,7 @@ export async function initPostgres() {
       );
     `)
 
-    console.log('✓ SQL tables created successfully in Supabase!')
+    console.log('✓ SQL tables created/verified successfully in Supabase PostgreSQL!')
 
     // 3. Seed initial data from local db.json into Supabase
     const dbData = readDb()
@@ -141,6 +141,30 @@ export async function initPostgres() {
          ON CONFLICT (name) DO UPDATE SET data = $2, updated_at = NOW()`,
         [key, JSON.stringify(items)]
       )
+    }
+
+    // Seed sites table
+    if (Array.isArray(dbData.sites)) {
+      for (const s of dbData.sites) {
+        await client.query(
+          `INSERT INTO sites (id, name, location, type, status, manager, budget_planned, budget_actual, progress, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           ON CONFLICT (id) DO UPDATE SET name = $2, status = $5, budget_actual = $8, progress = $9, data = $10`,
+          [s.id, s.name, s.location, s.type, s.status, s.manager, s.budgetPlanned, s.budgetActual, s.progress, JSON.stringify(s)]
+        )
+      }
+    }
+
+    // Seed inventory table
+    if (Array.isArray(dbData.inventory)) {
+      for (const inv of dbData.inventory) {
+        await client.query(
+          `INSERT INTO inventory (id, site_id, item, quantity, unit, status, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (id) DO UPDATE SET quantity = $4, status = $6, data = $7`,
+          [inv.id, inv.siteId, inv.item, inv.quantity, inv.unit, inv.status, JSON.stringify(inv)]
+        )
+      }
     }
 
     // Seed procurement_orders table
@@ -194,7 +218,43 @@ export async function initPostgres() {
       }
     }
 
-    console.log('✓ Supabase PostgreSQL database seeded with all SiteSync data!')
+    // Seed equipment table
+    if (Array.isArray(dbData.equipment)) {
+      for (const eq of dbData.equipment) {
+        await client.query(
+          `INSERT INTO equipment (id, site_id, name, category, status, utilization, idle_days, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (id) DO UPDATE SET status = $5, utilization = $6, idle_days = $7, data = $8`,
+          [eq.id, eq.siteId, eq.name, eq.category, eq.status, eq.utilization, eq.idleDays, JSON.stringify(eq)]
+        )
+      }
+    }
+
+    // Seed tasks table
+    if (Array.isArray(dbData.tasks)) {
+      for (const t of dbData.tasks) {
+        await client.query(
+          `INSERT INTO tasks (id, site_id, name, assignee, progress, due_date, priority, column_name, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (id) DO UPDATE SET progress = $5, column_name = $8, data = $9`,
+          [t.id, t.siteId, t.name, t.assignee, t.progress, t.dueDate, t.priority, t.column, JSON.stringify(t)]
+        )
+      }
+    }
+
+    // Seed alerts table
+    if (Array.isArray(dbData.alerts)) {
+      for (const a of dbData.alerts) {
+        await client.query(
+          `INSERT INTO alerts (id, site_id, severity, title, status, data)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (id) DO UPDATE SET status = $5, data = $6`,
+          [a.id, a.siteId, a.severity, a.title, a.status, JSON.stringify(a)]
+        )
+      }
+    }
+
+    console.log('✓ Supabase PostgreSQL database fully seeded with all relational & collection data!')
     client.release()
     await pool.end()
     return true

@@ -3,23 +3,34 @@ import { getCollection, findById, updateById } from '../db.js'
 
 const router = Router()
 
-// GET /api/tasks - List tasks (optional filter by siteId)
+// GET /api/tasks - List tasks (optional filter by ?siteId=...)
 router.get('/', (req, res) => {
   const { siteId } = req.query
   const tasks = getCollection('tasks')
   if (siteId) {
     return res.json(tasks.filter((t) => t.siteId === siteId))
   }
-  res.json(tasks)
+  return res.json(tasks)
 })
 
-// GET /api/tasks/:id - Single task
-router.get('/:id', (req, res) => {
-  const task = findById('tasks', req.params.id)
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' })
+// GET /api/tasks/:idOrSiteId - Single task OR list of tasks for a siteId
+router.get('/:idOrSiteId', (req, res) => {
+  const { idOrSiteId } = req.params
+  const tasks = getCollection('tasks')
+
+  // 1. Check if ID matches a task (e.g. TASK-031)
+  const task = tasks.find((t) => t.id === idOrSiteId)
+  if (task) {
+    return res.json(task)
   }
-  res.json(task)
+
+  // 2. Check if ID matches a site (e.g. SITE-001)
+  const siteTasks = tasks.filter((t) => t.siteId === idOrSiteId)
+  if (siteTasks.length > 0) {
+    return res.json(siteTasks)
+  }
+
+  return res.status(404).json({ error: `Task or site '${idOrSiteId}' not found` })
 })
 
 // PATCH /api/tasks/:id - Update task (e.g. column or progress)
@@ -28,7 +39,7 @@ router.patch('/:id', (req, res) => {
   if (!updated) {
     return res.status(404).json({ error: 'Task not found' })
   }
-  res.json(updated)
+  return res.json(updated)
 })
 
 export default router

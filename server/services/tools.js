@@ -1,17 +1,34 @@
 import { getCollection, readDb } from '../db.js'
 
+function resolveSiteId(input) {
+  if (!input || typeof input !== 'string') return null
+  const clean = input.trim().toLowerCase()
+  if (clean === 'null' || clean === 'undefined' || clean === '') return null
+
+  const sites = getCollection('sites')
+  // Check exact ID match
+  const byId = sites.find((s) => s.id.toLowerCase() === clean)
+  if (byId) return byId.id
+
+  // Check name includes match
+  const byName = sites.find((s) => s.name.toLowerCase().includes(clean))
+  if (byName) return byName.id
+
+  return input
+}
+
 export const AGENT_TOOLS = [
   {
     type: 'function',
     function: {
       name: 'get_sites',
-      description: 'Retrieve summary of all construction sites including planned vs actual budget, progress %, status, and managers.',
+      description: 'Retrieve summary of all construction sites or a specific site by ID or name (Riverside Tower, Site B, Metro Heights, Greenfield).',
       parameters: {
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
-            description: 'Optional specific site ID, e.g. SITE-001, SITE-002, SITE-003, SITE-004',
+            type: ['string', 'null'],
+            description: 'Optional site ID or site name (e.g. SITE-001 or "Riverside Tower")',
           },
         },
       },
@@ -26,11 +43,15 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
-            description: 'Optional site ID to filter inventory (e.g. SITE-001, SITE-002)',
+            type: ['string', 'null'],
+            description: 'Optional site ID or site name to filter inventory (e.g. SITE-001, "Riverside Tower", SITE-002)',
+          },
+          item: {
+            type: ['string', 'null'],
+            description: 'Optional item name to search for (e.g. "Cement", "Steel", "Bricks", "PVC Pipes")',
           },
           criticalOnly: {
-            type: 'boolean',
+            type: ['boolean', 'null'],
             description: 'Set to true to only return low or critical stock items needing attention',
           },
         },
@@ -46,11 +67,11 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
-            description: 'Optional site ID filter (e.g. SITE-002)',
+            type: ['string', 'null'],
+            description: 'Optional site ID or site name filter',
           },
           stage: {
-            type: 'string',
+            type: ['string', 'null'],
             description: 'Optional procurement stage filter',
           },
         },
@@ -66,11 +87,11 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
-            description: 'Optional site ID filter',
+            type: ['string', 'null'],
+            description: 'Optional site ID or site name filter',
           },
           status: {
-            type: 'string',
+            type: ['string', 'null'],
             description: 'Optional status filter: Active, Idle, or Under Maintenance',
           },
         },
@@ -86,11 +107,11 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
-            description: 'Optional site ID filter',
+            type: ['string', 'null'],
+            description: 'Optional site ID or site name filter',
           },
           atRiskOnly: {
-            type: 'boolean',
+            type: ['boolean', 'null'],
             description: 'If true, returns only tasks flagged at risk or delayed',
           },
         },
@@ -106,7 +127,7 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           delayedOnly: {
-            type: 'boolean',
+            type: ['boolean', 'null'],
             description: 'If true, returns only delayed deliveries',
           },
         },
@@ -122,7 +143,7 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           category: {
-            type: 'string',
+            type: ['string', 'null'],
             description: 'Optional vendor category filter',
           },
         },
@@ -138,7 +159,7 @@ export const AGENT_TOOLS = [
         type: 'object',
         properties: {
           siteId: {
-            type: 'string',
+            type: ['string', 'null'],
             description: 'Optional site ID filter',
           },
         },
@@ -165,19 +186,25 @@ export const AGENT_TOOLS = [
 ]
 
 export async function executeTool(toolName, args = {}) {
+  const targetSiteId = resolveSiteId(args.siteId)
+
   switch (toolName) {
     case 'get_sites': {
       const sites = getCollection('sites')
-      if (args.siteId) {
-        return sites.filter((s) => s.id === args.siteId)
+      if (targetSiteId) {
+        return sites.filter((s) => s.id === targetSiteId)
       }
       return sites
     }
 
     case 'get_inventory': {
       let items = getCollection('inventory')
-      if (args.siteId) {
-        items = items.filter((i) => i.siteId === args.siteId)
+      if (targetSiteId) {
+        items = items.filter((i) => i.siteId === targetSiteId)
+      }
+      if (args.item && typeof args.item === 'string') {
+        const itemTerm = args.item.toLowerCase()
+        items = items.filter((i) => i.item.toLowerCase().includes(itemTerm))
       }
       if (args.criticalOnly) {
         items = items.filter(
@@ -189,10 +216,10 @@ export async function executeTool(toolName, args = {}) {
 
     case 'get_procurement_orders': {
       let orders = getCollection('procurementOrders')
-      if (args.siteId) {
-        orders = orders.filter((o) => o.siteId === args.siteId)
+      if (targetSiteId) {
+        orders = orders.filter((o) => o.siteId === targetSiteId)
       }
-      if (args.stage) {
+      if (args.stage && typeof args.stage === 'string') {
         orders = orders.filter((o) => o.stage?.toLowerCase() === args.stage.toLowerCase())
       }
       return orders
@@ -200,10 +227,10 @@ export async function executeTool(toolName, args = {}) {
 
     case 'get_equipment': {
       let eq = getCollection('equipment')
-      if (args.siteId) {
-        eq = eq.filter((e) => e.siteId === args.siteId)
+      if (targetSiteId) {
+        eq = eq.filter((e) => e.siteId === targetSiteId)
       }
-      if (args.status) {
+      if (args.status && typeof args.status === 'string') {
         eq = eq.filter((e) => e.status?.toLowerCase() === args.status.toLowerCase())
       }
       return eq
@@ -211,8 +238,8 @@ export async function executeTool(toolName, args = {}) {
 
     case 'get_tasks': {
       let tasks = getCollection('tasks')
-      if (args.siteId) {
-        tasks = tasks.filter((t) => t.siteId === args.siteId)
+      if (targetSiteId) {
+        tasks = tasks.filter((t) => t.siteId === targetSiteId)
       }
       if (args.atRiskOnly) {
         tasks = tasks.filter((t) => t.priority === 'High' || t.progress < 70 || t.column === 'In Progress')
@@ -230,7 +257,7 @@ export async function executeTool(toolName, args = {}) {
 
     case 'get_vendors': {
       let vendors = getCollection('vendors')
-      if (args.category) {
+      if (args.category && typeof args.category === 'string') {
         vendors = vendors.filter((v) => v.category?.toLowerCase().includes(args.category.toLowerCase()))
       }
       return vendors
@@ -238,8 +265,8 @@ export async function executeTool(toolName, args = {}) {
 
     case 'get_alerts': {
       let alerts = getCollection('alerts')
-      if (args.siteId) {
-        alerts = alerts.filter((a) => a.siteId === args.siteId)
+      if (targetSiteId) {
+        alerts = alerts.filter((a) => a.siteId === targetSiteId)
       }
       return alerts
     }
@@ -247,8 +274,8 @@ export async function executeTool(toolName, args = {}) {
     case 'get_budget_breakdown': {
       const db = readDb()
       const budgetMap = db.budgetByCategory || {}
-      if (args.siteId) {
-        return budgetMap[args.siteId] || []
+      if (targetSiteId) {
+        return budgetMap[targetSiteId] || []
       }
       return budgetMap
     }

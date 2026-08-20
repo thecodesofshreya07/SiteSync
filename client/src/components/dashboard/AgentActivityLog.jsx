@@ -3,35 +3,120 @@ import { Radio } from 'lucide-react'
 import { getActivityScript } from '../../data/agentActivity'
 import { AGENT_EVENT_STYLES } from '../../lib/constants'
 import { cn } from '../../lib/utils'
+import { useAlerts } from '../../hooks/useAlerts'
+
+const API_BASE = 'http://localhost:4000/api'
 
 export default function AgentActivityLog({ siteId }) {
   const [entries, setEntries] = useState([])
+  const [isLive, setIsLive] = useState(false)
   const timeoutsRef = useRef([])
+  const eventSourceRef = useRef(null)
+  const fallbackTimerRef = useRef(null)
+  const { addAlert } = useAlerts()
 
   useEffect(() => {
-    // Reset and replay the activity script whenever the site changes.
+    // Reset state on site change
     timeoutsRef.current.forEach(clearTimeout)
     timeoutsRef.current = []
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current)
+    }
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
+
     setEntries([])
+    setIsLive(false)
 
-    const script = getActivityScript(siteId)
-    const now = Date.now()
+    let receivedLiveEvent = false
 
-    script.forEach((event, idx) => {
-      const delay = idx * 550
-      const t = setTimeout(() => {
-        setEntries((prev) => [
-          ...prev,
-          { ...event, id: `${siteId}-${idx}`, timestamp: new Date(now + idx * 2000) },
-        ])
-      }, delay)
-      timeoutsRef.current.push(t)
-    })
+    // Start fallback replay helper
+    function startMockFallback() {
+      if (receivedLiveEvent) return
+      setIsLive(false)
+      const script = getActivityScript(siteId)
+      const now = Date.now()
+
+      script.forEach((event, idx) => {
+        const delay = idx * 550
+        const t = setTimeout(() => {
+          setEntries((prev) => [
+            ...prev,
+            { ...event, id: `${siteId}-mock-${idx}-${Date.now()}`, timestamp: new Date(now + idx * 2000) },
+          ])
+        }, delay)
+        timeoutsRef.current.push(t)
+      })
+    }
+
+    // Set a safety timeout to trigger fallback if SSE doesn't connect in 3.5s
+    fallbackTimerRef.current = setTimeout(() => {
+      if (!receivedLiveEvent) {
+        startMockFallback()
+      }
+    }, 3500)
+
+    try {
+      const sseUrl = `${API_BASE}/agent/stream?siteId=${encodeURIComponent(siteId)}`
+      const es = new EventSource(sseUrl)
+      eventSourceRef.current = es
+
+      es.onopen = () => {
+        setIsLive(true)
+      }
+
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data)
+          receivedLiveEvent = true
+          setIsLive(true)
+
+          if (fallbackTimerRef.current) {
+            clearTimeout(fallbackTimerRef.current)
+          }
+
+          if (data.type === 'alert' && data.alert) {
+            if (addAlert) addAlert(data.alert)
+          } else if (data.message) {
+            setEntries((prev) => [
+              ...prev,
+              {
+                ...data,
+                id: `${siteId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                timestamp: new Date(),
+              },
+            ])
+          }
+        } catch (err) {
+          console.warn('Error parsing SSE message:', err)
+        }
+      }
+
+      es.onerror = () => {
+        es.close()
+        eventSourceRef.current = null
+        if (!receivedLiveEvent) {
+          startMockFallback()
+        }
+      }
+    } catch (err) {
+      console.warn('EventSource initialization failed:', err)
+      startMockFallback()
+    }
 
     return () => {
       timeoutsRef.current.forEach(clearTimeout)
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current)
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
     }
-  }, [siteId])
+  }, [siteId, addAlert])
 
   const isMonitoring = true
 
@@ -45,7 +130,7 @@ export default function AgentActivityLog({ siteId }) {
         <div className="flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-teal-400 pulse-dot" />
           <span className="text-xs font-bold uppercase tracking-wider text-teal-400 font-ibm">
-            {isMonitoring ? 'Monitoring' : 'Idle'}
+            {isMonitoring ? (isLive ? 'Live Stream' : 'Monitoring') : 'Idle'}
           </span>
         </div>
       </div>

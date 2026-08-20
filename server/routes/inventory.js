@@ -3,23 +3,34 @@ import { getCollection, findById, updateById } from '../db.js'
 
 const router = Router()
 
-// GET /api/inventory - List inventory items (optionally filter by siteId)
+// GET /api/inventory - List inventory items (optionally filter by ?siteId=...)
 router.get('/', (req, res) => {
   const { siteId } = req.query
   const inventory = getCollection('inventory')
   if (siteId) {
     return res.json(inventory.filter((item) => item.siteId === siteId))
   }
-  res.json(inventory)
+  return res.json(inventory)
 })
 
-// GET /api/inventory/:id - Single inventory item
-router.get('/:id', (req, res) => {
-  const item = findById('inventory', req.params.id)
-  if (!item) {
-    return res.status(404).json({ error: 'Inventory item not found' })
+// GET /api/inventory/:idOrSiteId - Single item by ID OR list of items for a siteId
+router.get('/:idOrSiteId', (req, res) => {
+  const { idOrSiteId } = req.params
+  const inventory = getCollection('inventory')
+
+  // First check if it matches a single item ID (e.g. INV-018)
+  const item = inventory.find((i) => i.id === idOrSiteId)
+  if (item) {
+    return res.json(item)
   }
-  res.json(item)
+
+  // Next check if it matches a site ID (e.g. SITE-001)
+  const siteItems = inventory.filter((i) => i.siteId === idOrSiteId)
+  if (siteItems.length > 0) {
+    return res.json(siteItems)
+  }
+
+  return res.status(404).json({ error: `Inventory item or site '${idOrSiteId}' not found` })
 })
 
 // POST /api/inventory/:id/transaction - Log a stock transaction (Stock In, Stock Out, Transfer)
@@ -77,7 +88,7 @@ router.post('/:id/transaction', (req, res) => {
     return res.status(500).json({ error: 'Failed to update inventory item' })
   }
 
-  res.json(updatedItem)
+  return res.json(updatedItem)
 })
 
 export default router
