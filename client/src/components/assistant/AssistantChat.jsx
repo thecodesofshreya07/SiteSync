@@ -1,0 +1,89 @@
+import { useEffect, useRef, useState } from 'react'
+import { Send, Sparkles } from 'lucide-react'
+import ChatMessage from './ChatMessage'
+import SuggestedQuestions from './SuggestedQuestions'
+import SourceRecordModal from '../common/SourceRecordModal'
+import { suggestedQuestions, getAssistantResponse } from '../../data/assistantResponses'
+
+const WELCOME = {
+  id: 'welcome',
+  role: 'assistant',
+  text:
+    "Ask me about sites, budgets, inventory, procurement, equipment, or project progress. I'll ground every answer in the underlying operational records.",
+  sources: [],
+}
+
+export default function AssistantChat() {
+  const [messages, setMessages] = useState([WELCOME])
+  const [input, setInput] = useState('')
+  const [thinking, setThinking] = useState(false)
+  const [activeSource, setActiveSource] = useState(null)
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, thinking])
+
+  function send(question) {
+    const q = question.trim()
+    if (!q) return
+
+    setMessages((prev) => [...prev, { id: `${Date.now()}-u`, role: 'user', text: q, sources: [] }])
+    setInput('')
+    setThinking(true)
+
+    setTimeout(() => {
+      const response = getAssistantResponse(q)
+      setMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-a`, role: 'assistant', text: response.answer, sources: response.sources },
+      ])
+      setThinking(false)
+    }, 900)
+  }
+
+  return (
+    <div className="flex h-[calc(100vh-220px)] min-h-[420px] flex-col rounded-xl border border-surface-border bg-white shadow-card">
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        {messages.map((m) => (
+          <ChatMessage key={m.id} message={m} onSourceClick={setActiveSource} />
+        ))}
+        {thinking && (
+          <div className="flex items-center gap-2 pl-9 text-xs text-navy-400">
+            <Sparkles size={13} className="animate-pulse text-teal-500" />
+            Grounding response in operational records...
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-surface-border p-3">
+        <div className="mb-2.5">
+          <SuggestedQuestions questions={suggestedQuestions} onSelect={send} />
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            send(input)
+          }}
+          className="flex items-center gap-2"
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about sites, budgets, inventory, procurement..."
+            className="flex-1 rounded-lg border border-surface-border px-3.5 py-2.5 text-sm focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40"
+          >
+            <Send size={16} />
+          </button>
+        </form>
+      </div>
+
+      <SourceRecordModal source={activeSource} onClose={() => setActiveSource(null)} />
+    </div>
+  )
+}
