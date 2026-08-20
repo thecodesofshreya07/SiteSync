@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useEffect, useState } from 'react'
 
 export const AlertsContext = createContext(null)
 
@@ -41,7 +41,7 @@ export function AlertsProvider({ children }) {
     }
   }, [])
 
-  async function updateAlertStatus(alertId, status) {
+  const updateAlertStatus = useCallback(async (alertId, status) => {
     // Optimistic local state update
     setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, status } : a)))
 
@@ -57,9 +57,9 @@ export function AlertsProvider({ children }) {
     } catch (err) {
       console.error(`Failed to persist alert ${alertId} status to backend:`, err.message)
     }
-  }
+  }, [])
 
-  function addAlert(newAlert) {
+  const addAlert = useCallback((newAlert) => {
     if (!newAlert || !newAlert.id) return
     setAlerts((prev) => {
       const idx = prev.findIndex((a) => a.id === newAlert.id)
@@ -70,7 +70,7 @@ export function AlertsProvider({ children }) {
       }
       return [newAlert, ...prev]
     })
-  }
+  }, [])
 
   const value = { alerts, updateAlertStatus, addAlert, setAlerts, loading, error }
 

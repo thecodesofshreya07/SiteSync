@@ -1,7 +1,14 @@
 import { Router } from 'express'
-import { runMonitoringStream } from '../services/dashboardAgent.js'
+import { runMonitoringStream, getAgentLogs } from '../services/dashboardAgent.js'
 
 const router = Router()
+
+// GET /api/agent/history?siteId=SITE-002
+router.get('/history', (req, res) => {
+  const siteId = req.query.siteId || 'SITE-002'
+  const logs = getAgentLogs(siteId)
+  res.json({ siteId, logs })
+})
 
 // GET /api/agent/stream?siteId=SITE-002 - SSE real-time streaming endpoint
 router.get('/stream', async (req, res) => {

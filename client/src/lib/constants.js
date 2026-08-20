@@ -73,6 +73,7 @@ export const AGENT_EVENT_TYPE = {
   RECOMMENDATION: 'recommendation',
   WAITING: 'waiting',
   RESOLVED: 'resolved',
+  IDLE: 'idle',
 }
 
 export const AGENT_EVENT_STYLES = {
@@ -84,4 +85,5 @@ export const AGENT_EVENT_STYLES = {
   recommendation: { dot: 'bg-teal-500', text: 'text-teal-600' },
   waiting: { dot: 'bg-amber-500', text: 'text-amber-600' },
   resolved: { dot: 'bg-green-500', text: 'text-green-600' },
+  idle: { dot: 'bg-teal-400', text: 'text-teal-300' },
 }

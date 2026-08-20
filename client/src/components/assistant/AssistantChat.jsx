@@ -19,12 +19,33 @@ const WELCOME = {
   sources: [],
 }
 
+function getInitialMessages() {
+  try {
+    const raw = sessionStorage.getItem('sitesync_assistant_messages')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [WELCOME]
+}
+
 export default function AssistantChat() {
-  const [messages, setMessages] = useState([WELCOME])
+  const [messages, setMessages] = useState(getInitialMessages)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const [activeSource, setActiveSource] = useState(null)
   const scrollRef = useRef(null)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('sitesync_assistant_messages', JSON.stringify(messages))
+    } catch (e) {
+      // ignore
+    }
+  }, [messages])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })

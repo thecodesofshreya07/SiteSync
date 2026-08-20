@@ -57,23 +57,52 @@ export async function executeMonitoringTool(toolName, args = {}) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// In-memory cache for recent monitoring logs per site
+const agentLogsBySite = {}
+
+export function getAgentLogs(siteId) {
+  return agentLogsBySite[siteId] || []
+}
+
 /**
  * Execute the autonomous AI operations monitoring loop for a specific site
  * and push SSE events in real-time.
  */
 export async function runMonitoringStream(siteId, res) {
   let isClosed = false
-  res.on('close', () => {
+  const cleanupHandlers = []
+
+  const onClose = () => {
     isClosed = true
-  })
+    cleanupHandlers.forEach((fn) => fn())
+  }
+
+  res.on('close', onClose)
+  res.on('error', onClose)
+
+  if (!agentLogsBySite[siteId]) {
+    agentLogsBySite[siteId] = []
+  }
 
   function emit(event) {
     if (!isClosed && !res.writableEnded) {
-      res.write(`data: ${JSON.stringify(event)}\n\n`)
+      const entry = {
+        ...event,
+        id: `${siteId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toISOString(),
+      }
+      if (event.type !== 'heartbeat') {
+        agentLogsBySite[siteId].push(entry)
+        // Keep last 40 logs per site
+        if (agentLogsBySite[siteId].length > 40) {
+          agentLogsBySite[siteId] = agentLogsBySite[siteId].slice(-40)
+        }
+      }
+      res.write(`data: ${JSON.stringify(entry)}\n\n`)
     }
   }
 
-  console.log(`[AGENT] Monitoring ${siteId}`)
+  console.log(`[AGENT] Monitoring started for ${siteId}`)
   const sites = await getCollectionDirect('sites')
   const currentSite = sites.find((s) => s.id === siteId) || { id: siteId, name: siteId }
 
@@ -262,8 +291,30 @@ export async function runMonitoringStream(siteId, res) {
       console.log(`[AGENT] No anomalies detected for ${siteId}`)
       emit({ type: 'resolved', message: `No anomalies detected this monitoring cycle for ${currentSite.name}` })
     }
+
+    emit({ type: 'idle', message: 'Autonomous agent active — continuous site telemetry online.' })
   } catch (err) {
     console.error('Monitoring stream error:', err.message)
     emit({ type: 'resolved', message: 'Monitoring cycle completed with database verification.' })
   }
+
+  // Keep stream alive with periodic heartbeats rather than closing the connection
+  const heartbeat = setInterval(() => {
+    if (isClosed || res.writableEnded) {
+      clearInterval(heartbeat)
+      return
+    }
+    try {
+      res.write(': keepalive\n\n')
+    } catch (e) {
+      clearInterval(heartbeat)
+    }
+  }, 15000)
+
+  cleanupHandlers.push(() => clearInterval(heartbeat))
+
+  // Keep promise open until connection is closed by client
+  return new Promise((resolve) => {
+    cleanupHandlers.push(resolve)
+  })
 }
