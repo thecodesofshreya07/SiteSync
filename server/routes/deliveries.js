@@ -3,15 +3,6 @@ import { getCollection, findById, getPool, getCollectionDirect } from '../db.js'
 
 const router = Router()
 
-<<<<<<< HEAD
-// GET /api/deliveries - List all deliveries (optionally filter by ?siteId=...)
-router.get('/', (req, res) => {
-  try {
-    const { siteId } = req.query
-    const deliveries = getCollection('deliveries')
-    const procurementOrders = getCollection('procurementOrders')
-
-=======
 function formatDeliveryRow(row) {
   if (!row) return null
   const baseData = row.data && typeof row.data === 'object' ? row.data : {}
@@ -52,7 +43,6 @@ router.get('/', async (req, res) => {
     }
 
     const deliveries = await getCollectionDirect('deliveries')
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
     if (siteId) {
       return res.json(deliveries.filter((d) => d.siteId === siteId))
     }
@@ -63,18 +53,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-<<<<<<< HEAD
-// GET /api/deliveries/:idOrSiteId - Single delivery by ID OR deliveries for a siteId
-router.get('/:idOrSiteId', (req, res) => {
-  try {
-    const { idOrSiteId } = req.params
-    const deliveries = getCollection('deliveries')
-
-    // 1. Check if ID matches a delivery (e.g. DEL-882)
-    const delivery = deliveries.find((d) => d.id === idOrSiteId)
-    if (delivery) {
-      return res.json(delivery)
-=======
 // GET /api/deliveries/:idOrSiteId - Single delivery OR list of deliveries for a siteId
 router.get('/:idOrSiteId', async (req, res) => {
   try {
@@ -102,7 +80,6 @@ router.get('/:idOrSiteId', async (req, res) => {
     const item = deliveries.find((d) => d.id === idOrSiteId)
     if (item) {
       return res.json(item)
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
     }
 
     // 2. Match site ID (e.g. SITE-002)
