@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
+<<<<<<< HEAD
 import { LayoutGrid, Table2, Plus } from 'lucide-react'
+=======
+import { LayoutGrid, Table2, AlertTriangle } from 'lucide-react'
+>>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 import PageHeader from '../components/common/PageHeader'
 import Button from '../components/common/Button'
 import ProcurementPipeline from '../components/procurement/ProcurementPipeline'
@@ -7,25 +11,29 @@ import ProcurementTable from '../components/procurement/ProcurementTable'
 import CreatePOModal from '../components/procurement/CreatePOModal'
 import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
-import { getProcurementBySite } from '../data/procurement'
 import { cn } from '../lib/utils'
 
-const API_BASE = 'http://localhost:5000/api'
+const API_BASE = 'http://localhost:4000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+<<<<<<< HEAD
   const [createModalOpen, setCreateModalOpen] = useState(false)
+=======
+  const [error, setError] = useState(null)
+>>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
+    setError(null)
 
     const fetchProcurement = async () => {
       try {
-        const res = await fetch(`${API_BASE}/procurement?siteId=${selectedSite.id}`)
+        const res = await fetch(`${API_BASE}/procurement?siteId=${encodeURIComponent(selectedSite.id)}`)
         if (!res.ok) {
           throw new Error(`API server returned ${res.status}`)
         }
@@ -34,13 +42,14 @@ export default function Procurement() {
           throw new Error('Server returned non-array data for procurement')
         }
         if (isMounted) {
-          setOrders(data)
+          setOrders(Array.isArray(data) ? data : [])
           setLoading(false)
         }
       } catch (err) {
-        console.warn('Procurement API fetch failed, falling back to mock data:', err)
+        console.error('Procurement API fetch error:', err.message)
         if (isMounted) {
-          setOrders(getProcurementBySite(selectedSite.id))
+          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve procurement data from ${API_BASE}/procurement (${err.message})`)
+          setOrders([])
           setLoading(false)
         }
       }
@@ -124,11 +133,16 @@ export default function Procurement() {
         return updated
       }
     } catch (err) {
+<<<<<<< HEAD
       console.warn('Procurement PATCH failed, applying optimistic update:', err)
       setOrders((prev) => {
         const list = Array.isArray(prev) ? prev : safeOrders
         return list.map((o) => (o.id === id ? { ...o, ...updateFields } : o))
       })
+=======
+      console.error('Procurement update error:', err.message)
+      alert(`Update failed: ${err.message}`)
+>>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
   }
 
@@ -172,8 +186,19 @@ export default function Procurement() {
         }
       />
 
+      {error && (
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {loading ? (
-        <LoadingState label="Loading procurement orders..." />
+        <LoadingState label="Loading procurement orders from PostgreSQL..." />
+      ) : orders.length === 0 && !error ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
+          NO REAL DATA FOUND — No procurement orders exist in PostgreSQL for {selectedSite.name}.
+        </div>
       ) : view === 'pipeline' ? (
         <ProcurementPipeline orders={safeOrders} onUpdateOrder={handleUpdateOrder} />
       ) : (

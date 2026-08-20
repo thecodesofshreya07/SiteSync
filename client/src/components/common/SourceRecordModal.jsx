@@ -1,11 +1,10 @@
+import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import Badge from './Badge'
-import { getInventoryById } from '../../data/inventory'
-import { getPOById, getVendorById, getDeliveryById } from '../../data/procurement'
-import { getSiteById } from '../../data/sites'
-import { tasks } from '../../data/tasks'
-import { getEquipmentById } from '../../data/equipment'
+import LoadingState from './LoadingState'
 import { formatDate, formatFullINR } from '../../lib/utils'
+
+const API_BASE = 'http://localhost:4000/api'
 
 function Row({ label, value }) {
   if (value === undefined || value === null || value === '') return null
@@ -17,171 +16,100 @@ function Row({ label, value }) {
   )
 }
 
-function InventorySource({ id }) {
-  const item = getInventoryById(id)
-  if (!item) return null
-  const site = getSiteById(item.siteId)
-  return (
-    <div>
-      <Badge tone="blue">Inventory Transaction</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{item.id}</h3>
-      <div className="mt-3">
-        <Row label="Item" value={item.item} />
-        <Row label="Site" value={site?.name} />
-        <Row label="Transaction" value={item.lastTransaction?.type} />
-        <Row
-          label="Quantity"
-          value={item.lastTransaction ? `${item.lastTransaction.quantity} ${item.unit}` : undefined}
-        />
-        <Row label="Date" value={item.lastTransaction ? formatDate(item.lastTransaction.date) : undefined} />
-        <Row label="Related Purchase Order" value={item.lastTransaction?.relatedPO} />
-        <Row label="Current Stock" value={`${item.quantity} ${item.unit}`} />
-        <Row label="Reorder Threshold" value={`${item.reorderThreshold} ${item.unit}`} />
-        <Row label="Consumption / day" value={`${item.consumptionPerDay} ${item.unit}`} />
-      </div>
-    </div>
-  )
-}
+export default function SourceRecordModal({ source, open, onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-function ProcurementSource({ id }) {
-  const po = getPOById(id)
-  if (!po) return null
-  const vendor = getVendorById(po.vendorId)
-  const site = getSiteById(po.siteId)
-  return (
-    <div>
-      <Badge tone="teal">Purchase Order</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{po.id}</h3>
-      <div className="mt-3">
-        <Row label="Item" value={po.item} />
-        <Row label="Site" value={site?.name} />
-        <Row label="Vendor" value={vendor?.name} />
-        <Row label="Quantity" value={`${po.quantity} ${po.unit}`} />
-        <Row label="Amount" value={formatFullINR(po.amount)} />
-        <Row label="Date Raised" value={formatDate(po.dateRaised)} />
-        <Row label="Expected Delivery" value={formatDate(po.expectedDelivery)} />
-        <Row label="Stage" value={po.stage} />
-        <Row label="Status" value={po.status} />
-      </div>
-    </div>
-  )
-}
+  useEffect(() => {
+    if (!open || !source?.id) {
+      setData(null)
+      return
+    }
 
-function DeliverySource({ id }) {
-  const delivery = getDeliveryById(id)
-  if (!delivery) return null
-  const po = getPOById(delivery.poId)
-  return (
-    <div>
-      <Badge tone="amber">Delivery Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{delivery.id}</h3>
-      <div className="mt-3">
-        <Row label="Purchase Order" value={po?.id} />
-        <Row label="Item" value={po?.item} />
-        <Row label="Expected Date" value={formatDate(delivery.expectedDate)} />
-        <Row label="Revised Date" value={formatDate(delivery.revisedDate)} />
-        <Row label="Delay" value={delivery.delayDays > 0 ? `${delivery.delayDays} days` : 'On time'} />
-        <Row label="Status" value={delivery.status} />
-        <Row label="Reason" value={delivery.reason} />
-      </div>
-    </div>
-  )
-}
+    let isMounted = true
+    setLoading(true)
+    setError(null)
 
-function VendorSource({ id }) {
-  const vendor = getVendorById(id)
-  if (!vendor) return null
-  return (
-    <div>
-      <Badge tone="neutral">Vendor Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{vendor.id}</h3>
-      <div className="mt-3">
-        <Row label="Name" value={vendor.name} />
-        <Row label="Category" value={vendor.category} />
-        <Row label="Reliability" value={vendor.reliability} />
-        <Row label="Avg. Delay" value={`${vendor.avgDelayDays} days`} />
-      </div>
-    </div>
-  )
-}
+    async function fetchRecord() {
+      const type = source.type?.toLowerCase() || ''
+      let endpoint = ''
 
-function TaskSource({ id }) {
-  const task = tasks.find((t) => t.id === id)
-  if (!task) return null
-  const site = getSiteById(task.siteId)
-  return (
-    <div>
-      <Badge tone="blue">Task Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{task.id}</h3>
-      <div className="mt-3">
-        <Row label="Name" value={task.name} />
-        <Row label="Site" value={site?.name} />
-        <Row label="Assignee" value={task.assignee} />
-        <Row label="Progress" value={`${task.progress}%`} />
-        <Row label="Due Date" value={formatDate(task.dueDate)} />
-        <Row label="Dependency" value={task.dependency} />
-        <Row label="Priority" value={task.priority} />
-      </div>
-    </div>
-  )
-}
+      if (type === 'inventory') endpoint = `${API_BASE}/inventory/${source.id}`
+      else if (type === 'procurement') endpoint = `${API_BASE}/procurement/${source.id}`
+      else if (type === 'delivery') endpoint = `${API_BASE}/deliveries/${source.id}`
+      else if (type === 'equipment') endpoint = `${API_BASE}/equipment/${source.id}`
+      else if (type === 'task') endpoint = `${API_BASE}/tasks/${source.id}`
+      else if (type === 'vendor') endpoint = `${API_BASE}/vendors/${source.id}`
+      else if (type === 'site') endpoint = `${API_BASE}/sites/${source.id}`
+      else endpoint = `${API_BASE}/inventory/${source.id}`
 
-function EquipmentSource({ id }) {
-  const eq = getEquipmentById(id)
-  if (!eq) return null
-  const site = getSiteById(eq.siteId)
-  return (
-    <div>
-      <Badge tone="amber">Equipment Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{eq.id}</h3>
-      <div className="mt-3">
-        <Row label="Name" value={eq.name} />
-        <Row label="Site" value={site?.name} />
-        <Row label="Status" value={eq.status} />
-        <Row label="Utilization" value={`${eq.utilization}%`} />
-        <Row label="Idle Days" value={eq.idleDays} />
-      </div>
-    </div>
-  )
-}
+      try {
+        const res = await fetch(endpoint)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json = await res.json()
+        if (isMounted) {
+          setData(json)
+          setLoading(false)
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(`Could not load record from PostgreSQL: ${err.message}`)
+          setLoading(false)
+        }
+      }
+    }
 
-function SiteSource({ id }) {
-  const site = getSiteById(id)
-  if (!site) return null
-  return (
-    <div>
-      <Badge tone="teal">Site Budget Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{site.name}</h3>
-      <div className="mt-3">
-        <Row label="Planned Budget" value={formatFullINR(site.budgetPlanned)} />
-        <Row label="Actual Spend" value={formatFullINR(site.budgetActual)} />
-        <Row
-          label="Variance"
-          value={`${(((site.budgetActual - site.budgetPlanned) / site.budgetPlanned) * 100).toFixed(1)}%`}
-        />
-        <Row label="Status" value={site.status} />
-      </div>
-    </div>
-  )
-}
+    fetchRecord()
 
-const RENDERERS = {
-  inventory: InventorySource,
-  procurement: ProcurementSource,
-  delivery: DeliverySource,
-  vendor: VendorSource,
-  task: TaskSource,
-  equipment: EquipmentSource,
-  site: SiteSource,
-}
+    return () => {
+      isMounted = false
+    }
+  }, [open, source?.id, source?.type])
 
-export default function SourceRecordModal({ source, onClose }) {
   if (!source) return null
-  const Renderer = RENDERERS[source.type]
 
   return (
-    <Modal open={!!source} onClose={onClose} title="Source Record" subtitle="Verified operational record">
-      {Renderer ? <Renderer id={source.id} /> : <p className="text-sm text-navy-500">Record not found.</p>}
+    <Modal open={open} onClose={onClose} title={`Source Record: ${source.id}`}>
+      {loading ? (
+        <LoadingState label="Loading database record..." />
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
+          {error}
+        </div>
+      ) : !data ? (
+        <div className="py-6 text-center text-xs text-slate-500 font-medium">
+          NO REAL DATA FOUND in PostgreSQL for {source.id}
+        </div>
+      ) : (
+        <div>
+          <Badge tone="blue">{source.type?.toUpperCase() || 'RECORD'}</Badge>
+          <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{data.name || data.item || data.id}</h3>
+          <div className="mt-3">
+            {data.siteId && <Row label="Site ID" value={data.siteId} />}
+            {data.item && <Row label="Item" value={data.item} />}
+            {data.quantity !== undefined && (
+              <Row label="Quantity" value={`${data.quantity} ${data.unit || ''}`} />
+            )}
+            {data.consumptionPerDay && (
+              <Row label="Consumption / day" value={`${data.consumptionPerDay} ${data.unit || ''}`} />
+            )}
+            {data.reorderThreshold && (
+              <Row label="Reorder Threshold" value={`${data.reorderThreshold} ${data.unit || ''}`} />
+            )}
+            {data.amount && <Row label="Amount" value={formatFullINR(data.amount)} />}
+            {data.stage && <Row label="Stage" value={data.stage} />}
+            {data.status && <Row label="Status" value={data.status} />}
+            {data.delayDays !== undefined && <Row label="Delay Days" value={`${data.delayDays} days`} />}
+            {data.utilization !== undefined && <Row label="Utilization" value={`${data.utilization}%`} />}
+            {data.idleDays !== undefined && <Row label="Idle Days" value={`${data.idleDays} days`} />}
+            {data.progress !== undefined && <Row label="Progress" value={`${data.progress}%`} />}
+            {data.dateRaised && <Row label="Date Raised" value={formatDate(data.dateRaised)} />}
+            {data.expectedDelivery && <Row label="Expected Delivery" value={formatDate(data.expectedDelivery)} />}
+            {data.lastUpdated && <Row label="Last Updated" value={formatDate(data.lastUpdated)} />}
+          </div>
+        </div>
+      )}
     </Modal>
   )
 }

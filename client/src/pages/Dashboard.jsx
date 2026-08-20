@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { IndianRupee, ListChecks, ShieldAlert, Gauge } from 'lucide-react'
 import StatCard from '../components/dashboard/StatCard'
 import BudgetOverview from '../components/dashboard/BudgetOverview'
@@ -8,10 +9,9 @@ import Badge from '../components/common/Badge'
 import { useSite } from '../hooks/useSite'
 import { useRole } from '../hooks/useRole'
 import { useAlerts } from '../hooks/useAlerts'
-import { getBudgetByCategory } from '../data/sites'
-import { getTasksBySite, getTimelineBySite } from '../data/tasks'
-import { getEquipmentBySite } from '../data/equipment'
 import { formatINR, percentage, formatDate, formatTime } from '../lib/utils'
+
+const API_BASE = 'http://localhost:4000/api'
 
 const STATUS_TONE = {
   'On Track': 'green',
@@ -24,16 +24,64 @@ export default function Dashboard() {
   const { role } = useRole()
   const { alerts } = useAlerts()
 
-  const siteTasks = getTasksBySite(selectedSite.id)
+  const [siteTasks, setSiteTasks] = useState([])
+  const [siteEquipment, setSiteEquipment] = useState([])
+  const [categoryData, setCategoryData] = useState([])
+  const [timeline, setTimeline] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!selectedSite?.id) return
+
+    let isMounted = true
+    async function loadDashboardData() {
+      try {
+        setLoading(true)
+        const [tasksRes, eqRes, budgetRes, timelineRes] = await Promise.all([
+          fetch(`${API_BASE}/tasks?siteId=${encodeURIComponent(selectedSite.id)}`),
+          fetch(`${API_BASE}/equipment?siteId=${encodeURIComponent(selectedSite.id)}`),
+          fetch(`${API_BASE}/sites/${encodeURIComponent(selectedSite.id)}/budget`),
+          fetch(`${API_BASE}/timeline?siteId=${encodeURIComponent(selectedSite.id)}`),
+        ])
+
+        if (isMounted) {
+          if (tasksRes.ok) {
+            const data = await tasksRes.json()
+            setSiteTasks(Array.isArray(data) ? data : [])
+          }
+          if (eqRes.ok) {
+            const data = await eqRes.json()
+            setSiteEquipment(Array.isArray(data) ? data : [])
+          }
+          if (budgetRes.ok) {
+            const data = await budgetRes.json()
+            setCategoryData(Array.isArray(data) ? data : [])
+          }
+          if (timelineRes.ok) {
+            const data = await timelineRes.json()
+            setTimeline(Array.isArray(data) ? data : [])
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading dashboard metrics from API:', err.message)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
+    loadDashboardData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedSite?.id])
+
   const activeTasks = siteTasks.filter((t) => t.column !== 'Done').length
-  const siteEquipment = getEquipmentBySite(selectedSite.id)
   const avgUtilization = siteEquipment.length
-    ? Math.round(siteEquipment.reduce((sum, e) => sum + e.utilization, 0) / siteEquipment.length)
+    ? Math.round(siteEquipment.reduce((sum, e) => sum + (e.utilization || 0), 0) / siteEquipment.length)
     : 0
   const openAlerts = alerts.filter((a) => a.siteId === selectedSite.id && a.status === 'pending').length
-  const usedPct = percentage(selectedSite.budgetActual, selectedSite.budgetPlanned)
-  const categoryData = getBudgetByCategory(selectedSite.id)
-  const timeline = getTimelineBySite(selectedSite.id)
+  const usedPct = percentage(selectedSite.budgetActual || 0, selectedSite.budgetPlanned || 1)
 
   return (
     <div>
@@ -51,7 +99,7 @@ export default function Dashboard() {
         <div className="sm:text-right">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Agent Scan</p>
           <p className="text-sm font-bold text-slate-800">
-            {formatDate(selectedSite.lastScan)} · {formatTime(selectedSite.lastScan)}
+            {formatDate(selectedSite.lastScan || new Date())} · {formatTime(selectedSite.lastScan || new Date())}
           </p>
         </div>
       </div>
@@ -60,7 +108,7 @@ export default function Dashboard() {
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Budget Used"
-          value={`${formatINR(selectedSite.budgetActual)} / ${formatINR(selectedSite.budgetPlanned)}`}
+          value={`${formatINR(selectedSite.budgetActual || 0)} / ${formatINR(selectedSite.budgetPlanned || 0)}`}
           sublabel={`${usedPct}% utilized`}
           icon={IndianRupee}
           accent="teal"

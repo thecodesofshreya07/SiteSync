@@ -4,9 +4,9 @@ import Badge from '../common/Badge'
 import Button from '../common/Button'
 import SourceRecordModal from '../common/SourceRecordModal'
 import { SEVERITY_STYLES, ALERT_STATUS } from '../../lib/constants'
-import { getSiteById } from '../../data/sites'
 import { cn, formatTime } from '../../lib/utils'
 import { useAlerts } from '../../hooks/useAlerts'
+import { useSite } from '../../hooks/useSite'
 
 const STATUS_BADGE = {
   pending: { tone: 'amber', label: 'PENDING HUMAN REVIEW' },
@@ -17,10 +17,11 @@ const STATUS_BADGE = {
 
 export default function AlertCard({ alert, defaultExpanded = false }) {
   const { updateAlertStatus } = useAlerts()
+  const { sites } = useSite()
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [activeSource, setActiveSource] = useState(null)
   const severity = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.medium
-  const site = getSiteById(alert.siteId)
+  const site = sites?.find((s) => s.id === alert.siteId)
   const statusBadge = STATUS_BADGE[alert.status] || STATUS_BADGE.pending
 
   return (

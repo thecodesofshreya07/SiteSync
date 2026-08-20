@@ -1,4 +1,5 @@
 import { Router } from 'express'
+<<<<<<< HEAD
 import { getCollection, findById, getPool } from '../db.js'
 
 const router = Router()
@@ -35,12 +36,28 @@ router.get('/', async (req, res) => {
 
     const deliveries = getCollection('deliveries')
     res.json(deliveries)
+=======
+import { getCollectionDirect } from '../db.js'
+
+const router = Router()
+
+// GET /api/deliveries - List deliveries (optional filter by ?siteId=...)
+router.get('/', async (req, res) => {
+  try {
+    const { siteId } = req.query
+    const deliveries = await getCollectionDirect('deliveries')
+    if (siteId) {
+      return res.json(deliveries.filter((d) => d.siteId === siteId))
+    }
+    return res.json(deliveries)
+>>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
   } catch (err) {
-    console.error('Error fetching deliveries:', err)
-    res.status(500).json({ error: 'Failed to retrieve deliveries' })
+    console.error('Error in GET /api/deliveries:', err)
+    return res.status(500).json({ error: 'Failed to retrieve deliveries' })
   }
 })
 
+<<<<<<< HEAD
 // GET /api/deliveries/:id - Single delivery by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -60,11 +77,30 @@ router.get('/:id', async (req, res) => {
     const delivery = findById('deliveries', id)
     if (!delivery) {
       return res.status(404).json({ error: 'Delivery not found' })
+=======
+// GET /api/deliveries/:idOrSiteId - Single delivery OR list of deliveries for a siteId
+router.get('/:idOrSiteId', async (req, res) => {
+  try {
+    const { idOrSiteId } = req.params
+    const deliveries = await getCollectionDirect('deliveries')
+
+    // 1. Match delivery ID (e.g. DEL-882)
+    const item = deliveries.find((d) => d.id === idOrSiteId)
+    if (item) {
+      return res.json(item)
+>>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
-    res.json(delivery)
+
+    // 2. Match site ID (e.g. SITE-002)
+    const siteDeliveries = deliveries.filter((d) => d.siteId === idOrSiteId)
+    if (siteDeliveries.length > 0) {
+      return res.json(siteDeliveries)
+    }
+
+    return res.status(404).json({ error: `Delivery or site '${idOrSiteId}' not found` })
   } catch (err) {
-    console.error(`Error fetching delivery ${req.params.id}:`, err)
-    res.status(500).json({ error: 'Failed to retrieve delivery' })
+    console.error(`Error in GET /api/deliveries/${req.params.idOrSiteId}:`, err)
+    return res.status(500).json({ error: 'Failed to retrieve deliveries' })
   }
 })
 

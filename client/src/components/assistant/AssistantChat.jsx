@@ -3,28 +3,55 @@ import { Send, Sparkles } from 'lucide-react'
 import ChatMessage from './ChatMessage'
 import SuggestedQuestions from './SuggestedQuestions'
 import SourceRecordModal from '../common/SourceRecordModal'
-import { suggestedQuestions, getAssistantResponse } from '../../data/assistantResponses'
+
+const SUGGESTED_PROMPTS = [
+  'What is the stock of Cement Portland Type I at Riverside Tower?',
+  'Why is Site B at risk and what is causing the shortage?',
+  'Which equipment is currently idle or under maintenance?',
+  'What are the delayed deliveries and procurement purchase orders?',
+]
 
 const WELCOME = {
   id: 'welcome',
   role: 'assistant',
   text:
-    "Ask me about sites, budgets, inventory, procurement, equipment, or project progress. I'll ground every answer in the underlying operational records.",
+    "Ask me about sites, budgets, inventory, procurement, equipment, or project progress. I'll dynamically query the live PostgreSQL operational database to answer.",
   sources: [],
 }
 
+function getInitialMessages() {
+  try {
+    const raw = sessionStorage.getItem('sitesync_assistant_messages')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [WELCOME]
+}
+
 export default function AssistantChat() {
-  const [messages, setMessages] = useState([WELCOME])
+  const [messages, setMessages] = useState(getInitialMessages)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const [activeSource, setActiveSource] = useState(null)
   const scrollRef = useRef(null)
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem('sitesync_assistant_messages', JSON.stringify(messages))
+    } catch (e) {
+      // ignore
+    }
+  }, [messages])
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, thinking])
 
-  function send(question) {
+  async function send(question) {
     const q = question.trim()
     if (!q) return
 
@@ -32,14 +59,41 @@ export default function AssistantChat() {
     setInput('')
     setThinking(true)
 
-    setTimeout(() => {
-      const response = getAssistantResponse(q)
+    try {
+      const res = await fetch('http://localhost:4000/api/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: q }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.message || data.error || `Server returned ${res.status}`)
+      }
+
       setMessages((prev) => [
         ...prev,
-        { id: `${Date.now()}-a`, role: 'assistant', text: response.answer, sources: response.sources },
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          text: data.answer || data.text || 'No response text received from agent.',
+          sources: data.sources || [],
+        },
       ])
+    } catch (err) {
+      console.error('Backend assistant error:', err.message)
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          text: `⚠️ AI Service Error: ${err.message}`,
+          sources: [],
+        },
+      ])
+    } finally {
       setThinking(false)
-    }, 900)
+    }
   }
 
   return (
@@ -51,14 +105,14 @@ export default function AssistantChat() {
         {thinking && (
           <div className="flex items-center gap-2 pl-9 text-xs font-semibold text-teal-700 font-ibm">
             <Sparkles size={14} className="animate-pulse text-teal-600" />
-            Grounding response in operational records...
+            Querying PostgreSQL database and grounding response...
           </div>
         )}
       </div>
 
       <div className="border-t border-surface-border p-3.5 bg-slate-50/50">
         <div className="mb-3">
-          <SuggestedQuestions questions={suggestedQuestions} onSelect={send} />
+          <SuggestedQuestions questions={SUGGESTED_PROMPTS} onSelect={send} />
         </div>
         <form
           onSubmit={(e) => {
