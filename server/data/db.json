@@ -461,16 +461,15 @@
       "siteId": "SITE-002",
       "item": "Cement Portland Type I",
       "unit": "bags",
-      "quantity": 300,
+      "quantity": 180,
       "reorderThreshold": 400,
       "consumptionPerDay": 55,
-      "status": "LOW",
-      "lastUpdated": "2026-08-20T11:15:26.843Z",
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-19T09:10:00",
       "lastTransaction": {
-        "date": "2026-08-20",
-        "note": "Delivery PO-2041 verification",
-        "type": "Stock In",
+        "type": "Stock Out",
         "quantity": 120,
+        "date": "2026-08-18",
         "relatedPO": "PO-2041"
       }
     },
@@ -616,15 +615,15 @@
       "siteId": "SITE-001",
       "item": "Cement Portland Type I",
       "unit": "bags",
-      "quantity": 10,
+      "quantity": 860,
       "reorderThreshold": 400,
       "consumptionPerDay": 40,
-      "status": "CRITICAL",
-      "lastUpdated": "2026-08-20T10:18:37.319Z",
+      "status": "OK",
+      "lastUpdated": "2026-08-19T08:05:00",
       "lastTransaction": {
-        "date": "2026-08-20",
-        "type": "Stock Out",
-        "quantity": 900,
+        "type": "Stock In",
+        "quantity": 300,
+        "date": "2026-08-10",
         "relatedPO": "PO-2015"
       }
     },
@@ -897,7 +896,7 @@
       "siteId": "SITE-002",
       "severity": "critical",
       "title": "Cement Portland Type I stock at Site B — Warehouse Expansion is projected to become critical in 3.3 days.",
-      "timestamp": "2026-08-20T10:43:15.650Z",
+      "timestamp": "2026-08-20T10:53:31.056Z",
       "explanation": "Current consumption is 55 bags/day against remaining stock of 180 bags. Pending replenishment is delayed by 4 days, causing a potential supply gap.",
       "reasonPoints": [
         "Current consumption is 55 bags/day.",
@@ -1293,5 +1292,67 @@
         }
       ]
     }
-  }
+  },
+  "users": [
+    {
+      "id": "USR-001",
+      "name": "Aarav Mehta",
+      "email": "aarav.mehta@sitesync.com",
+      "phone": "+91 98765 43210",
+      "role": "Product Manager",
+      "projectId": "1",
+      "status": "Active",
+      "createdAt": "2026-08-15"
+    },
+    {
+      "id": "USR-002",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@sitesync.com",
+      "phone": "+91 98765 43211",
+      "role": "Product Manager",
+      "projectId": "NA",
+      "status": "Not Active",
+      "createdAt": "2026-08-16"
+    },
+    {
+      "id": "USR-003",
+      "name": "Rohan Kapoor",
+      "email": "rohan.kapoor@sitesync.com",
+      "phone": "+91 98765 43212",
+      "role": "Product Manager",
+      "projectId": "NA",
+      "status": "Not Active",
+      "createdAt": "2026-08-17"
+    },
+    {
+      "id": "USR-004",
+      "name": "Vikram Construction",
+      "email": "contact@vikramconst.com",
+      "phone": "+91 98123 45678",
+      "role": "Contractor",
+      "siteId": "SITE-001",
+      "status": "Active",
+      "createdAt": "2026-08-18"
+    },
+    {
+      "id": "USR-005",
+      "name": "BuildPro Contractors",
+      "email": "admin@buildpro.com",
+      "phone": "+91 98234 56789",
+      "role": "Contractor",
+      "siteId": "SITE-002",
+      "status": "Active",
+      "createdAt": "2026-08-19"
+    },
+    {
+      "id": "USR-006",
+      "name": "Apex Infra Contractors",
+      "email": "contact@apexinfra.com",
+      "phone": "+91 98345 67890",
+      "role": "Contractor",
+      "siteId": "SITE-003",
+      "status": "Active",
+      "createdAt": "2026-08-20"
+    }
+  ]
 }

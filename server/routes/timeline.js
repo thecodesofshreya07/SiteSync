@@ -1,26 +1,34 @@
 import { Router } from 'express'
-import { getCollection } from '../db.js'
+import { getCollectionDirect } from '../db.js'
 
 const router = Router()
 
-// GET /api/timeline - Timeline phases for site (optional ?siteId=...)
-router.get('/', (req, res) => {
-  const { siteId } = req.query
-  const timelines = getCollection('timelines') || {}
-  if (siteId) {
-    return res.json(timelines[siteId] || [])
+// GET /api/timeline - List timeline (optional ?siteId=...)
+router.get('/', async (req, res) => {
+  try {
+    const { siteId } = req.query
+    const timelines = await getCollectionDirect('timelines')
+    if (siteId) {
+      return res.json(timelines[siteId] || [])
+    }
+    return res.json(timelines)
+  } catch (err) {
+    console.error('Error in GET /api/timeline:', err)
+    return res.status(500).json({ error: 'Failed to retrieve timelines' })
   }
-  return res.json(timelines)
 })
 
-// GET /api/timeline/:siteId - Timeline phases for specific site
-router.get('/:siteId', (req, res) => {
-  const timelines = getCollection('timelines') || {}
-  const siteTimeline = timelines[req.params.siteId]
-  if (siteTimeline) {
+// GET /api/timeline/:siteId - Timeline for a specific siteId
+router.get('/:siteId', async (req, res) => {
+  try {
+    const { siteId } = req.params
+    const timelines = await getCollectionDirect('timelines')
+    const siteTimeline = timelines[siteId] || []
     return res.json(siteTimeline)
+  } catch (err) {
+    console.error(`Error in GET /api/timeline/${req.params.siteId}:`, err)
+    return res.status(500).json({ error: 'Failed to retrieve timeline' })
   }
-  return res.json([])
 })
 
 export default router

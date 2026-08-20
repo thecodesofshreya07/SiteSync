@@ -1,0 +1,203 @@
+import { Router } from 'express'
+import { getCollection, findById, setCollection, getPool } from '../db.js'
+
+const router = Router()
+
+const ALLOWED_ROLES = ['Product Manager', 'Contractor']
+
+function formatUserRow(row) {
+  if (!row) return null
+  const baseData = row.data && typeof row.data === 'object' ? row.data : {}
+  return {
+    ...baseData,
+    id: row.id || baseData.id,
+    name: row.name || baseData.name,
+    email: row.email || baseData.email,
+    phone: row.phone || baseData.phone,
+    role: row.role || baseData.role,
+    projectId: row.project_id || baseData.projectId || (baseData.role === 'Product Manager' ? 'NA' : undefined),
+    siteId: row.site_id || baseData.siteId || (baseData.role === 'Contractor' ? 'NA' : undefined),
+    status: row.status || baseData.status || 'Not Active',
+    createdAt: row.created_at || baseData.createdAt || new Date().toISOString().slice(0, 10),
+  }
+}
+
+// GET /api/users - List all users
+router.get('/', async (req, res) => {
+  try {
+    const pool = getPool()
+
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM users ORDER BY id ASC')
+        if (result.rows && result.rows.length > 0) {
+          return res.json(result.rows.map(formatUserRow))
+        }
+      } catch (err) {
+        console.warn('PostgreSQL users query warning, using local collection cache:', err.message)
+      }
+    }
+
+    const users = getCollection('users') || []
+    res.json(users)
+  } catch (err) {
+    console.error('Error fetching users:', err)
+    res.status(500).json({ error: 'Failed to retrieve users' })
+  }
+})
+
+// GET /api/users/:id - Get single user by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM users WHERE id = $1', [id])
+        if (result.rows.length > 0) {
+          return res.json(formatUserRow(result.rows[0]))
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL user lookup failed for ${id}:`, err.message)
+      }
+    }
+
+    const user = findById('users', id)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    res.json(user)
+  } catch (err) {
+    console.error(`Error fetching user ${req.params.id}:`, err)
+    res.status(500).json({ error: 'Failed to retrieve user' })
+  }
+})
+
+// POST /api/users - Create new Product Manager or Contractor account
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, phone, role, siteId, projectId, status } = req.body
+
+    // Required Validation: Name, Email, Phone, Role
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Full Name is required' })
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email is required' })
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid email address' })
+    }
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ error: 'Phone number is required' })
+    }
+    if (!role || !ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({ error: 'Role must be either Product Manager or Contractor' })
+    }
+
+    // Optional fields with default fallbacks
+    const finalStatus = status && status.trim() ? status.trim() : 'Not Active'
+    let finalProjectId = undefined
+    let finalSiteId = undefined
+
+    if (role === 'Product Manager') {
+      finalProjectId = projectId && projectId.trim() ? projectId.trim() : 'NA'
+    } else {
+      finalSiteId = siteId && siteId.trim() ? siteId.trim() : 'NA'
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+    const pool = getPool()
+    let existingUser = null
+
+    // Check duplicate email in PostgreSQL
+    if (pool) {
+      try {
+        const check = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [normalizedEmail])
+        if (check.rows.length > 0) {
+          existingUser = check.rows[0]
+        }
+      } catch (err) {
+        console.warn('PostgreSQL email duplicate check warning:', err.message)
+      }
+    }
+
+    // Check duplicate email in local collection cache
+    const currentList = getCollection('users') || []
+    if (!existingUser && currentList.some((u) => u.email.toLowerCase() === normalizedEmail)) {
+      existingUser = true
+    }
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'A user with this email already exists.' })
+    }
+
+    const id = `USR-${Math.floor(100 + Math.random() * 900)}`
+    const createdAt = new Date().toISOString().slice(0, 10)
+
+    const newUser = {
+      id,
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      role,
+      ...(role === 'Product Manager' ? { projectId: finalProjectId } : { siteId: finalSiteId }),
+      status: finalStatus,
+      createdAt,
+    }
+
+    // Save to PostgreSQL if available
+    if (pool) {
+      try {
+        await pool.query(
+          `CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            phone TEXT,
+            role TEXT,
+            site_id TEXT,
+            project_id TEXT,
+            status TEXT DEFAULT 'Not Active',
+            created_at TEXT,
+            data JSONB
+          );
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS project_id TEXT;
+          `
+        )
+
+        await pool.query(
+          `INSERT INTO users (id, name, email, phone, role, site_id, project_id, status, created_at, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            id,
+            newUser.name,
+            newUser.email,
+            newUser.phone,
+            role,
+            finalSiteId || null,
+            finalProjectId || null,
+            finalStatus,
+            createdAt,
+            JSON.stringify(newUser),
+          ]
+        )
+      } catch (err) {
+        console.warn('PostgreSQL insert user warning:', err.message)
+      }
+    }
+
+    // Save to local DB cache
+    currentList.push(newUser)
+    setCollection('users', currentList)
+
+    res.status(201).json(newUser)
+  } catch (err) {
+    console.error('Error creating user:', err)
+    res.status(500).json({ error: 'Failed to create user account' })
+  }
+})
+
+export default router

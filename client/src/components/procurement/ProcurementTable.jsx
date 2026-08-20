@@ -1,13 +1,14 @@
+import { ClipboardList, Trash2 } from 'lucide-react'
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import EmptyState from '../common/EmptyState'
-import { ClipboardList, Trash2 } from 'lucide-react'
-import { getVendorById } from '../../data/procurement'
-import { getSiteById } from '../../data/sites'
+import { useSite } from '../../hooks/useSite'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
 export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder }) {
-  if (orders.length === 0) {
-    return <EmptyState icon={ClipboardList} title="No purchase orders" description="Nothing matches the current view." />
+  const { sites } = useSite()
+
+  if (!orders || orders.length === 0) {
+    return <EmptyState icon={ClipboardList} title="No purchase orders" description="No procurement orders found for this view." />
   }
 
   return (
@@ -28,14 +29,14 @@ export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder 
         </thead>
         <tbody>
           {orders.map((po) => {
-            const vendor = getVendorById(po.vendorId)
-            const site = getSiteById(po.siteId)
+            const site = sites?.find((s) => s.id === po.siteId)
+            const vendorName = po.vendorName || po.vendor || po.vendorId || '—'
             return (
               <tr key={po.id} className="border-b border-surface-border last:border-0 hover:bg-slate-50 transition-colors">
                 <td className="px-4 py-3.5 font-bold text-slate-900">{po.id}</td>
                 <td className="px-4 py-3.5 font-semibold text-slate-800">{po.item}</td>
-                <td className="px-4 py-3.5 font-medium text-slate-700">{vendor?.name}</td>
-                <td className="px-4 py-3.5 font-medium text-slate-600">{site?.name}</td>
+                <td className="px-4 py-3.5 font-medium text-slate-700">{vendorName}</td>
+                <td className="px-4 py-3.5 font-medium text-slate-600">{site?.name || po.siteId}</td>
                 <td className="px-4 py-3.5 tabular-nums font-bold text-slate-900">{formatFullINR(po.amount)}</td>
                 <td className="px-4 py-3.5 font-semibold text-slate-700">{po.stage}</td>
                 <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">{formatDate(po.expectedDelivery)}</td>

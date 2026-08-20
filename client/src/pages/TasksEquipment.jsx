@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import TaskBoard from '../components/tasks/TaskBoard'
 import TaskFilters from '../components/tasks/TaskFilters'
 import EquipmentGrid from '../components/equipment/EquipmentGrid'
 import LoadingState from '../components/common/LoadingState'
 import { useSite } from '../hooks/useSite'
-import { getTasksBySite } from '../data/tasks'
-import { getEquipmentBySite } from '../data/equipment'
 import { cn } from '../lib/utils'
 
 const TABS = ['Tasks', 'Equipment']
+<<<<<<< HEAD
 const API_BASE = 'http://localhost:5000/api'
+=======
+const API_BASE = 'http://localhost:4000/api'
+>>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()
@@ -20,17 +23,18 @@ export default function TasksEquipment() {
   const [tasks, setTasks] = useState([])
   const [equipment, setEquipment] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     let isMounted = true
     setLoading(true)
+    setError(null)
 
     const fetchOperationalData = async () => {
-      console.log('🔄 [Tasks & Equipment] Attempting API fetch for site:', selectedSite.id)
       try {
         const [tasksRes, equipmentRes] = await Promise.all([
-          fetch(`${API_BASE}/tasks?siteId=${selectedSite.id}`),
-          fetch(`${API_BASE}/equipment?siteId=${selectedSite.id}`),
+          fetch(`${API_BASE}/tasks?siteId=${encodeURIComponent(selectedSite.id)}`),
+          fetch(`${API_BASE}/equipment?siteId=${encodeURIComponent(selectedSite.id)}`),
         ])
 
         if (!tasksRes.ok || !equipmentRes.ok) {
@@ -41,16 +45,16 @@ export default function TasksEquipment() {
         const equipmentData = await equipmentRes.json()
 
         if (isMounted) {
-          console.log('✅ [Tasks & Equipment] Successfully loaded from backend API!', { tasks: tasksData.length, equipment: equipmentData.length })
-          setTasks(tasksData)
-          setEquipment(equipmentData)
+          setTasks(Array.isArray(tasksData) ? tasksData : [])
+          setEquipment(Array.isArray(equipmentData) ? equipmentData : [])
           setLoading(false)
         }
       } catch (err) {
-        console.error('⚠️ [Tasks & Equipment] API fetch failed — using local fallback mock data:', err.message || err)
+        console.error('Tasks & Equipment API fetch error:', err.message)
         if (isMounted) {
-          setTasks(getTasksBySite(selectedSite.id))
-          setEquipment(getEquipmentBySite(selectedSite.id))
+          setError(`⚠️ LIVE DATABASE UNAVAILABLE — Cannot retrieve tasks/equipment from ${API_BASE} (${err.message})`)
+          setTasks([])
+          setEquipment([])
           setLoading(false)
         }
       }
@@ -68,6 +72,13 @@ export default function TasksEquipment() {
   return (
     <div>
       <PageHeader title="Tasks & Equipment" subtitle={`Operational status for ${selectedSite.name}`} />
+
+      {error && (
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800">
+          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-white p-1">
@@ -88,9 +99,19 @@ export default function TasksEquipment() {
       </div>
 
       {loading ? (
-        <LoadingState label="Loading operational status..." />
+        <LoadingState label="Loading operational status from PostgreSQL..." />
       ) : tab === 'Tasks' ? (
-        <TaskBoard tasks={filteredTasks} />
+        tasks.length === 0 && !error ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
+            NO REAL DATA FOUND — No tasks exist in PostgreSQL for {selectedSite.name}.
+          </div>
+        ) : (
+          <TaskBoard tasks={filteredTasks} />
+        )
+      ) : equipment.length === 0 && !error ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 font-medium">
+          NO REAL DATA FOUND — No equipment records exist in PostgreSQL for {selectedSite.name}.
+        </div>
       ) : (
         <EquipmentGrid equipment={equipment} />
       )}

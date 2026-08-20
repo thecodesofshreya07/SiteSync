@@ -21,33 +21,9 @@ function formatInventoryRow(row) {
   }
 }
 
-async function generateUniqueInventoryId(pool) {
-  if (pool) {
-    try {
-      const res = await pool.query("SELECT id FROM inventory WHERE id LIKE 'INV-%'")
-      const existingIds = new Set(res.rows.map((r) => r.id))
-      let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
-      while (existingIds.has(candidate)) {
-        candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
-      }
-      return candidate
-    } catch (err) {
-      console.warn('Could not query existing inventory IDs from Postgres:', err.message)
-    }
-  }
-
-  const localList = getCollection('inventory') || []
-  const localIds = new Set(localList.map((i) => i.id))
-  let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
-  while (localIds.has(candidate)) {
-    candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
-  }
-  return candidate
-}
-
-// GET /api/inventory - List inventory items (optionally filter by ?siteId=...)
+// GET /api/inventory - List inventory items (optionally filter by siteId)
 router.get('/', async (req, res) => {
-  const { siteId } = req.query
+  const siteId = req.query.siteId || req.query.site_id
   const pool = getPool()
 
   if (pool) {
@@ -55,13 +31,14 @@ router.get('/', async (req, res) => {
       let query = 'SELECT * FROM inventory'
       const params = []
       if (siteId) {
-        query += ' WHERE site_id = $1'
-        params.push(siteId)
+        query += ' WHERE site_id ILIKE $1'
+        params.push(String(siteId).trim())
       }
       query += ' ORDER BY id ASC'
       const result = await pool.query(query, params)
-      if (result.rows && result.rows.length > 0) {
-        return res.json(result.rows.map(formatInventoryRow))
+      if (result.rows) {
+        const mapped = result.rows.map(formatInventoryRow)
+        return res.json(mapped)
       }
     } catch (err) {
       console.warn('PostgreSQL inventory query failed, using local collection:', err.message)
@@ -69,16 +46,16 @@ router.get('/', async (req, res) => {
   }
 
   // Fallback to local collection cache
-  const inventory = getCollection('inventory')
+  const inventory = getCollection('inventory') || []
   if (siteId) {
-    return res.json(inventory.filter((item) => item.siteId === siteId))
+    return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
   return res.json(inventory)
 })
 
-// GET /api/inventory/:idOrSiteId - Single item by ID OR list of items for a siteId
-router.get('/:idOrSiteId', async (req, res) => {
-  const { idOrSiteId } = req.params
+// GET /api/inventory/:id - Single inventory item
+router.get('/:id', async (req, res) => {
+  const { id } = req.params
   const pool = getPool()
 
   if (pool) {
@@ -99,21 +76,11 @@ router.get('/:idOrSiteId', async (req, res) => {
     }
   }
 
-  const inventory = getCollection('inventory')
-
-  // First check if it matches a single item ID (e.g. INV-018)
-  const item = inventory.find((i) => i.id === idOrSiteId)
-  if (item) {
-    return res.json(item)
+  const item = findById('inventory', id)
+  if (!item) {
+    return res.status(404).json({ error: 'Inventory item not found' })
   }
-
-  // Next check if it matches a site ID (e.g. SITE-001)
-  const siteItems = inventory.filter((i) => i.siteId === idOrSiteId)
-  if (siteItems.length > 0) {
-    return res.json(siteItems)
-  }
-
-  return res.status(404).json({ error: `Inventory item or site '${idOrSiteId}' not found` })
+  return res.json(item)
 })
 
 // POST /api/inventory - Create a new inventory item
@@ -192,9 +159,8 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Update local cache
     const list = getCollection('inventory') || []
-    list.push(createdRecord)
+    list.push(newItem)
     setCollection('inventory', list)
 
     console.log(`✓ Created inventory item ${createdRecord.id} ("${createdRecord.item}") for site ${siteId}`)
@@ -425,7 +391,7 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    const list = getCollection('inventory')
+    const list = getCollection('inventory') || []
     const idx = list.findIndex((i) => i.id === id)
     if (idx !== -1) {
       found = true

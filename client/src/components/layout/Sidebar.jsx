@@ -7,6 +7,7 @@ import {
   MessageSquareText,
   Settings,
   Building2,
+  Users,
   X,
 } from 'lucide-react'
 import { useRole } from '../../hooks/useRole'
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { key: 'tasks-equipment', to: '/tasks-equipment', label: 'Tasks & Equipment', icon: ListChecks },
   { key: 'assistant', to: '/assistant', label: 'Assistant', icon: MessageSquareText },
   { key: 'settings', to: '/settings', label: 'Settings', icon: Settings },
+  { key: 'user-management', to: '/user-management', label: 'User Management', icon: Users },
 ]
 
 export default function Sidebar({ mobileOpen, setMobileOpen }) {

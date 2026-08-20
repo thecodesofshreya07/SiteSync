@@ -6,6 +6,7 @@ import Procurement from './pages/Procurement'
 import TasksEquipment from './pages/TasksEquipment'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
+import UserManagement from './pages/UserManagement'
 import { SiteProvider } from './context/SiteContext'
 import { RoleProvider } from './context/RoleContext'
 import { AlertsProvider } from './context/AlertsContext'
@@ -24,6 +25,7 @@ export default function App() {
                 <Route path="/tasks-equipment" element={<TasksEquipment />} />
                 <Route path="/assistant" element={<Assistant />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/user-management" element={<UserManagement />} />
               </Route>
             </Routes>
           </BrowserRouter>

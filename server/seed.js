@@ -11,6 +11,7 @@ import { equipment } from '../client/src/data/equipment.js'
 import { initialAlerts } from '../client/src/data/alerts.js'
 import { activityScripts } from '../client/src/data/agentActivity.js'
 import { suggestedQuestions, assistantResponses } from '../client/src/data/assistantResponses.js'
+import { initialUsers } from '../client/src/data/users.js'
 
 const { Pool } = pg
 
@@ -32,6 +33,7 @@ export async function runSeed() {
     agentActivity: activityScripts,
     suggestedQuestions,
     assistantResponses,
+    users: initialUsers,
   }
 
   writeDb(fullData)
@@ -55,7 +57,7 @@ export async function runSeed() {
     const client = await pool.connect()
     console.log('✓ Connected to PostgreSQL')
 
-    // Ensure all required tables and columns exist
+    // Ensure all required tables exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS collections (
         name TEXT PRIMARY KEY,
@@ -113,31 +115,29 @@ export async function runSeed() {
         reason TEXT,
         data JSONB
       );
+
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        role TEXT,
+        site_id TEXT,
+        status TEXT DEFAULT 'Active',
+        created_at TEXT,
+        data JSONB
+      );
     `)
 
-    // Ensure schema columns exist even if tables existed previously
-    await client.query(`
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS reorder_threshold NUMERIC DEFAULT 0;
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS consumption_per_day NUMERIC DEFAULT 0;
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS last_updated TEXT;
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS last_transaction JSONB;
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS data JSONB;
-      
-      ALTER TABLE procurement_orders ADD COLUMN IF NOT EXISTS delay_days INT DEFAULT 0;
-      ALTER TABLE procurement_orders ADD COLUMN IF NOT EXISTS data JSONB;
-
-      ALTER TABLE vendors ADD COLUMN IF NOT EXISTS data JSONB;
-      ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS data JSONB;
-    `)
-
-    // Clear existing rows before inserting (safely re-runnable)
+    // Clear existing rows before inserting
     await client.query('DELETE FROM inventory')
     await client.query('DELETE FROM procurement_orders')
     await client.query('DELETE FROM vendors')
     await client.query('DELETE FROM deliveries')
-    console.log('✓ Cleared existing rows in inventory, procurement_orders, vendors, and deliveries')
+    await client.query('DELETE FROM users')
+    console.log('✓ Cleared existing rows in tables')
 
-    // 3. Seed Inventory Table
+    // Seed Inventory Table
     for (const item of inventory) {
       await client.query(
         `INSERT INTO inventory (
@@ -170,7 +170,7 @@ export async function runSeed() {
       )
     }
 
-    // 4. Seed Procurement Orders Table
+    // Seed Procurement Orders Table
     for (const po of procurementOrders) {
       await client.query(
         `INSERT INTO procurement_orders (
@@ -209,7 +209,7 @@ export async function runSeed() {
       )
     }
 
-    // 5. Seed Vendors Table
+    // Seed Vendors Table
     for (const v of vendors) {
       await client.query(
         `INSERT INTO vendors (
@@ -225,7 +225,7 @@ export async function runSeed() {
       )
     }
 
-    // 6. Seed Deliveries Table
+    // Seed Deliveries Table
     for (const d of deliveries) {
       await client.query(
         `INSERT INTO deliveries (
@@ -252,7 +252,26 @@ export async function runSeed() {
       )
     }
 
-    // 7. Seed Collections snapshot table
+    // Seed Users Table
+    for (const u of initialUsers) {
+      await client.query(
+        `INSERT INTO users (
+          id, name, email, phone, role, site_id, status, created_at, data
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (id) DO UPDATE SET
+          name = $2,
+          email = $3,
+          phone = $4,
+          role = $5,
+          site_id = $6,
+          status = $7,
+          created_at = $8,
+          data = $9`,
+        [u.id, u.name, u.email, u.phone, u.role, u.siteId, u.status, u.createdAt, JSON.stringify(u)]
+      )
+    }
+
+    // Seed Collections snapshot table
     for (const [name, data] of Object.entries(fullData)) {
       await client.query(
         `INSERT INTO collections (name, data, updated_at)
@@ -264,7 +283,7 @@ export async function runSeed() {
 
     console.log('--------------------------------------------------')
     console.log(
-      `✓ Seeded ${inventory.length} inventory items, ${procurementOrders.length} procurement orders, ${vendors.length} vendors, ${deliveries.length} deliveries`
+      `✓ Seeded ${inventory.length} inventory items, ${procurementOrders.length} procurement orders, ${vendors.length} vendors, ${deliveries.length} deliveries, ${initialUsers.length} users`
     )
     console.log('✓ Seeded all document collections into PostgreSQL')
     console.log('--------------------------------------------------')
