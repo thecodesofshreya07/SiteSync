@@ -10,9 +10,9 @@ import { formatDate, formatFullINR } from '../../lib/utils'
 function Row({ label, value }) {
   if (value === undefined || value === null || value === '') return null
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-surface-border py-2 last:border-0">
-      <span className="text-xs text-navy-500">{label}</span>
-      <span className="text-right text-xs font-medium text-navy-900">{value}</span>
+    <div className="flex items-start justify-between gap-4 border-b border-surface-border py-2.5 last:border-0 font-public">
+      <span className="text-xs font-semibold text-slate-500 font-public">{label}</span>
+      <span className="text-right text-xs font-bold text-slate-900 font-ibm">{value}</span>
     </div>
   )
 }

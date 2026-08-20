@@ -6,6 +6,10 @@ export default {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        public: ['"Public Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        ibm: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'ibm-mono': ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        agent: ['"Public Sans"', '"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
         navy: {

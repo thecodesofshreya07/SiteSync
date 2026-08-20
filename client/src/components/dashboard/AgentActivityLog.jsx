@@ -36,21 +36,21 @@ export default function AgentActivityLog({ siteId }) {
   const isMonitoring = true
 
   return (
-    <div className="rounded-xl border border-surface-border bg-navy-950 p-5 shadow-card">
+    <div className="rounded-xl border border-surface-border bg-navy-950 p-5 shadow-card font-public">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Radio size={15} className="text-teal-400" />
-          <h3 className="text-sm font-semibold tracking-wide text-white">AI OPERATIONS AGENT</h3>
+          <h3 className="text-sm font-bold tracking-wider text-white font-public">AI OPERATIONS AGENT</h3>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-teal-400 pulse-dot" />
-          <span className="text-2xs font-bold uppercase tracking-wide text-teal-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-teal-400 font-ibm">
             {isMonitoring ? 'Monitoring' : 'Idle'}
           </span>
         </div>
       </div>
 
-      <div className="h-[280px] overflow-y-auto rounded-lg bg-navy-900/90 border border-slate-700/60 p-3.5 font-mono">
+      <div className="h-[280px] overflow-y-auto rounded-lg bg-navy-900/90 border border-slate-700/60 p-3.5 font-ibm">
         {entries.length === 0 && (
           <p className="px-1 py-2 text-xs font-medium text-slate-400">Initializing monitoring session...</p>
         )}

@@ -43,21 +43,21 @@ export default function AssistantChat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-220px)] min-h-[420px] flex-col rounded-xl border border-surface-border bg-white shadow-card">
+    <div className="flex h-[calc(100vh-220px)] min-h-[420px] flex-col rounded-xl border border-surface-border bg-white shadow-card font-public">
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {messages.map((m) => (
           <ChatMessage key={m.id} message={m} onSourceClick={setActiveSource} />
         ))}
         {thinking && (
-          <div className="flex items-center gap-2 pl-9 text-xs text-navy-400">
-            <Sparkles size={13} className="animate-pulse text-teal-500" />
+          <div className="flex items-center gap-2 pl-9 text-xs font-semibold text-teal-700 font-ibm">
+            <Sparkles size={14} className="animate-pulse text-teal-600" />
             Grounding response in operational records...
           </div>
         )}
       </div>
 
-      <div className="border-t border-surface-border p-3">
-        <div className="mb-2.5">
+      <div className="border-t border-surface-border p-3.5 bg-slate-50/50">
+        <div className="mb-3">
           <SuggestedQuestions questions={suggestedQuestions} onSelect={send} />
         </div>
         <form
@@ -71,12 +71,12 @@ export default function AssistantChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about sites, budgets, inventory, procurement..."
-            className="flex-1 rounded-lg border border-surface-border px-3.5 py-2.5 text-sm focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
+            className="flex-1 rounded-lg border border-surface-border bg-white px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40 shadow-sm transition-colors"
           >
             <Send size={16} />
           </button>

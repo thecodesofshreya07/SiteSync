@@ -9,11 +9,11 @@ export default function AlertList({ siteId }) {
   const openCount = siteAlerts.filter((a) => a.status === 'pending').length
 
   return (
-    <div className="rounded-xl border border-surface-border bg-white p-5 shadow-card">
+    <div className="rounded-xl border border-surface-border bg-white p-5 shadow-card font-public">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-navy-900">AI Alerts</h3>
-          <p className="mt-0.5 text-xs text-navy-500">{openCount} open, awaiting your review</p>
+          <h3 className="text-base font-bold text-slate-900 font-public">AI Alerts</h3>
+          <p className="mt-0.5 text-xs font-semibold text-slate-600 font-ibm">{openCount} open, awaiting your review</p>
         </div>
       </div>
 

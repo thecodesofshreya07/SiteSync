@@ -26,7 +26,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
   return (
     <div
       className={cn(
-        'rounded-xl border bg-white shadow-card transition-colors',
+        'rounded-xl border bg-white shadow-card transition-colors font-public',
         alert.status === 'pending' ? severity.border : 'border-surface-border'
       )}
     >
@@ -44,12 +44,12 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
             <AlertTriangle size={14} className={severity.text} />
           </div>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 font-public">
               <Badge tone={severity.text.includes('red') ? 'red' : 'amber'}>{severity.label}</Badge>
-              {site && <span className="text-xs font-semibold text-slate-600">{site.name}</span>}
-              <span className="text-xs font-medium text-slate-500">· {formatTime(alert.timestamp)}</span>
+              {site && <span className="text-xs font-semibold text-slate-600 font-public">{site.name}</span>}
+              <span className="text-xs font-medium text-slate-500 font-ibm">· {formatTime(alert.timestamp)}</span>
             </div>
-            <p className="mt-1.5 text-base font-bold leading-snug text-slate-900">{alert.title}</p>
+            <p className="mt-1.5 text-base font-bold leading-snug text-slate-900 font-public">{alert.title}</p>
           </div>
         </div>
         <ChevronDown
@@ -61,12 +61,12 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
       {expanded && (
         <div className="border-t border-surface-border px-4 pb-4 pt-3.5">
           <div className="rounded-lg bg-surface-bg p-3.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-700">AI Explanation</p>
-            <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800">{alert.explanation}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-700 font-public">AI Explanation</p>
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-800 font-ibm">{alert.explanation}</p>
             {alert.reasonPoints?.length > 0 && (
               <ul className="mt-2.5 space-y-1.5">
                 {alert.reasonPoints.map((point, i) => (
-                  <li key={i} className="flex gap-2 text-xs font-medium text-slate-700">
+                  <li key={i} className="flex gap-2 text-xs font-medium text-slate-700 font-ibm">
                     <span className="text-slate-500 font-bold">•</span>
                     {point}
                   </li>
@@ -76,13 +76,13 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
           </div>
 
           <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3.5">
-            <p className="text-xs font-bold uppercase tracking-wider text-teal-800">Recommendation</p>
-            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900">{alert.recommendation}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-teal-800 font-public">Recommendation</p>
+            <p className="mt-1.5 text-sm font-semibold leading-relaxed text-slate-900 font-ibm">{alert.recommendation}</p>
           </div>
 
           {alert.sources?.length > 0 && (
-            <div className="mt-3">
-              <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-600">
+            <div className="mt-3 font-public">
+              <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 font-public">
                 Source Records
               </p>
               <div className="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ export default function AlertCard({ alert, defaultExpanded = false }) {
                   <button
                     key={s.id}
                     onClick={() => setActiveSource(s)}
-                    className="flex items-center gap-1.5 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm"
+                    className="flex items-center gap-1.5 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm font-ibm"
                   >
                     <FileSearch size={13} className="text-teal-600" />
                     {s.label}
