@@ -10,9 +10,9 @@ import { formatDate, formatFullINR } from '../../lib/utils'
 function Row({ label, value }) {
   if (value === undefined || value === null || value === '') return null
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-surface-border py-2.5 last:border-0 font-public">
-      <span className="text-xs font-semibold text-slate-500 font-public">{label}</span>
-      <span className="text-right text-xs font-bold text-slate-900 font-ibm">{value}</span>
+    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 sm:gap-4 border-b border-surface-border py-2.5 last:border-0 font-public min-w-0">
+      <span className="text-xs font-semibold text-slate-500 font-public shrink-0">{label}</span>
+      <span className="sm:text-right text-xs font-bold text-slate-900 font-ibm break-words min-w-0">{value}</span>
     </div>
   )
 }
@@ -24,7 +24,7 @@ function InventorySource({ id }) {
   return (
     <div>
       <Badge tone="blue">Inventory Transaction</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{item.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{item.id}</h3>
       <div className="mt-3">
         <Row label="Item" value={item.item} />
         <Row label="Site" value={site?.name} />
@@ -51,7 +51,7 @@ function ProcurementSource({ id }) {
   return (
     <div>
       <Badge tone="teal">Purchase Order</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{po.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{po.id}</h3>
       <div className="mt-3">
         <Row label="Item" value={po.item} />
         <Row label="Site" value={site?.name} />
@@ -74,7 +74,7 @@ function DeliverySource({ id }) {
   return (
     <div>
       <Badge tone="amber">Delivery Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{delivery.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{delivery.id}</h3>
       <div className="mt-3">
         <Row label="Purchase Order" value={po?.id} />
         <Row label="Item" value={po?.item} />
@@ -94,7 +94,7 @@ function VendorSource({ id }) {
   return (
     <div>
       <Badge tone="neutral">Vendor Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{vendor.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{vendor.id}</h3>
       <div className="mt-3">
         <Row label="Name" value={vendor.name} />
         <Row label="Category" value={vendor.category} />
@@ -112,7 +112,7 @@ function TaskSource({ id }) {
   return (
     <div>
       <Badge tone="blue">Task Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{task.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{task.id}</h3>
       <div className="mt-3">
         <Row label="Name" value={task.name} />
         <Row label="Site" value={site?.name} />
@@ -133,7 +133,7 @@ function EquipmentSource({ id }) {
   return (
     <div>
       <Badge tone="amber">Equipment Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{eq.id}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{eq.id}</h3>
       <div className="mt-3">
         <Row label="Name" value={eq.name} />
         <Row label="Site" value={site?.name} />
@@ -151,7 +151,7 @@ function SiteSource({ id }) {
   return (
     <div>
       <Badge tone="teal">Site Budget Record</Badge>
-      <h3 className="mt-2 text-base font-semibold text-navy-900">{site.name}</h3>
+      <h3 className="mt-2 text-base font-semibold text-navy-900 break-words">{site.name}</h3>
       <div className="mt-3">
         <Row label="Planned Budget" value={formatFullINR(site.budgetPlanned)} />
         <Row label="Actual Spend" value={formatFullINR(site.budgetActual)} />

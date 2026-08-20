@@ -24,16 +24,16 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
 
   return (
     <Modal open={open} onClose={onClose} title="Log Transaction" subtitle={`${item.item} · ${item.id}`}>
-      <div className="space-y-4">
+      <div className="space-y-4 font-public min-w-0">
         <div>
           <label className="mb-1.5 block text-xs font-medium text-navy-600">Transaction Type</label>
-          <div className="flex items-center gap-1 rounded-lg border border-surface-border bg-surface-bg p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-lg border border-surface-border bg-surface-bg p-1">
             {TXN_TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
                 className={cn(
-                  'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                  'rounded-md px-1.5 py-1.5 text-xs font-medium transition-colors truncate',
                   type === t ? 'bg-white text-teal-700 shadow-sm' : 'text-navy-500 hover:text-navy-700'
                 )}
               >
@@ -69,7 +69,7 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>

@@ -34,7 +34,7 @@ export default function ProjectTimeline({ phases }) {
   }
 
   return (
-    <div className="rounded-xl border border-surface-border bg-white p-5 shadow-card">
+    <div className="rounded-xl border border-surface-border bg-white p-4 sm:p-5 shadow-card min-w-0">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-navy-900">Project Timeline</h3>
         <p className="mt-0.5 text-xs text-navy-500">
@@ -45,30 +45,32 @@ export default function ProjectTimeline({ phases }) {
       {phases.length === 0 ? (
         <EmptyState icon={CalendarRange} title="No timeline data" description="This site has no phase schedule yet." />
       ) : (
-        <div className="space-y-3">
-          {phases.map((phase) => (
-            <div key={phase.id} className="flex items-center gap-3">
-              <div className="w-28 shrink-0 sm:w-36">
-                <p className="truncate text-xs font-medium text-navy-800">{phase.name}</p>
-                <p className={cn('text-2xs font-medium', STATUS_TEXT[phase.status])}>{phase.status}</p>
-              </div>
-              <div className="relative h-6 flex-1 rounded-md bg-surface-bg">
-                <div
-                  className="absolute top-0 h-6 overflow-hidden rounded-md border border-black/5"
-                  style={barStyle(phase)}
-                >
-                  <div className={cn('h-full opacity-25', STATUS_COLOR[phase.status])} />
+        <div className="overflow-x-auto min-w-0 pb-1">
+          <div className="min-w-[500px] space-y-3">
+            {phases.map((phase) => (
+              <div key={phase.id} className="flex items-center gap-3">
+                <div className="w-32 shrink-0 sm:w-36">
+                  <p className="truncate text-xs font-medium text-navy-800">{phase.name}</p>
+                  <p className={cn('text-2xs font-medium', STATUS_TEXT[phase.status])}>{phase.status}</p>
+                </div>
+                <div className="relative h-6 flex-1 rounded-md bg-surface-bg min-w-[150px]">
                   <div
-                    className={cn('absolute inset-y-0 left-0 rounded-md', STATUS_COLOR[phase.status])}
-                    style={{ width: `${phase.progress}%` }}
-                  />
+                    className="absolute top-0 h-6 overflow-hidden rounded-md border border-black/5"
+                    style={barStyle(phase)}
+                  >
+                    <div className={cn('h-full opacity-25', STATUS_COLOR[phase.status])} />
+                    <div
+                      className={cn('absolute inset-y-0 left-0 rounded-md', STATUS_COLOR[phase.status])}
+                      style={{ width: `${phase.progress}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="w-10 shrink-0 text-right text-2xs font-semibold tabular-nums text-navy-600">
+                  {phase.progress}%
                 </div>
               </div>
-              <div className="w-10 shrink-0 text-right text-2xs font-semibold tabular-nums text-navy-600">
-                {phase.progress}%
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

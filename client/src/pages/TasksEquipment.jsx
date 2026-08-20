@@ -26,6 +26,7 @@ export default function TasksEquipment() {
     setLoading(true)
 
     const fetchOperationalData = async () => {
+      console.log('🔄 [Tasks & Equipment] Attempting API fetch for site:', selectedSite.id)
       try {
         const [tasksRes, equipmentRes] = await Promise.all([
           fetch(`${API_BASE}/tasks?siteId=${selectedSite.id}`),
@@ -33,19 +34,20 @@ export default function TasksEquipment() {
         ])
 
         if (!tasksRes.ok || !equipmentRes.ok) {
-          throw new Error('API server returned error status')
+          throw new Error('API server returned HTTP error status')
         }
 
         const tasksData = await tasksRes.json()
         const equipmentData = await equipmentRes.json()
 
         if (isMounted) {
+          console.log('✅ [Tasks & Equipment] Successfully loaded from backend API!', { tasks: tasksData.length, equipment: equipmentData.length })
           setTasks(tasksData)
           setEquipment(equipmentData)
           setLoading(false)
         }
       } catch (err) {
-        console.warn('API fetch failed, falling back to mock data:', err)
+        console.error('⚠️ [Tasks & Equipment] API fetch failed — using local fallback mock data:', err.message || err)
         if (isMounted) {
           setTasks(getTasksBySite(selectedSite.id))
           setEquipment(getEquipmentBySite(selectedSite.id))
