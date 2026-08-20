@@ -1,13 +1,14 @@
 import { createContext, useEffect, useState } from 'react'
+import { sites as defaultSites } from '../data/sites'
 
 export const SiteContext = createContext(null)
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export function SiteProvider({ children }) {
-  const [sites, setSites] = useState([])
+  const [sites, setSites] = useState(defaultSites)
   const [selectedSiteId, setSelectedSiteId] = useState('SITE-002') // default to Site B
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     async function loadSites() {
@@ -23,9 +24,7 @@ export function SiteProvider({ children }) {
           }
         }
       } catch (err) {
-        console.warn('Failed to load sites from backend API:', err.message)
-      } finally {
-        setLoading(false)
+        console.warn('Failed to load sites from backend API, using local sites:', err.message)
       }
     }
     loadSites()
@@ -33,19 +32,12 @@ export function SiteProvider({ children }) {
 
   const selectedSite =
     sites.find((s) => s.id === selectedSiteId) ||
-    sites[0] || {
-      id: selectedSiteId || 'SITE-002',
-      name: 'Site B — Warehouse Expansion',
-      location: 'Bhiwandi, Thane',
-      status: 'At Risk',
-      budgetPlanned: 31000000,
-      budgetActual: 34658000,
-      progress: 41,
-      lastScan: new Date().toISOString(),
-    }
+    defaultSites.find((s) => s.id === selectedSiteId) ||
+    sites[0] ||
+    defaultSites[0]
 
   const value = {
-    sites,
+    sites: sites.length > 0 ? sites : defaultSites,
     selectedSiteId,
     selectedSite,
     setSelectedSiteId,

@@ -10,7 +10,7 @@ import { useSite } from '../hooks/useSite'
 import { getProcurementBySite } from '../data/procurement'
 import { cn } from '../lib/utils'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()

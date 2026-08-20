@@ -3,7 +3,7 @@ import { initialAlerts } from '../data/alerts'
 
 export const AlertsContext = createContext(null)
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export function AlertsProvider({ children }) {
   const [alerts, setAlerts] = useState(initialAlerts)

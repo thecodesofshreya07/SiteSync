@@ -5,7 +5,7 @@ import { AGENT_EVENT_STYLES } from '../../lib/constants'
 import { cn } from '../../lib/utils'
 import { useAlerts } from '../../hooks/useAlerts'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export default function AgentActivityLog({ siteId }) {
   const [entries, setEntries] = useState([])

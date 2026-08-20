@@ -11,7 +11,7 @@ import { useRole } from '../hooks/useRole'
 import { useAlerts } from '../hooks/useAlerts'
 import { formatINR, percentage, formatDate, formatTime } from '../lib/utils'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 const STATUS_TONE = {
   'On Track': 'green',

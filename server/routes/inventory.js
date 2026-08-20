@@ -3,8 +3,50 @@ import { getCollection, findById, updateById, setCollection, getPool } from '../
 
 const router = Router()
 
+function formatInventoryRow(row) {
+  if (!row) return null
+  const baseData = row.data && typeof row.data === 'object' ? row.data : {}
+  return {
+    ...baseData,
+    id: row.id || baseData.id,
+    siteId: row.site_id || baseData.siteId,
+    item: row.item || baseData.item,
+    unit: row.unit || baseData.unit,
+    quantity: Number(row.quantity ?? baseData.quantity ?? 0),
+    reorderThreshold: Number(row.reorder_threshold ?? baseData.reorderThreshold ?? 0),
+    consumptionPerDay: Number(row.consumption_per_day ?? baseData.consumptionPerDay ?? 0),
+    status: row.status || baseData.status || 'OK',
+    lastUpdated: row.last_updated || baseData.lastUpdated || new Date().toISOString(),
+    lastTransaction: row.last_transaction || baseData.lastTransaction || null,
+  }
+}
+
+async function generateUniqueInventoryId(pool) {
+  if (pool) {
+    try {
+      const res = await pool.query("SELECT id FROM inventory WHERE id LIKE 'INV-%'")
+      const existingIds = new Set(res.rows.map((r) => r.id))
+      let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
+      while (existingIds.has(candidate)) {
+        candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
+      }
+      return candidate
+    } catch (err) {
+      console.warn('Could not query existing inventory IDs from Postgres:', err.message)
+    }
+  }
+
+  const localList = getCollection('inventory') || []
+  const localIds = new Set(localList.map((i) => i.id))
+  let candidate = `INV-${Math.floor(200 + Math.random() * 800)}`
+  while (localIds.has(candidate)) {
+    candidate = `INV-${Math.floor(200 + Math.random() * 8000)}`
+  }
+  return candidate
+}
+
 // GET /api/inventory - List inventory items (optionally filter by ?siteId=...)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { siteId } = req.query
   const pool = getPool()
 
@@ -35,8 +77,28 @@ router.get('/', (req, res) => {
 })
 
 // GET /api/inventory/:idOrSiteId - Single item by ID OR list of items for a siteId
-router.get('/:idOrSiteId', (req, res) => {
+router.get('/:idOrSiteId', async (req, res) => {
   const { idOrSiteId } = req.params
+  const pool = getPool()
+
+  if (pool) {
+    try {
+      // 1. Try single item by id
+      const itemRes = await pool.query('SELECT * FROM inventory WHERE id = $1', [idOrSiteId])
+      if (itemRes.rows && itemRes.rows.length > 0) {
+        return res.json(formatInventoryRow(itemRes.rows[0]))
+      }
+
+      // 2. Try site items by site_id
+      const siteRes = await pool.query('SELECT * FROM inventory WHERE site_id = $1 ORDER BY id ASC', [idOrSiteId])
+      if (siteRes.rows && siteRes.rows.length > 0) {
+        return res.json(siteRes.rows.map(formatInventoryRow))
+      }
+    } catch (err) {
+      console.warn(`PostgreSQL lookup failed for '${idOrSiteId}', using local collection:`, err.message)
+    }
+  }
+
   const inventory = getCollection('inventory')
 
   // First check if it matches a single item ID (e.g. INV-018)
@@ -136,10 +198,10 @@ router.post('/', async (req, res) => {
     setCollection('inventory', list)
 
     console.log(`✓ Created inventory item ${createdRecord.id} ("${createdRecord.item}") for site ${siteId}`)
-    res.status(201).json(createdRecord)
+    return res.status(201).json(createdRecord)
   } catch (err) {
     console.error('Error creating inventory item:', err)
-    res.status(500).json({ error: 'Failed to create inventory item: ' + err.message })
+    return res.status(500).json({ error: 'Failed to create inventory item: ' + err.message })
   }
 })
 
@@ -212,7 +274,174 @@ router.post('/:id/transaction', async (req, res) => {
     lastTransaction,
   }
 
+  let updatedItem = updatedPayload
+
+  if (pool) {
+    try {
+      const updateRes = await pool.query(
+        `UPDATE inventory
+         SET quantity = $1, status = $2, last_updated = $3, last_transaction = $4, data = $5
+         WHERE id = $6
+         RETURNING *`,
+        [
+          newQuantity,
+          status,
+          lastUpdated,
+          JSON.stringify(lastTransaction),
+          JSON.stringify(updatedPayload),
+          id,
+        ]
+      )
+      if (updateRes.rows && updateRes.rows.length > 0) {
+        updatedItem = formatInventoryRow(updateRes.rows[0])
+      }
+    } catch (err) {
+      console.error('❌ PostgreSQL UPDATE failed for inventory transaction:', err.message)
+      return res.status(500).json({ error: `Database update failed: ${err.message}` })
+    }
+  }
+
+  updateById('inventory', id, updatedItem)
+
   return res.json(updatedItem)
+})
+
+// PATCH /api/inventory/:id - Direct field edits (e.g. reorderThreshold, consumptionPerDay, unit, item)
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+    let currentItem = null
+
+    if (pool) {
+      try {
+        const result = await pool.query('SELECT * FROM inventory WHERE id = $1', [id])
+        if (result.rows.length > 0) {
+          currentItem = formatInventoryRow(result.rows[0])
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL lookup failed for item ${id}:`, err.message)
+      }
+    }
+
+    if (!currentItem) {
+      currentItem = findById('inventory', id)
+    }
+
+    if (!currentItem) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    const payload = req.body
+    if (!payload || typeof payload !== 'object') {
+      return res.status(400).json({ error: 'Invalid update body' })
+    }
+
+    const updatedQty = payload.quantity !== undefined ? Number(payload.quantity) : currentItem.quantity
+    const updatedThreshold =
+      payload.reorderThreshold !== undefined ? Number(payload.reorderThreshold) : currentItem.reorderThreshold
+
+    let updatedStatus = payload.status || currentItem.status
+    if (payload.quantity !== undefined || payload.reorderThreshold !== undefined) {
+      if (!payload.status) {
+        if (updatedQty <= updatedThreshold * 0.5) {
+          updatedStatus = 'CRITICAL'
+        } else if (updatedQty <= updatedThreshold) {
+          updatedStatus = 'LOW'
+        } else {
+          updatedStatus = 'OK'
+        }
+      }
+    }
+
+    const now = new Date()
+    const lastUpdated = now.toISOString()
+
+    const merged = {
+      ...currentItem,
+      ...payload,
+      quantity: updatedQty,
+      reorderThreshold: updatedThreshold,
+      consumptionPerDay:
+        payload.consumptionPerDay !== undefined ? Number(payload.consumptionPerDay) : currentItem.consumptionPerDay,
+      status: updatedStatus,
+      lastUpdated,
+    }
+
+    if (pool) {
+      try {
+        const patchRes = await pool.query(
+          `UPDATE inventory 
+           SET item = $1, unit = $2, quantity = $3, reorder_threshold = $4, consumption_per_day = $5, status = $6, last_updated = $7, data = $8
+           WHERE id = $9
+           RETURNING *`,
+          [
+            merged.item,
+            merged.unit,
+            merged.quantity,
+            merged.reorderThreshold,
+            merged.consumptionPerDay,
+            merged.status,
+            merged.lastUpdated,
+            JSON.stringify(merged),
+            id,
+          ]
+        )
+        if (patchRes.rows && patchRes.rows.length > 0) {
+          const confirmed = formatInventoryRow(patchRes.rows[0])
+          updateById('inventory', id, confirmed)
+          return res.json(confirmed)
+        }
+      } catch (err) {
+        console.error(`❌ PostgreSQL PATCH error for item ${id}:`, err.message)
+        return res.status(500).json({ error: `Database patch failed: ${err.message}` })
+      }
+    }
+
+    updateById('inventory', id, merged)
+    return res.json(merged)
+  } catch (err) {
+    console.error('Error updating inventory item:', err)
+    return res.status(500).json({ error: 'Failed to update inventory item: ' + err.message })
+  }
+})
+
+// DELETE /api/inventory/:id - Delete an inventory item
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+    let found = false
+
+    if (pool) {
+      try {
+        const result = await pool.query('DELETE FROM inventory WHERE id = $1 RETURNING id', [id])
+        if (result.rows.length > 0) {
+          found = true
+        }
+      } catch (err) {
+        console.error(`❌ PostgreSQL DELETE error for item ${id}:`, err.message)
+        return res.status(500).json({ error: `Database delete failed: ${err.message}` })
+      }
+    }
+
+    const list = getCollection('inventory')
+    const idx = list.findIndex((i) => i.id === id)
+    if (idx !== -1) {
+      found = true
+      list.splice(idx, 1)
+      setCollection('inventory', list)
+    }
+
+    if (!found) {
+      return res.status(404).json({ error: 'Inventory item not found' })
+    }
+
+    return res.json({ message: 'Inventory item deleted successfully', id })
+  } catch (err) {
+    console.error('Error deleting inventory item:', err)
+    return res.status(500).json({ error: 'Failed to delete inventory item: ' + err.message })
+  }
 })
 
 export default router

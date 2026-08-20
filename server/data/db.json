@@ -461,15 +461,16 @@
       "siteId": "SITE-002",
       "item": "Cement Portland Type I",
       "unit": "bags",
-      "quantity": 180,
+      "quantity": 300,
       "reorderThreshold": 400,
       "consumptionPerDay": 55,
-      "status": "CRITICAL",
-      "lastUpdated": "2026-08-19T09:10:00",
+      "status": "LOW",
+      "lastUpdated": "2026-08-20T11:15:26.843Z",
       "lastTransaction": {
-        "type": "Stock Out",
+        "date": "2026-08-20",
+        "note": "Delivery PO-2041 verification",
+        "type": "Stock In",
         "quantity": 120,
-        "date": "2026-08-18",
         "relatedPO": "PO-2041"
       }
     },
@@ -478,15 +479,16 @@
       "siteId": "SITE-002",
       "item": "Steel Rebar 12mm",
       "unit": "tonnes",
-      "quantity": 14.2,
+      "quantity": 44.2,
       "reorderThreshold": 10,
       "consumptionPerDay": 0.8,
       "status": "OK",
-      "lastUpdated": "2026-08-18T16:20:00",
+      "lastUpdated": "2026-08-20T11:57:07.554Z",
       "lastTransaction": {
-        "type": "Stock In",
-        "quantity": 8,
-        "date": "2026-08-14",
+        "date": "2026-08-20",
+        "note": "Test Stock Out via API",
+        "type": "Stock Out",
+        "quantity": 20,
         "relatedPO": "PO-2045"
       }
     },
@@ -495,15 +497,15 @@
       "siteId": "SITE-001",
       "item": "Structural Steel",
       "unit": "tonnes",
-      "quantity": 22.6,
+      "quantity": 2.6,
       "reorderThreshold": 15,
       "consumptionPerDay": 1.1,
-      "status": "OK",
-      "lastUpdated": "2026-08-19T08:15:00",
+      "status": "CRITICAL",
+      "lastUpdated": "2026-08-20T12:38:19.558Z",
       "lastTransaction": {
-        "type": "Stock In",
-        "quantity": 12,
-        "date": "2026-08-16",
+        "date": "2026-08-20",
+        "type": "Stock Out",
+        "quantity": 20,
         "relatedPO": "PO-2038"
       }
     },
@@ -658,6 +660,40 @@
         "quantity": 100
       },
       "reorderThreshold": 30,
+      "consumptionPerDay": 10
+    },
+    {
+      "id": "INV-584",
+      "item": "Test Material",
+      "unit": "bags",
+      "siteId": "SITE-002",
+      "status": "OK",
+      "quantity": 100,
+      "lastUpdated": "2026-08-20T12:06:40.808Z",
+      "lastTransaction": {
+        "date": "2026-08-20",
+        "note": "Initial inventory creation",
+        "type": "Stock In",
+        "quantity": 100
+      },
+      "reorderThreshold": 50,
+      "consumptionPerDay": 5
+    },
+    {
+      "id": "INV-753",
+      "item": "cement",
+      "unit": "bags",
+      "siteId": "SITE-001",
+      "status": "OK",
+      "quantity": 100,
+      "lastUpdated": "2026-08-20T12:12:35.055Z",
+      "lastTransaction": {
+        "date": "2026-08-20",
+        "note": "Initial inventory creation",
+        "type": "Stock In",
+        "quantity": 100
+      },
+      "reorderThreshold": 40,
       "consumptionPerDay": 10
     }
   ],

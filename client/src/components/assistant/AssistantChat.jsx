@@ -33,7 +33,7 @@ export default function AssistantChat() {
     setThinking(true)
 
     try {
-      const res = await fetch('http://localhost:4000/api/assistant/chat', {
+      const res = await fetch('http://localhost:5000/api/assistant/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: q }),
