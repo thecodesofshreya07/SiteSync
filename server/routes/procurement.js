@@ -31,12 +31,15 @@ const ALLOWED_UPDATE_FIELDS = [
 router.get('/', (req, res) => {
   try {
     const { siteId } = req.query
-    const orders = getCollection('procurementOrders')
+    let orders = getCollection('procurementOrders')
+    if (!orders || !orders.length) {
+      orders = getCollection('procurement')
+    }
     if (siteId) {
-      const filtered = orders.filter((o) => o.siteId === siteId)
+      const filtered = (orders || []).filter((o) => o.siteId === siteId)
       return res.json(filtered)
     }
-    res.json(orders)
+    res.json(orders || [])
   } catch (err) {
     console.error('Error fetching procurement orders:', err)
     res.status(500).json({ error: 'Failed to retrieve procurement orders' })
@@ -46,7 +49,7 @@ router.get('/', (req, res) => {
 // GET /api/procurement/:id - Single procurement order
 router.get('/:id', (req, res) => {
   try {
-    const order = findById('procurementOrders', req.params.id)
+    const order = findById('procurementOrders', req.params.id) || findById('procurement', req.params.id)
     if (!order) {
       return res.status(404).json({ error: 'Procurement order not found' })
     }
@@ -61,7 +64,7 @@ router.get('/:id', (req, res) => {
 router.patch('/:id', (req, res) => {
   try {
     const { id } = req.params
-    const existing = findById('procurementOrders', id)
+    const existing = findById('procurementOrders', id) || findById('procurement', id)
     if (!existing) {
       return res.status(404).json({ error: 'Procurement order not found' })
     }
@@ -90,7 +93,7 @@ router.patch('/:id', (req, res) => {
       return res.status(400).json({ error: 'No valid fields provided for update' })
     }
 
-    const updated = updateById('procurementOrders', id, updateFields)
+    const updated = updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
     if (!updated) {
       return res.status(500).json({ error: 'Failed to update procurement order' })
     }

@@ -8,7 +8,7 @@ import { useSite } from '../hooks/useSite'
 import { getProcurementBySite } from '../data/procurement'
 import { cn } from '../lib/utils'
 
-const API_BASE = 'http://localhost:5000/api'
+const API_BASE = 'http://127.0.0.1:5000/api'
 
 export default function Procurement() {
   const { selectedSite } = useSite()
@@ -27,6 +27,9 @@ export default function Procurement() {
           throw new Error(`API server returned ${res.status}`)
         }
         const data = await res.json()
+        if (!Array.isArray(data)) {
+          throw new Error('Server returned non-array data for procurement')
+        }
         if (isMounted) {
           setOrders(data)
           setLoading(false)
@@ -47,6 +50,8 @@ export default function Procurement() {
     }
   }, [selectedSite.id])
 
+  const safeOrders = Array.isArray(orders) ? orders : getProcurementBySite(selectedSite.id)
+
   const handleUpdateOrder = async (id, updateFields) => {
     try {
       const res = await fetch(`${API_BASE}/procurement/${id}`, {
@@ -58,13 +63,19 @@ export default function Procurement() {
         throw new Error(`PATCH failed with status ${res.status}`)
       }
       const updated = await res.json()
-      setOrders((prev) => prev.map((o) => (o.id === id ? updated : o)))
-      return updated
+      if (updated && updated.id) {
+        setOrders((prev) => {
+          const list = Array.isArray(prev) ? prev : safeOrders
+          return list.map((o) => (o.id === id ? updated : o))
+        })
+        return updated
+      }
     } catch (err) {
       console.warn('Procurement PATCH failed, applying optimistic update:', err)
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, ...updateFields } : o))
-      )
+      setOrders((prev) => {
+        const list = Array.isArray(prev) ? prev : safeOrders
+        return list.map((o) => (o.id === id ? { ...o, ...updateFields } : o))
+      })
     }
   }
 
@@ -102,11 +113,10 @@ export default function Procurement() {
       {loading ? (
         <LoadingState label="Loading procurement orders..." />
       ) : view === 'pipeline' ? (
-        <ProcurementPipeline orders={orders} onUpdateOrder={handleUpdateOrder} />
+        <ProcurementPipeline orders={safeOrders} onUpdateOrder={handleUpdateOrder} />
       ) : (
-        <ProcurementTable orders={orders} onUpdateOrder={handleUpdateOrder} />
+        <ProcurementTable orders={safeOrders} onUpdateOrder={handleUpdateOrder} />
       )}
     </div>
   )
 }
-
