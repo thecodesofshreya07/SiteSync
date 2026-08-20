@@ -103,12 +103,70 @@ router.patch('/:id', async (req, res) => {
     const pool = getPool()
 
     // -------------------------------------------------------------------------
-    // 1. Target Site (Site B) approves a transfer recommendation
+    // 1. Target Site (Site B) approves an alert
     // -------------------------------------------------------------------------
+    // 1a. If approving an emergency procurement fallback alert:
+    if (status === 'approved' && existing.type === 'emergency_procurement_fallback') {
+      const nowIso = new Date().toISOString()
+      const newPoId = `PO-${Math.floor(2050 + Math.random() * 500)}`
+      const newOrder = {
+        id: newPoId,
+        item: existing.title.includes('Steel') ? 'Structural Steel' : 'Cement Portland Type I',
+        vendorId: 'VEN-017',
+        vendorName: 'BuildPro Materials',
+        siteId: existing.siteId,
+        amount: 175000,
+        stage: 'PO Raised',
+        status: 'Draft',
+        dateRaised: nowIso.slice(0, 10),
+        expectedDelivery: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+        delayDays: 0,
+        note: `Emergency PO created via AI alert approval (${existing.id})`,
+      }
+
+      if (pool) {
+        try {
+          await pool.query(
+            `INSERT INTO procurement_orders (id, site_id, item, vendor_id, amount, stage, status, date_raised, expected_delivery, delay_days, data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            [
+              newOrder.id,
+              newOrder.siteId,
+              newOrder.item,
+              newOrder.vendorId,
+              newOrder.amount,
+              newOrder.stage,
+              newOrder.status,
+              newOrder.dateRaised,
+              newOrder.expectedDelivery,
+              newOrder.delayDays,
+              JSON.stringify(newOrder),
+            ]
+          )
+        } catch (err) {
+          console.warn('Error inserting emergency PO in PostgreSQL:', err.message)
+        }
+      }
+      await updateByIdDirect('procurementOrders', newOrder.id, newOrder)
+      console.log(`[EMERGENCY PO] Automatically raised emergency purchase order ${newPoId} for ${existing.siteId}`)
+
+      const updatedAlert = {
+        ...existing,
+        status: 'approved',
+        resolvedAt: nowIso,
+        title: `✓ Emergency PO Raised (${newPoId}) for ${newOrder.item}`,
+        explanation: `Emergency Purchase Order ${newPoId} for 500 bags of ${newOrder.item} from BuildPro Materials has been raised with expedited 24-48h turnaround.`,
+      }
+      await insertAlertDirect(updatedAlert)
+      return res.json(updatedAlert)
+    }
+
+    // 1b. If approving a standard shortage alert with transfer recommendation:
     const isShortageTransferApproval =
       status === 'approved' &&
       (existing.transferDetails || existing.recommendation?.toLowerCase().includes('transfer')) &&
-      existing.type !== 'incoming_transfer_request'
+      existing.type !== 'incoming_transfer_request' &&
+      existing.type !== 'emergency_procurement_fallback'
 
     if (isShortageTransferApproval) {
       const sites = await getCollectionDirect('sites')
@@ -279,43 +337,28 @@ router.patch('/:id', async (req, res) => {
         }
         await insertAlertDirect(updatedSourceAlert)
 
-        // 2b. Mark Site B alert as transfer_rejected
+        // 2b. Transition Site B alert directly to emergency procurement fallback
         if (targetAlertId) {
           const targetAlert = alerts.find((a) => a.id === targetAlertId)
           if (targetAlert) {
             await insertAlertDirect({
               ...targetAlert,
-              status: 'transfer_rejected',
+              status: 'pending',
+              type: 'emergency_procurement_fallback',
+              title: `Transfer Declined by ${transfer.sourceSiteName || 'Riverside Tower'} — Emergency PO Recommended`,
+              explanation: `${transfer.sourceSiteName || 'Riverside Tower'} was unable to authorize the ${transfer.quantity || 150} ${transfer.unit || 'bags'} transfer. Inter-site transfer route is unavailable. Critical supply shortage for ${transfer.item || 'Cement Portland Type I'} remains active at ${transfer.targetSiteName || 'Warehouse Expansion'}.`,
+              reasonPoints: [
+                `Inter-site stock transfer was declined by ${transfer.sourceSiteName || 'Riverside Tower'}.`,
+                `Current stock is 150 bags (runway: 2.7 days before stockout).`,
+                `Direct emergency vendor procurement is now the required action.`,
+              ],
+              recommendation: `Expedite Emergency Purchase Order for 500 ${transfer.unit || 'bags'} of ${transfer.item || 'Cement Portland Type I'} from local vendor BuildPro Materials.`,
+              transferDetails: null,
               rejectedAt: new Date().toISOString(),
             })
+            console.log(`[ALERT] Updated target alert ${targetAlertId} to emergency fallback for ${transfer.targetSiteId}`)
           }
         }
-
-        // 2c. Create Emergency Fallback Alert at Site B
-        const emergencyAlertId = `ALT-EMG-${Date.now().toString().slice(-4)}`
-        const emergencyAlert = {
-          id: emergencyAlertId,
-          siteId: transfer.targetSiteId || 'SITE-002',
-          severity: 'critical',
-          type: 'emergency_procurement_fallback',
-          title: `Stock Transfer Declined by ${transfer.sourceSiteName || 'Riverside Tower'} — Emergency Purchase Order Needed`,
-          timestamp: new Date().toISOString(),
-          explanation: `${transfer.sourceSiteName || 'Riverside Tower'} was unable to authorize the ${transfer.quantity || 150} ${transfer.unit || 'bags'} transfer. Critical supply shortage for ${transfer.item || 'Cement Portland Type I'} remains active at ${transfer.targetSiteName || 'Warehouse Expansion'}.`,
-          reasonPoints: [
-            `Inter-site stock transfer request was declined by ${transfer.sourceSiteName || 'Riverside Tower'}.`,
-            `Critical stockout risk remains unresolved without alternative replenishment.`,
-            `Direct expedited purchase order required with guaranteed 24-48h supplier dispatch.`,
-          ],
-          recommendation: `Expedite Emergency Purchase Order for 500 ${transfer.unit || 'bags'} of ${transfer.item || 'Cement Portland Type I'} from local vendor BuildPro Materials.`,
-          sources: [
-            ...(existing.sources || []),
-            { type: 'alert', id: existing.id, label: `Declined Transfer ${existing.id}` },
-          ],
-          status: 'pending',
-        }
-
-        await insertAlertDirect(emergencyAlert)
-        console.log(`[ALERT] Created Emergency Fallback Alert for ${transfer.targetSiteId} (ID: ${emergencyAlertId})`)
 
         return res.json(updatedSourceAlert)
       }

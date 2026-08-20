@@ -86,6 +86,31 @@ async function triggerShortageAlertIfNeeded(item) {
   }
 }
 
+async function generateUniqueInventoryId(pool) {
+  const prefix = 'INV-'
+  let existingIds = []
+
+  if (pool) {
+    try {
+      const result = await pool.query('SELECT id FROM inventory')
+      existingIds = result.rows.map((r) => r.id)
+    } catch (err) {
+      console.warn('Could not fetch existing ids from PostgreSQL, falling back to local collection:', err.message)
+      existingIds = getCollection('inventory').map((i) => i.id)
+    }
+  } else {
+    existingIds = getCollection('inventory').map((i) => i.id)
+  }
+
+  let newId
+  do {
+    const randomNum = Math.floor(100 + Math.random() * 900)
+    newId = `${prefix}${randomNum}`
+  } while (existingIds.includes(newId))
+
+  return newId
+}
+
 function formatInventoryRow(row) {
   if (!row) return null
   const baseData = row.data && typeof row.data === 'object' ? row.data : {}
@@ -139,6 +164,7 @@ router.get('/', async (req, res) => {
 // GET /api/inventory/:id - Single inventory item
 router.get('/:id', async (req, res) => {
   const { id } = req.params
+  const idOrSiteId = id
   const pool = getPool()
 
   if (pool) {
