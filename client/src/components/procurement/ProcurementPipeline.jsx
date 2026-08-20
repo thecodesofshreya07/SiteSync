@@ -1,7 +1,7 @@
 import ProcurementCard from './ProcurementCard'
 import { PROCUREMENT_STAGES } from '../../data/procurement'
 
-export default function ProcurementPipeline({ orders }) {
+export default function ProcurementPipeline({ orders, onUpdateOrder }) {
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex min-w-[1100px] gap-3">
@@ -17,7 +17,7 @@ export default function ProcurementPipeline({ orders }) {
               </div>
               <div className="space-y-2">
                 {stageOrders.map((po) => (
-                  <ProcurementCard key={po.id} po={po} />
+                  <ProcurementCard key={po.id} po={po} onUpdateOrder={onUpdateOrder} />
                 ))}
                 {stageOrders.length === 0 && (
                   <div className="rounded-lg border border-dashed border-surface-border py-6 text-center text-2xs text-navy-400">

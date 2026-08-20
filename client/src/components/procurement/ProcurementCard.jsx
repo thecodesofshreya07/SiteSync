@@ -2,7 +2,7 @@ import ProcurementStatusBadge from './ProcurementStatusBadge'
 import { getVendorById } from '../../data/procurement'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
-export default function ProcurementCard({ po }) {
+export default function ProcurementCard({ po, onUpdateOrder }) {
   const vendor = getVendorById(po.vendorId)
   return (
     <div className="rounded-lg border border-surface-border bg-white p-3 shadow-card">
