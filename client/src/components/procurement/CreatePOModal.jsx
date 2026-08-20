@@ -1,0 +1,157 @@
+import { useState } from 'react'
+import Modal from '../common/Modal'
+import Button from '../common/Button'
+import { vendors, PROCUREMENT_STAGES } from '../../data/procurement'
+
+export default function CreatePOModal({ open, onClose, siteId, siteName, onCreate }) {
+  const [item, setItem] = useState('')
+  const [vendorId, setVendorId] = useState(vendors[0]?.id || 'VEN-001')
+  const [quantity, setQuantity] = useState('')
+  const [unit, setUnit] = useState('bags')
+  const [amount, setAmount] = useState('')
+  const [expectedDelivery, setExpectedDelivery] = useState('')
+  const [stage, setStage] = useState(PROCUREMENT_STAGES[0] || 'Material Request')
+  const [submitting, setSubmitting] = useState(false)
+
+  if (!open) return null
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!item.trim()) return
+
+    setSubmitting(true)
+    try {
+      await onCreate({
+        siteId,
+        item: item.trim(),
+        vendorId,
+        quantity: Number(quantity) || 1,
+        unit: unit.trim() || 'units',
+        amount: Number(amount) || 0,
+        expectedDelivery: expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+        stage,
+        status: 'Draft',
+      })
+      setItem('')
+      setQuantity('')
+      setAmount('')
+      setExpectedDelivery('')
+      onClose()
+    } catch (err) {
+      console.error('Failed to create purchase order:', err)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Raise Purchase Order" subtitle={`New procurement order for ${siteName || 'site'}`}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Material Item *
+          </label>
+          <input
+            type="text"
+            required
+            value={item}
+            onChange={(e) => setItem(e.target.value)}
+            placeholder="e.g. Structural Steel TMT Bars"
+            className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Select Vendor *
+          </label>
+          <select
+            value={vendorId}
+            onChange={(e) => setVendorId(e.target.value)}
+            className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+          >
+            {vendors.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} ({v.category} · {v.reliability} reliability)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Quantity</label>
+            <input
+              type="number"
+              min="1"
+              required
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              placeholder="e.g. 500"
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Unit</label>
+            <input
+              type="text"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="bags, tonnes"
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Amount (₹)</label>
+            <input
+              type="number"
+              min="0"
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g. 250000"
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Expected Delivery
+            </label>
+            <input
+              type="date"
+              value={expectedDelivery}
+              onChange={(e) => setExpectedDelivery(e.target.value)}
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Initial Stage</label>
+            <select
+              value={stage}
+              onChange={(e) => setStage(e.target.value)}
+              className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+            >
+              {PROCUREMENT_STAGES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" disabled={!item.trim() || submitting}>
+            {submitting ? 'Raising PO...' : 'Create Purchase Order'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}

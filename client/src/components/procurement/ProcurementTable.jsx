@@ -1,11 +1,11 @@
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import EmptyState from '../common/EmptyState'
-import { ClipboardList } from 'lucide-react'
+import { ClipboardList, Trash2 } from 'lucide-react'
 import { getVendorById } from '../../data/procurement'
 import { getSiteById } from '../../data/sites'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
-export default function ProcurementTable({ orders, onUpdateOrder }) {
+export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder }) {
   if (orders.length === 0) {
     return <EmptyState icon={ClipboardList} title="No purchase orders" description="Nothing matches the current view." />
   }
@@ -23,6 +23,7 @@ export default function ProcurementTable({ orders, onUpdateOrder }) {
             <th className="px-4 py-3">Stage</th>
             <th className="px-4 py-3">Delivery</th>
             <th className="px-4 py-3">Status</th>
+            {onDeleteOrder && <th className="px-4 py-3 text-right">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -41,6 +42,17 @@ export default function ProcurementTable({ orders, onUpdateOrder }) {
                 <td className="px-4 py-3.5">
                   <ProcurementStatusBadge status={po.status} />
                 </td>
+                {onDeleteOrder && (
+                  <td className="px-4 py-3.5 text-right">
+                    <button
+                      onClick={() => onDeleteOrder(po.id)}
+                      className="inline-flex items-center justify-center rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Cancel/Delete Purchase Order"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                )}
               </tr>
             )
           })}

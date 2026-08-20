@@ -61,13 +61,21 @@ app.listen(PORT, async () => {
   const pool = getPool()
   if (pool) {
     try {
-      const res = await pool.query('SELECT current_database(), current_user')
-      console.log(`✓ Connected to Supabase PostgreSQL [DB: ${res.rows[0].current_database}, User: ${res.rows[0].current_user}]`)
+      const res = await pool.query('SELECT current_database(), current_user, inet_server_addr()')
+      let hostInfo = 'Supabase Cloud'
+      if (config.databaseUrl) {
+        try {
+          const u = new URL(config.databaseUrl)
+          hostInfo = u.host
+        } catch (_) {}
+      }
+      console.log(`✓ Connected to PostgreSQL [Host: ${hostInfo}, DB: ${res.rows[0].current_database}, User: ${res.rows[0].current_user}]`)
     } catch (err) {
-      console.warn(`! Supabase connection warning: ${err.message}`)
+      console.error(`❌ PostgreSQL connection failed: ${err.message}`)
+      console.warn(`ℹ Falling back to local cache (${config.dbPath})`)
     }
   } else {
-    console.log(`ℹ Using local JSON database (${config.dbPath})`)
+    console.log(`ℹ No PostgreSQL configured. Using local JSON database (${config.dbPath})`)
   }
 })
 

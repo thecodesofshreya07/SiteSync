@@ -6,12 +6,13 @@ import LoadingState from '../components/common/LoadingState'
 import InventoryFilters from '../components/inventory/InventoryFilters'
 import InventoryTable from '../components/inventory/InventoryTable'
 import StockTransactionModal from '../components/inventory/StockTransactionModal'
+import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
 import { getInventoryBySite, daysRemaining } from '../data/inventory'
-import { PackagePlus } from 'lucide-react'
+import { Plus, PackagePlus } from 'lucide-react'
 
-const API_BASE = 'http://127.0.0.1:5000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 export default function Inventory() {
   const { selectedSite } = useSite()
@@ -22,6 +23,7 @@ export default function Inventory() {
   const [status, setStatus] = useState('ALL')
   const [txnItem, setTxnItem] = useState(null)
   const [txnModalOpen, setTxnModalOpen] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   // Fetch inventory for selected site with fallback to mock data
   useEffect(() => {
@@ -78,6 +80,55 @@ export default function Inventory() {
     setTxnModalOpen(true)
   }
 
+  async function handleCreateItem(itemData) {
+    try {
+      const res = await fetch(`${API_BASE}/inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(itemData),
+      })
+      if (!res.ok) {
+        throw new Error(`Create failed with status ${res.status}`)
+      }
+      const created = await res.json()
+      if (created && created.id) {
+        setItems((prev) => [...prev, created])
+      }
+    } catch (err) {
+      console.warn('Create inventory item API error, applying local fallback:', err)
+      const newItem = {
+        ...itemData,
+        id: `INV-${Math.floor(100 + Math.random() * 900)}`,
+        status: itemData.quantity <= itemData.reorderThreshold * 0.5 ? 'CRITICAL' : itemData.quantity <= itemData.reorderThreshold ? 'LOW' : 'OK',
+        lastUpdated: new Date().toISOString(),
+        lastTransaction: {
+          type: 'Stock In',
+          quantity: itemData.quantity,
+          date: new Date().toISOString().slice(0, 10),
+          note: 'Initial creation',
+        },
+      }
+      setItems((prev) => [...prev, newItem])
+    }
+  }
+
+  async function handleDeleteItem(id) {
+    if (!window.confirm('Are you sure you want to remove this material from inventory?')) return
+
+    try {
+      const res = await fetch(`${API_BASE}/inventory/${id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        throw new Error(`Delete failed with status ${res.status}`)
+      }
+      setItems((prev) => prev.filter((i) => i.id !== id))
+    } catch (err) {
+      console.warn('Delete API error, applying local removal fallback:', err)
+      setItems((prev) => prev.filter((i) => i.id !== id))
+    }
+  }
+
   async function handleTransaction({ type, quantity, note }) {
     if (!txnItem) return
 
@@ -103,7 +154,6 @@ export default function Inventory() {
       }
     } catch (err) {
       console.warn('Transaction API call failed, applying optimistic local update:', err)
-      // Graceful local fallback if server is offline or fails
       setItems((prev) => {
         const list = Array.isArray(prev) ? prev : safeItems
         return list.map((i) => {
@@ -138,14 +188,23 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          <Button
-            variant="primary"
-            icon={PackagePlus}
-            onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
-            disabled={safeItems.length === 0}
-          >
-            Add Stock
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              icon={Plus}
+              onClick={() => setCreateModalOpen(true)}
+            >
+              Add Material
+            </Button>
+            <Button
+              variant="primary"
+              icon={PackagePlus}
+              onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
+              disabled={safeItems.length === 0}
+            >
+              Log Stock
+            </Button>
+          </div>
         }
       />
 
@@ -167,7 +226,11 @@ export default function Inventory() {
             <InventoryFilters search={search} onSearchChange={setSearch} status={status} onStatusChange={setStatus} />
           </div>
 
-          <InventoryTable items={filtered} onLogTransaction={openTransactionModal} />
+          <InventoryTable
+            items={filtered}
+            onLogTransaction={openTransactionModal}
+            onDeleteItem={handleDeleteItem}
+          />
         </>
       )}
 
@@ -176,6 +239,14 @@ export default function Inventory() {
         item={txnItem}
         onClose={() => setTxnModalOpen(false)}
         onSubmit={handleTransaction}
+      />
+
+      <CreateItemModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        siteId={selectedSite.id}
+        siteName={selectedSite.name}
+        onCreate={handleCreateItem}
       />
     </div>
   )

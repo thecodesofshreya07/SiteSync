@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getCollection, findById, updateById, getPool } from '../db.js'
+import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
 
 const router = Router()
 
@@ -115,6 +115,92 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+// POST /api/procurement - Create a new procurement order
+router.post('/', async (req, res) => {
+  try {
+    const {
+      siteId,
+      vendorId,
+      item,
+      quantity = 1,
+      unit = 'units',
+      amount = 0,
+      expectedDelivery,
+      stage = 'Material Request',
+      status = 'Draft',
+    } = req.body
+
+    if (!siteId || !item) {
+      return res.status(400).json({ error: 'siteId and item are required fields' })
+    }
+
+    if (stage && !VALID_STAGES.includes(stage)) {
+      return res.status(400).json({
+        error: `Invalid stage '${stage}'. Must be one of: ${VALID_STAGES.join(', ')}`,
+      })
+    }
+
+    const now = new Date()
+    const id = `PO-${Math.floor(2050 + Math.random() * 500)}`
+    const dateRaised = now.toISOString().slice(0, 10)
+    const targetDelivery = expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+
+    const newOrder = {
+      id,
+      siteId,
+      item,
+      vendorId: vendorId || 'VEN-001',
+      quantity: Number(quantity) || 1,
+      unit,
+      amount: Number(amount) || 0,
+      dateRaised,
+      expectedDelivery: targetDelivery,
+      stage,
+      status,
+      deliveryId: null,
+      delayDays: 0,
+    }
+
+    const pool = getPool()
+    if (pool) {
+      try {
+        await pool.query(
+          `INSERT INTO procurement_orders (
+            id, site_id, item, vendor_id, quantity, unit, amount, date_raised, expected_delivery, stage, status, delivery_id, delay_days, data
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+          [
+            id,
+            siteId,
+            item,
+            newOrder.vendorId,
+            newOrder.quantity,
+            unit,
+            newOrder.amount,
+            dateRaised,
+            targetDelivery,
+            stage,
+            status,
+            null,
+            0,
+            JSON.stringify(newOrder),
+          ]
+        )
+      } catch (err) {
+        console.warn('PostgreSQL insert procurement order warning:', err.message)
+      }
+    }
+
+    const list = getCollection('procurementOrders') || []
+    list.push(newOrder)
+    setCollection('procurementOrders', list)
+
+    res.status(201).json(newOrder)
+  } catch (err) {
+    console.error('Error creating procurement order:', err)
+    res.status(500).json({ error: 'Failed to create procurement order' })
+  }
+})
+
 // PATCH /api/procurement/:id - Update procurement order
 router.patch('/:id', async (req, res) => {
   try {
@@ -155,9 +241,18 @@ router.patch('/:id', async (req, res) => {
           const merged = { ...current, ...updateFields }
           await pool.query(
             `UPDATE procurement_orders
-             SET stage = $1, status = $2, data = $3
-             WHERE id = $4`,
-            [merged.stage, merged.status, JSON.stringify(merged), id]
+             SET stage = $1, status = $2, quantity = $3, unit = $4, amount = $5, delay_days = $6, data = $7
+             WHERE id = $8`,
+            [
+              merged.stage,
+              merged.status,
+              merged.quantity,
+              merged.unit,
+              merged.amount,
+              merged.delayDays || 0,
+              JSON.stringify(merged),
+              id,
+            ]
           )
           updated = merged
         }
@@ -178,6 +273,43 @@ router.patch('/:id', async (req, res) => {
   } catch (err) {
     console.error(`Error updating procurement order ${req.params.id}:`, err)
     res.status(500).json({ error: 'Failed to update procurement order' })
+  }
+})
+
+// DELETE /api/procurement/:id - Delete / Cancel a procurement order
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const pool = getPool()
+    let found = false
+
+    if (pool) {
+      try {
+        const result = await pool.query('DELETE FROM procurement_orders WHERE id = $1 RETURNING id', [id])
+        if (result.rows.length > 0) {
+          found = true
+        }
+      } catch (err) {
+        console.warn(`PostgreSQL DELETE error for PO ${id}:`, err.message)
+      }
+    }
+
+    const list = getCollection('procurementOrders') || []
+    const idx = list.findIndex((p) => p.id === id)
+    if (idx !== -1) {
+      found = true
+      list.splice(idx, 1)
+      setCollection('procurementOrders', list)
+    }
+
+    if (!found) {
+      return res.status(404).json({ error: 'Procurement order not found' })
+    }
+
+    res.json({ message: 'Procurement order deleted successfully', id })
+  } catch (err) {
+    console.error('Error deleting procurement order:', err)
+    res.status(500).json({ error: 'Failed to delete procurement order' })
   }
 })
 

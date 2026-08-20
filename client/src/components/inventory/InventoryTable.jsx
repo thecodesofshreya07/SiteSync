@@ -1,10 +1,10 @@
-import { PackagePlus, ClipboardList } from 'lucide-react'
+import { PackagePlus, ClipboardList, Trash2 } from 'lucide-react'
 import InventoryStatusBadge from './InventoryStatusBadge'
 import EmptyState from '../common/EmptyState'
 import { daysRemaining } from '../../data/inventory'
 import { formatDate } from '../../lib/utils'
 
-export default function InventoryTable({ items, onLogTransaction }) {
+export default function InventoryTable({ items, onLogTransaction, onDeleteItem }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -56,13 +56,25 @@ export default function InventoryTable({ items, onLogTransaction }) {
                 </td>
                 <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">{formatDate(item.lastUpdated)}</td>
                 <td className="px-4 py-3.5 text-right">
-                  <button
-                    onClick={() => onLogTransaction(item)}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm"
-                  >
-                    <PackagePlus size={13} className="text-teal-600" />
-                    Log
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      onClick={() => onLogTransaction(item)}
+                      className="inline-flex items-center gap-1 rounded-md border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:border-teal-400 hover:text-teal-800 shadow-sm transition-colors"
+                      title="Log Stock In/Out"
+                    >
+                      <PackagePlus size={13} className="text-teal-600" />
+                      Log
+                    </button>
+                    {onDeleteItem && (
+                      <button
+                        onClick={() => onDeleteItem(item.id)}
+                        className="inline-flex items-center justify-center rounded-md border border-transparent p-1 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        title="Delete material"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )
