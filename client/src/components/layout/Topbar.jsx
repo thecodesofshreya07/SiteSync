@@ -7,7 +7,7 @@ import { ROLE_LIST, SEVERITY_STYLES } from '../../lib/constants'
 import { cn, formatTime } from '../../lib/utils'
 import { Link } from 'react-router-dom'
 
-const API_BASE = 'http://localhost:4000/api'
+const API_BASE = 'http://localhost:5000/api'
 
 function DataSourceBadge() {
   const [status, setStatus] = useState('checking') // 'live' | 'error' | 'checking'
@@ -43,7 +43,7 @@ function DataSourceBadge() {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-300 px-2.5 py-1 text-xs font-bold text-red-700 shadow-sm shrink-0">
         <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-        🔴 ERROR — Backend Unavailable (localhost:4000)
+        🔴 ERROR — Backend Unavailable (localhost:5000)
       </span>
     )
   }
@@ -51,7 +51,7 @@ function DataSourceBadge() {
   return (
     <div className="hidden sm:flex items-center gap-2 shrink-0">
       <span
-        title="Connected to Supabase PostgreSQL on port 4000"
+        title="Connected to Supabase PostgreSQL on port 5000"
         className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-2xs font-bold text-emerald-800 shadow-xs"
       >
         <Database size={11} className="text-emerald-600" />
