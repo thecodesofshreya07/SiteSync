@@ -215,61 +215,65 @@ export async function runMonitoringStream(siteId, res) {
       await sleep(450)
       if (isClosed) return
 
-      emit({ type: 'waiting', message: 'Waiting for manager approval' })
-
-      console.log(`[ALERT] Creating alert for ${siteId}...`)
+      console.log(`[ALERT] Evaluating alert state for ${siteId}...`)
       const matchedAlert = existingAlerts.find(
         (a) => a.siteId === siteId && a.title.toLowerCase().includes(criticalInventory.item.toLowerCase())
       )
 
-      const alertId = matchedAlert ? matchedAlert.id : `ALT-${Date.now().toString().slice(-4)}`
-      const alert = {
-        id: alertId,
-        siteId,
-        severity: 'critical',
-        type: wasTransferRejected ? 'emergency_procurement_fallback' : 'standard',
-        title: wasTransferRejected
-          ? `Transfer Declined by Riverside Tower — Emergency PO Recommended for ${criticalInventory.item}`
-          : `${criticalInventory.item} stock at ${currentSite.name} is projected to become critical in ${daysLeft} days.`,
-        timestamp: new Date().toISOString(),
-        explanation: wasTransferRejected
-          ? `Riverside Tower site management declined the 150-bag transfer request. Inter-site transfer route is unavailable. Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}.`
-          : `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}. Pending replenishment is delayed by ${delayedPO?.delayDays || 4} days, causing a potential supply gap.`,
-        reasonPoints: wasTransferRejected
-          ? [
-              `Inter-site stock transfer was declined by Riverside Tower.`,
-              `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit} (runway: ${daysLeft} days).`,
-              `Direct vendor procurement is the only remaining replenishment pathway.`,
-            ]
-          : [
-              `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day.`,
-              `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit}.`,
-              `Pending delivery (${delayedPO?.id || 'PO-2041'}) is delayed by ${delayedPO?.delayDays || 4} days.`,
-            ],
-        recommendation: recMessage.replace('Recommendation generated — ', ''),
-        sources: [
-          { type: 'inventory', id: criticalInventory.id, label: `Inventory Record ${criticalInventory.id}` },
-          ...(delayedPO ? [{ type: 'procurement', id: delayedPO.id, label: `Purchase Order ${delayedPO.id}` }] : []),
-          ...(delayedPO?.deliveryId ? [{ type: 'delivery', id: delayedPO.deliveryId, label: `Delivery ${delayedPO.deliveryId}` }] : []),
-          ...(delayedPO?.vendorId ? [{ type: 'vendor', id: delayedPO.vendorId, label: `Vendor Record ${delayedPO.vendorId}` }] : []),
-        ],
-        status: matchedAlert?.status === 'transfer_requested' ? 'transfer_requested' : 'pending',
-        transferDetails: transferSource
-          ? {
-              sourceSiteId: transferSource.siteId,
-              sourceSiteName: transferSite,
-              targetSiteId: siteId,
-              targetSiteName: currentSite.name,
-              item: criticalInventory.item,
-              quantity: 150,
-              unit: criticalInventory.unit || 'bags',
-            }
-          : null,
-      }
+      if (matchedAlert && matchedAlert.status !== 'pending') {
+        // If alert was already actioned (e.g. approved, transfer_requested, resolved, emergency PO in progress), do NOT overwrite it!
+        console.log(`[AGENT] Shortage alert ${matchedAlert.id} is already in state '${matchedAlert.status}'. Preserving state.`)
+        emit({ type: 'alert', alert: matchedAlert })
+      } else {
+        const alertId = matchedAlert ? matchedAlert.id : `ALT-${Date.now().toString().slice(-4)}`
+        const alert = {
+          id: alertId,
+          siteId,
+          severity: 'critical',
+          type: wasTransferRejected ? 'emergency_procurement_fallback' : 'standard',
+          title: wasTransferRejected
+            ? `Transfer Declined by Riverside Tower — Emergency PO Recommended for ${criticalInventory.item}`
+            : `${criticalInventory.item} stock at ${currentSite.name} is projected to become critical in ${daysLeft} days.`,
+          timestamp: matchedAlert ? matchedAlert.timestamp : new Date().toISOString(),
+          explanation: wasTransferRejected
+            ? `Riverside Tower site management declined the 150-bag transfer request. Inter-site transfer route is unavailable. Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}.`
+            : `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day against remaining stock of ${criticalInventory.quantity} ${criticalInventory.unit}. Pending replenishment is delayed by ${delayedPO?.delayDays || 4} days, causing a potential supply gap.`,
+          reasonPoints: wasTransferRejected
+            ? [
+                `Inter-site stock transfer was declined by Riverside Tower.`,
+                `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit} (runway: ${daysLeft} days).`,
+                `Direct vendor procurement is the only remaining replenishment pathway.`,
+              ]
+            : [
+                `Current consumption is ${criticalInventory.consumptionPerDay || 55} ${criticalInventory.unit}/day.`,
+                `Current stock is ${criticalInventory.quantity} ${criticalInventory.unit}.`,
+                `Pending delivery (${delayedPO?.id || 'PO-2041'}) is delayed by ${delayedPO?.delayDays || 4} days.`,
+              ],
+          recommendation: recMessage.replace('Recommendation generated — ', ''),
+          sources: [
+            { type: 'inventory', id: criticalInventory.id, label: `Inventory Record ${criticalInventory.id}` },
+            ...(delayedPO ? [{ type: 'procurement', id: delayedPO.id, label: `Purchase Order ${delayedPO.id}` }] : []),
+            ...(delayedPO?.deliveryId ? [{ type: 'delivery', id: delayedPO.deliveryId, label: `Delivery ${delayedPO.deliveryId}` }] : []),
+            ...(delayedPO?.vendorId ? [{ type: 'vendor', id: delayedPO.vendorId, label: `Vendor Record ${delayedPO.vendorId}` }] : []),
+          ],
+          status: 'pending',
+          transferDetails: transferSource
+            ? {
+                sourceSiteId: transferSource.siteId,
+                sourceSiteName: transferSite,
+                targetSiteId: siteId,
+                targetSiteName: currentSite.name,
+                item: criticalInventory.item,
+                quantity: 150,
+                unit: criticalInventory.unit || 'bags',
+              }
+            : null,
+        }
 
-      await insertAlertDirect(alert)
-      console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
-      emit({ type: 'alert', alert })
+        await insertAlertDirect(alert)
+        console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
+        emit({ type: 'alert', alert })
+      }
     } else if (idleEquipment) {
       console.log(`[AGENT] Idle equipment detected: ${idleEquipment.name} (${idleEquipment.idleDays} days)`)
       emit({

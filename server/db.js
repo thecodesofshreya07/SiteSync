@@ -14,9 +14,13 @@ if (config.databaseUrl) {
       ssl: {
         rejectUnauthorized: false,
       },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      keepAlive: true,
     })
     pgPool.on('error', (err) => {
-      console.warn('[PostgreSQL] Pool warning:', err.message)
+      console.warn('[PostgreSQL Pool Note]:', err.message)
     })
   } catch (err) {
     console.error('[PostgreSQL] Failed to initialize pool:', err.message)
