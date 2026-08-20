@@ -51,7 +51,7 @@ function formatOrderRow(row) {
 // GET /api/procurement - List procurement orders (optional ?siteId=...)
 router.get('/', async (req, res) => {
   try {
-    const { siteId } = req.query
+    const siteId = req.query.siteId || req.query.site_id
     const pool = getPool()
 
     if (pool) {
@@ -59,12 +59,12 @@ router.get('/', async (req, res) => {
         let query = 'SELECT * FROM procurement_orders'
         const params = []
         if (siteId) {
-          query += ' WHERE site_id = $1'
-          params.push(siteId)
+          query += ' WHERE site_id ILIKE $1'
+          params.push(String(siteId).trim())
         }
         query += ' ORDER BY id ASC'
         const result = await pool.query(query, params)
-        if (result.rows && result.rows.length > 0) {
+        if (result.rows) {
           return res.json(result.rows.map(formatOrderRow))
         }
       } catch (err) {
@@ -72,15 +72,15 @@ router.get('/', async (req, res) => {
       }
     }
 
-    let orders = getCollection('procurementOrders')
+    let orders = getCollection('procurementOrders') || []
     if (!orders || !orders.length) {
-      orders = getCollection('procurement')
+      orders = getCollection('procurement') || []
     }
     if (siteId) {
-      const filtered = (orders || []).filter((o) => o.siteId === siteId)
+      const filtered = orders.filter((o) => String(o.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase())
       return res.json(filtered)
     }
-    res.json(orders || [])
+    res.json(orders)
   } catch (err) {
     console.error('Error fetching procurement orders:', err)
     res.status(500).json({ error: 'Failed to retrieve procurement orders' })

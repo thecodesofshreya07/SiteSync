@@ -12,6 +12,7 @@ import deliveriesRouter from './routes/deliveries.js'
 import alertsRouter from './routes/alerts.js'
 import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
+import usersRouter from './routes/users.js'
 
 import { getPool } from './db.js'
 
@@ -51,6 +52,7 @@ app.use('/api/deliveries', deliveriesRouter)
 app.use('/api/alerts', alertsRouter)
 app.use('/api/assistant', assistantRouter)
 app.use('/api/timeline', timelineRouter)
+app.use('/api/users', usersRouter)
 
 const PORT = config.port
 
@@ -80,4 +82,3 @@ app.listen(PORT, async () => {
 })
 
 export default app
-

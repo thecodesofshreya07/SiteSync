@@ -12,7 +12,7 @@ export const ROLE_NAV_ACCESS = {
   [ROLES.PROJECT_MANAGER]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings'],
   [ROLES.CONTRACTOR]: ['dashboard', 'inventory', 'tasks-equipment', 'assistant', 'settings'],
   [ROLES.FINANCE]: ['dashboard', 'procurement', 'assistant', 'settings'],
-  [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings'],
+  [ROLES.ADMIN]: ['dashboard', 'inventory', 'procurement', 'tasks-equipment', 'assistant', 'settings', 'user-management'],
 }
 
 export const SEVERITY = {

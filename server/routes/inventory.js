@@ -23,7 +23,7 @@ function formatInventoryRow(row) {
 
 // GET /api/inventory - List inventory items (optionally filter by siteId)
 router.get('/', async (req, res) => {
-  const { siteId } = req.query
+  const siteId = req.query.siteId || req.query.site_id
   const pool = getPool()
 
   if (pool) {
@@ -31,13 +31,14 @@ router.get('/', async (req, res) => {
       let query = 'SELECT * FROM inventory'
       const params = []
       if (siteId) {
-        query += ' WHERE site_id = $1'
-        params.push(siteId)
+        query += ' WHERE site_id ILIKE $1'
+        params.push(String(siteId).trim())
       }
       query += ' ORDER BY id ASC'
       const result = await pool.query(query, params)
-      if (result.rows && result.rows.length > 0) {
-        return res.json(result.rows.map(formatInventoryRow))
+      if (result.rows) {
+        const mapped = result.rows.map(formatInventoryRow)
+        return res.json(mapped)
       }
     } catch (err) {
       console.warn('PostgreSQL inventory query failed, using local collection:', err.message)
@@ -45,9 +46,9 @@ router.get('/', async (req, res) => {
   }
 
   // Fallback to local collection cache
-  const inventory = getCollection('inventory')
+  const inventory = getCollection('inventory') || []
   if (siteId) {
-    return res.json(inventory.filter((item) => item.siteId === siteId))
+    return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
   res.json(inventory)
 })
@@ -144,7 +145,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const list = getCollection('inventory')
+    const list = getCollection('inventory') || []
     list.push(newItem)
     setCollection('inventory', list)
 
@@ -367,7 +368,7 @@ router.delete('/:id', async (req, res) => {
       }
     }
 
-    const list = getCollection('inventory')
+    const list = getCollection('inventory') || []
     const idx = list.findIndex((i) => i.id === id)
     if (idx !== -1) {
       found = true
