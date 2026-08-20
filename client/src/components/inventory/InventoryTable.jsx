@@ -3,18 +3,13 @@ import InventoryStatusBadge from './InventoryStatusBadge'
 import EmptyState from '../common/EmptyState'
 import { formatDate } from '../../lib/utils'
 
-<<<<<<< HEAD
-export default function InventoryTable({ items, onLogTransaction, onDeleteItem }) {
-  if (items.length === 0) {
-=======
 function daysRemaining(item) {
   if (!item || !item.consumptionPerDay || item.consumptionPerDay <= 0) return '—'
   return Math.round((item.quantity / item.consumptionPerDay) * 10) / 10
 }
 
-export default function InventoryTable({ items, onLogTransaction }) {
+export default function InventoryTable({ items, onLogTransaction, onDeleteItem }) {
   if (!items || items.length === 0) {
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     return (
       <EmptyState
         icon={ClipboardList}
@@ -65,7 +60,6 @@ export default function InventoryTable({ items, onLogTransaction }) {
                 </td>
                 <td className="px-4 py-3.5 text-xs font-semibold text-slate-600">{formatDate(item.lastUpdated || item.lastTransaction?.date || new Date())}</td>
                 <td className="px-4 py-3.5 text-right">
-<<<<<<< HEAD
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => onLogTransaction(item)}
@@ -85,15 +79,6 @@ export default function InventoryTable({ items, onLogTransaction }) {
                       </button>
                     )}
                   </div>
-=======
-                  <button
-                    onClick={() => onLogTransaction(item)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-surface-border bg-white px-2.5 py-1 text-xs font-bold text-teal-700 hover:bg-teal-50 hover:border-teal-300 transition-colors"
-                  >
-                    <PackagePlus size={12} />
-                    Log
-                  </button>
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
                 </td>
               </tr>
             )

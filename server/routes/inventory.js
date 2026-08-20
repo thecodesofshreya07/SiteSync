@@ -50,6 +50,7 @@ router.get('/', async (req, res) => {
   if (siteId) {
     return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
+  return res.json(inventory)
 })
 
 // GET /api/inventory/:id - Single inventory item
@@ -72,6 +73,7 @@ router.get('/:id', async (req, res) => {
   if (!item) {
     return res.status(404).json({ error: 'Inventory item not found' })
   }
+  return res.json(item)
 })
 
 // POST /api/inventory - Create a new inventory item

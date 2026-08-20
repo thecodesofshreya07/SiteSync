@@ -1,25 +1,14 @@
+import { ClipboardList, Trash2 } from 'lucide-react'
 import ProcurementStatusBadge from './ProcurementStatusBadge'
 import EmptyState from '../common/EmptyState'
-<<<<<<< HEAD
-import { ClipboardList, Trash2 } from 'lucide-react'
-import { getVendorById } from '../../data/procurement'
-import { getSiteById } from '../../data/sites'
-import { formatFullINR, formatDate } from '../../lib/utils'
-
-export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder }) {
-  if (orders.length === 0) {
-    return <EmptyState icon={ClipboardList} title="No purchase orders" description="Nothing matches the current view." />
-=======
-import { ClipboardList } from 'lucide-react'
 import { useSite } from '../../hooks/useSite'
 import { formatFullINR, formatDate } from '../../lib/utils'
 
-export default function ProcurementTable({ orders }) {
+export default function ProcurementTable({ orders, onUpdateOrder, onDeleteOrder }) {
   const { sites } = useSite()
 
   if (!orders || orders.length === 0) {
-    return <EmptyState icon={ClipboardList} title="No purchase orders" description="No procurement orders found in PostgreSQL database." />
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+    return <EmptyState icon={ClipboardList} title="No purchase orders" description="No procurement orders found for this view." />
   }
 
   return (

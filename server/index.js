@@ -12,11 +12,8 @@ import deliveriesRouter from './routes/deliveries.js'
 import alertsRouter from './routes/alerts.js'
 import assistantRouter from './routes/assistant.js'
 import timelineRouter from './routes/timeline.js'
-<<<<<<< HEAD
 import usersRouter from './routes/users.js'
-=======
 import agentRouter from './routes/agent.js'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
 import { getPool } from './db.js'
 
@@ -66,11 +63,8 @@ app.use('/api/deliveries', deliveriesRouter)
 app.use('/api/alerts', alertsRouter)
 app.use('/api/assistant', assistantRouter)
 app.use('/api/timeline', timelineRouter)
-<<<<<<< HEAD
 app.use('/api/users', usersRouter)
-=======
 app.use('/api/agent', agentRouter)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
 const PORT = config.port
 

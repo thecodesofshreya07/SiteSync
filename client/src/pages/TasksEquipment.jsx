@@ -9,11 +9,7 @@ import { useSite } from '../hooks/useSite'
 import { cn } from '../lib/utils'
 
 const TABS = ['Tasks', 'Equipment']
-<<<<<<< HEAD
-const API_BASE = 'http://127.0.0.1:5000/api'
-=======
 const API_BASE = 'http://localhost:4000/api'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()

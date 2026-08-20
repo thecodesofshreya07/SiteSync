@@ -9,12 +9,7 @@ import StockTransactionModal from '../components/inventory/StockTransactionModal
 import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
-<<<<<<< HEAD
-import { getInventoryBySite, daysRemaining } from '../data/inventory'
-import { Plus, PackagePlus } from 'lucide-react'
-=======
-import { PackagePlus, AlertTriangle } from 'lucide-react'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
 
 const API_BASE = 'http://localhost:4000/api'
 
@@ -158,11 +153,9 @@ export default function Inventory() {
         setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
       }
     } catch (err) {
-<<<<<<< HEAD
       console.warn('Transaction API call failed, applying optimistic local update:', err)
       setItems((prev) => {
-        const list = Array.isArray(prev) ? prev : safeItems
-        return list.map((i) => {
+        return prev.map((i) => {
           if (i.id !== txnItem.id) return i
           let newQty = i.quantity
           if (type === 'Stock In') newQty += quantity
@@ -185,10 +178,6 @@ export default function Inventory() {
           }
         })
       })
-=======
-      console.error('Transaction API call error:', err.message)
-      alert(`Transaction failed: ${err.message}`)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
   }
 
@@ -198,7 +187,6 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-<<<<<<< HEAD
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
@@ -210,22 +198,12 @@ export default function Inventory() {
             <Button
               variant="primary"
               icon={PackagePlus}
-              onClick={() => safeItems.length > 0 && openTransactionModal(safeItems[0])}
-              disabled={safeItems.length === 0}
+              onClick={() => items.length > 0 && openTransactionModal(items[0])}
+              disabled={items.length === 0}
             >
               Log Stock
             </Button>
           </div>
-=======
-          <Button
-            variant="primary"
-            icon={PackagePlus}
-            onClick={() => items.length > 0 && openTransactionModal(items[0])}
-            disabled={items.length === 0}
-          >
-            Add Stock
-          </Button>
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
         }
       />
 

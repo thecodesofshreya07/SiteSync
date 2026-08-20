@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react'
-<<<<<<< HEAD
-import { LayoutGrid, Table2, Plus } from 'lucide-react'
-=======
-import { LayoutGrid, Table2, AlertTriangle } from 'lucide-react'
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
+import { LayoutGrid, Table2, Plus, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/common/PageHeader'
 import Button from '../components/common/Button'
 import ProcurementPipeline from '../components/procurement/ProcurementPipeline'
@@ -20,11 +16,8 @@ export default function Procurement() {
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-<<<<<<< HEAD
   const [createModalOpen, setCreateModalOpen] = useState(false)
-=======
   const [error, setError] = useState(null)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
 
   useEffect(() => {
     let isMounted = true
@@ -133,16 +126,11 @@ export default function Procurement() {
         return updated
       }
     } catch (err) {
-<<<<<<< HEAD
       console.warn('Procurement PATCH failed, applying optimistic update:', err)
       setOrders((prev) => {
         const list = Array.isArray(prev) ? prev : safeOrders
         return list.map((o) => (o.id === id ? { ...o, ...updateFields } : o))
       })
-=======
-      console.error('Procurement update error:', err.message)
-      alert(`Update failed: ${err.message}`)
->>>>>>> 9ec1c5ff38cf68cffa967dfdbd6299686e4c6419
     }
   }
 
