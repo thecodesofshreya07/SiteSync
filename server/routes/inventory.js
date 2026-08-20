@@ -14,14 +14,19 @@ async function triggerShortageAlertIfNeeded(item) {
     if (!isCritical) return
 
     const existingAlerts = await getCollectionDirect('alerts')
-    const activeAlert = existingAlerts.find(
-      (a) =>
-        a.siteId === item.siteId &&
-        (a.status === 'pending' || a.status === 'transfer_requested') &&
-        a.title.toLowerCase().includes(item.item.toLowerCase())
-    )
+    const activeAlert = existingAlerts.find((a) => {
+      if (a.siteId !== item.siteId) return false
+      if (a.inventoryItemId === item.id) return true
+      if (a.sources?.some((s) => s.id === item.id)) return true
+      const itemLower = item.item.toLowerCase()
+      return (
+        (a.title || '').toLowerCase().includes(itemLower) ||
+        (a.explanation || '').toLowerCase().includes(itemLower) ||
+        (a.transferDetails && a.transferDetails.item?.toLowerCase() === itemLower)
+      )
+    })
 
-    if (activeAlert) return // Alert already pending or in flight
+    if (activeAlert) return // Alert already exists for this item
 
     const allInventory = await getCollectionDirect('inventory')
     const sites = await getCollectionDirect('sites')
