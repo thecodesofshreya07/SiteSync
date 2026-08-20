@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/common/PageHeader'
 import Button from '../components/common/Button'
+import LoadingState from '../components/common/LoadingState'
 import InventoryFilters from '../components/inventory/InventoryFilters'
 import InventoryTable from '../components/inventory/InventoryTable'
 import StockTransactionModal from '../components/inventory/StockTransactionModal'
@@ -10,18 +11,48 @@ import { useSite } from '../hooks/useSite'
 import { getInventoryBySite, daysRemaining } from '../data/inventory'
 import { PackagePlus } from 'lucide-react'
 
+const API_BASE = 'http://localhost:5000/api'
+
 export default function Inventory() {
   const { selectedSite } = useSite()
   const navigate = useNavigate()
-  const [items, setItems] = useState(() => getInventoryBySite(selectedSite.id))
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('ALL')
   const [txnItem, setTxnItem] = useState(null)
   const [txnModalOpen, setTxnModalOpen] = useState(false)
 
-  // Re-sync when site changes.
-  useMemo(() => {
-    setItems(getInventoryBySite(selectedSite.id))
+  // Fetch inventory for selected site with fallback to mock data
+  useEffect(() => {
+    let isMounted = true
+    setLoading(true)
+
+    const fetchInventory = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/inventory?siteId=${selectedSite.id}`)
+        if (!res.ok) {
+          throw new Error(`Server returned status ${res.status}`)
+        }
+        const data = await res.json()
+        if (isMounted) {
+          setItems(data)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.warn('Inventory API fetch failed, falling back to mock data:', err)
+        if (isMounted) {
+          setItems(getInventoryBySite(selectedSite.id))
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchInventory()
+
+    return () => {
+      isMounted = false
+    }
   }, [selectedSite.id])
 
   const filtered = items.filter((item) => {
@@ -35,28 +66,57 @@ export default function Inventory() {
     .sort((a, b) => daysRemaining(a) - daysRemaining(b))[0]
 
   function openTransactionModal(item) {
+    if (!item) return
     setTxnItem(item)
     setTxnModalOpen(true)
   }
 
-  function handleTransaction({ type, quantity }) {
-    setItems((prev) =>
-      prev.map((i) => {
-        if (i.id !== txnItem.id) return i
-        let newQty = i.quantity
-        if (type === 'Stock In') newQty += quantity
-        if (type === 'Stock Out' || type === 'Transfer') newQty -= quantity
-        newQty = Math.max(newQty, 0)
-        const status = newQty <= i.reorderThreshold * 0.5 ? 'CRITICAL' : newQty <= i.reorderThreshold ? 'LOW' : 'OK'
-        return {
-          ...i,
-          quantity: newQty,
-          status,
-          lastUpdated: new Date().toISOString(),
-          lastTransaction: { type, quantity, date: new Date().toISOString().slice(0, 10), relatedPO: i.lastTransaction?.relatedPO },
-        }
+  async function handleTransaction({ type, quantity, note }) {
+    if (!txnItem) return
+
+    try {
+      const res = await fetch(`${API_BASE}/inventory/${txnItem.id}/transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type, quantity, note }),
       })
-    )
+
+      if (!res.ok) {
+        throw new Error(`Transaction failed with status ${res.status}`)
+      }
+
+      const updatedItem = await res.json()
+      setItems((prev) => prev.map((i) => (i.id === updatedItem.id ? updatedItem : i)))
+    } catch (err) {
+      console.warn('Transaction API call failed, applying optimistic local update:', err)
+      // Graceful local fallback if server is offline
+      setItems((prev) =>
+        prev.map((i) => {
+          if (i.id !== txnItem.id) return i
+          let newQty = i.quantity
+          if (type === 'Stock In') newQty += quantity
+          if (type === 'Stock Out' || type === 'Transfer') newQty -= quantity
+          newQty = Math.max(newQty, 0)
+          const newStatus =
+            newQty <= i.reorderThreshold * 0.5 ? 'CRITICAL' : newQty <= i.reorderThreshold ? 'LOW' : 'OK'
+          return {
+            ...i,
+            quantity: newQty,
+            status: newStatus,
+            lastUpdated: new Date().toISOString(),
+            lastTransaction: {
+              type,
+              quantity,
+              date: new Date().toISOString().slice(0, 10),
+              relatedPO: i.lastTransaction?.relatedPO,
+              note,
+            },
+          }
+        })
+      )
+    }
   }
 
   return (
@@ -65,27 +125,38 @@ export default function Inventory() {
         title="Inventory"
         subtitle={`Material stock across ${selectedSite.name}`}
         actions={
-          <Button variant="primary" icon={PackagePlus} onClick={() => openTransactionModal(items[0])}>
+          <Button
+            variant="primary"
+            icon={PackagePlus}
+            onClick={() => items.length > 0 && openTransactionModal(items[0])}
+            disabled={items.length === 0}
+          >
             Add Stock
           </Button>
         }
       />
 
-      {criticalItem && (
-        <div className="mb-5">
-          <PredictiveProcurementCard
-            item={criticalItem}
-            onReview={() => openTransactionModal(criticalItem)}
-            onOpenProcurement={() => navigate('/procurement')}
-          />
-        </div>
+      {loading ? (
+        <LoadingState label="Loading inventory..." />
+      ) : (
+        <>
+          {criticalItem && (
+            <div className="mb-5">
+              <PredictiveProcurementCard
+                item={criticalItem}
+                onReview={() => openTransactionModal(criticalItem)}
+                onOpenProcurement={() => navigate('/procurement')}
+              />
+            </div>
+          )}
+
+          <div className="mb-4">
+            <InventoryFilters search={search} onSearchChange={setSearch} status={status} onStatusChange={setStatus} />
+          </div>
+
+          <InventoryTable items={filtered} onLogTransaction={openTransactionModal} />
+        </>
       )}
-
-      <div className="mb-4">
-        <InventoryFilters search={search} onSearchChange={setSearch} status={status} onStatusChange={setStatus} />
-      </div>
-
-      <InventoryTable items={filtered} onLogTransaction={openTransactionModal} />
 
       <StockTransactionModal
         open={txnModalOpen}
