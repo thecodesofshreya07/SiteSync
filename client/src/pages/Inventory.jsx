@@ -10,6 +10,7 @@ import CreateItemModal from '../components/inventory/CreateItemModal'
 import PredictiveProcurementCard from '../components/inventory/PredictiveProcurementCard'
 import { useSite } from '../hooks/useSite'
 import { useAuth } from '../hooks/useAuth'
+import { useAlerts } from '../hooks/useAlerts'
 import { apiRequest } from '../lib/api'
 import { Plus, PackagePlus, AlertTriangle } from 'lucide-react'
 
@@ -21,6 +22,7 @@ export function daysRemaining(item) {
 export default function Inventory() {
   const { selectedSite } = useSite()
   const { user } = useAuth()
+  const { refreshAlerts } = useAlerts()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -31,7 +33,8 @@ export default function Inventory() {
   const [txnModalOpen, setTxnModalOpen] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const canLogStock = user?.role === 'Contractor'
+  const canLogStock = !user || user.role === 'Admin' || user.role === 'Project Manager' || user.role === 'Contractor'
+  const canAddMaterial = !user || user.role === 'Admin' || user.role === 'Project Manager'
 
   useEffect(() => {
     let isMounted = true
