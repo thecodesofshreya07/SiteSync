@@ -7,13 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-<<<<<<< HEAD
     "seed": "node seed.js",
     "seed:pg": "node seed.js"
-=======
-    "seed": "node seed/seed.js",
-    "seed:pg": "node seed/postgres-init.js"
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

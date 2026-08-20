@@ -16,13 +16,8 @@ export default function Procurement() {
   const [view, setView] = useState('pipeline')
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-<<<<<<< HEAD
-  const [error, setError] = useState(null)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-=======
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [error, setError] = useState(null)
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 
   useEffect(() => {
     let isMounted = true

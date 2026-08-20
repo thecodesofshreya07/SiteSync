@@ -50,17 +50,10 @@ router.get('/', async (req, res) => {
   if (siteId) {
     return res.json(inventory.filter((item) => String(item.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase()))
   }
-<<<<<<< HEAD
   res.json(inventory)
 })
 
 // GET /api/inventory/:id - Single inventory item by ID or Site ID
-=======
-  return res.json(inventory)
-})
-
-// GET /api/inventory/:id - Single inventory item
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 router.get('/:id', async (req, res) => {
   const { id } = req.params
   const pool = getPool()
@@ -77,7 +70,6 @@ router.get('/:id', async (req, res) => {
   }
 
   const item = findById('inventory', id)
-<<<<<<< HEAD
   if (item) {
     return res.json(item)
   }
@@ -89,12 +81,6 @@ router.get('/:id', async (req, res) => {
   }
 
   return res.status(404).json({ error: `Inventory item or site '${id}' not found` })
-=======
-  if (!item) {
-    return res.status(404).json({ error: 'Inventory item not found' })
-  }
-  return res.json(item)
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 })
 
 // POST /api/inventory - Create a new inventory item
@@ -179,14 +165,9 @@ router.post('/', async (req, res) => {
 
 // POST /api/inventory/:id/transaction - Log a stock transaction (Stock In, Stock Out, Transfer)
 router.post('/:id/transaction', async (req, res) => {
-<<<<<<< HEAD
   try {
     const { id } = req.params
     const { type = 'Stock In', quantity, note } = req.body
-=======
-  const { id } = req.params
-  const { type = 'Stock In', quantity, note } = req.body
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 
     const qty = Number(quantity)
     if (!qty || qty <= 0 || isNaN(qty)) {

@@ -1,9 +1,5 @@
 import { Router } from 'express'
-<<<<<<< HEAD
 import { getCollection, findById, updateById, setCollection, getPool } from '../db.js'
-=======
-import { getCollection, findById, updateById, setCollection, getPool, getCollectionDirect, updateByIdDirect } from '../db.js'
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
 
 const router = Router()
 
@@ -68,7 +64,7 @@ router.get('/', async (req, res) => {
         }
         query += ' ORDER BY id ASC'
         const result = await pool.query(query, params)
-        if (result.rows && result.rows.length > 0) {
+        if (result.rows) {
           return res.json(result.rows.map(formatOrderRow))
         }
       } catch (err) {
@@ -76,7 +72,6 @@ router.get('/', async (req, res) => {
       }
     }
 
-<<<<<<< HEAD
     let orders = getCollection('procurementOrders') || []
     if (!orders || !orders.length) {
       orders = getCollection('procurement') || []
@@ -84,11 +79,6 @@ router.get('/', async (req, res) => {
     if (siteId) {
       const filtered = orders.filter((o) => String(o.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase())
       return res.json(filtered)
-=======
-    const orders = await getCollectionDirect('procurementOrders')
-    if (siteId) {
-      return res.json(orders.filter((o) => o.siteId === siteId))
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
     }
     return res.json(orders)
   } catch (err) {
@@ -97,22 +87,14 @@ router.get('/', async (req, res) => {
   }
 })
 
-<<<<<<< HEAD
 // GET /api/procurement/:id - Single procurement order or list by Site ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
-=======
-// GET /api/procurement/:idOrSiteId - Single order OR list of orders for a siteId
-router.get('/:idOrSiteId', async (req, res) => {
-  try {
-    const { idOrSiteId } = req.params
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
     const pool = getPool()
 
     if (pool) {
       try {
-<<<<<<< HEAD
         const result = await pool.query('SELECT * FROM procurement_orders WHERE id = $1', [id])
         if (result.rows.length > 0) {
           return res.json(formatOrderRow(result.rows[0]))
@@ -123,26 +105,6 @@ router.get('/:idOrSiteId', async (req, res) => {
     }
 
     const order = findById('procurementOrders', id) || findById('procurement', id)
-=======
-        const result = await pool.query(
-          'SELECT * FROM procurement_orders WHERE id = $1 OR site_id = $1 ORDER BY id ASC',
-          [idOrSiteId]
-        )
-        if (result.rows.length === 1 && result.rows[0].id === idOrSiteId) {
-          return res.json(formatOrderRow(result.rows[0]))
-        } else if (result.rows.length > 0) {
-          return res.json(result.rows.map(formatOrderRow))
-        }
-      } catch (err) {
-        console.warn(`PostgreSQL procurement lookup failed for ${idOrSiteId}:`, err.message)
-      }
-    }
-
-    const orders = await getCollectionDirect('procurementOrders')
-
-    // 1. Check if ID matches a purchase order (e.g. PO-2041)
-    const order = orders.find((o) => o.id === idOrSiteId)
->>>>>>> c93e7056994b12a97d317b7b571b8d42a2ca0eb5
     if (order) {
       return res.json(order)
     }
@@ -246,7 +208,7 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PATCH /api/procurement/:id - Advance procurement stage or update fields
+// PATCH /api/procurement/:id - Update procurement order
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -256,17 +218,23 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid update payload' })
     }
 
+    // Validate stage if provided
     if (payload.stage !== undefined && !VALID_STAGES.includes(payload.stage)) {
       return res.status(400).json({
         error: `Invalid stage '${payload.stage}'. Must be one of: ${VALID_STAGES.join(', ')}`,
       })
     }
 
+    // Filter to only allowed fields
     const updateFields = {}
     for (const key of Object.keys(payload)) {
       if (ALLOWED_UPDATE_FIELDS.includes(key)) {
         updateFields[key] = payload[key]
       }
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: 'No valid fields provided for update' })
     }
 
     const pool = getPool()
@@ -300,9 +268,10 @@ router.patch('/:id', async (req, res) => {
       }
     }
 
-    const localUpdated = await updateByIdDirect('procurementOrders', id, updateFields)
-    const finalResult = updated || localUpdated
+    const localUpdated =
+      updateById('procurementOrders', id, updateFields) || updateById('procurement', id, updateFields)
 
+    const finalResult = updated || localUpdated
     if (!finalResult) {
       return res.status(404).json({ error: 'Procurement order not found' })
     }
