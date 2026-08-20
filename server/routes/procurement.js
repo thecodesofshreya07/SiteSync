@@ -29,19 +29,43 @@ const ALLOWED_UPDATE_FIELDS = [
   'history',
 ]
 
+function calculateBackendAmount(item, quantity, unit) {
+  const qty = Number(quantity) || 1
+  if (!item) return qty * 500
+  const norm = String(item).toLowerCase()
+  if (norm.includes('sand')) return qty * 2400
+  if (norm.includes('cement')) return qty * 380
+  if (norm.includes('aggregate')) return qty * 2100
+  if (norm.includes('steel')) return qty * 65000
+  if (norm.includes('brick')) return Math.round(qty * 8.4)
+  if (norm.includes('pvc')) return qty * 420
+  if (norm.includes('cable')) return qty * 290
+  const cleanUnit = String(unit || '').toLowerCase()
+  if (cleanUnit === 'bags') return qty * 390
+  if (cleanUnit === 'cu.m') return qty * 2300
+  if (cleanUnit === 'tonnes') return qty * 68000
+  return Math.round(qty * 500)
+}
+
 function formatOrderRow(row) {
   if (!row) return null
   const baseData = row.data && typeof row.data === 'object' ? row.data : {}
+  const rawItem = row.item || baseData.item
+  const rawQty = Number(row.quantity ?? baseData.quantity ?? 1)
+  const rawUnit = row.unit || baseData.unit || 'units'
+  const rawAmount = Number(row.amount ?? baseData.amount ?? 0)
+  const finalAmount = rawAmount > 0 && rawAmount !== 250000 ? rawAmount : calculateBackendAmount(rawItem, rawQty, rawUnit)
+
   return {
     ...baseData,
     id: row.id || baseData.id,
     siteId: row.site_id || baseData.siteId,
-    item: row.item || baseData.item,
+    item: rawItem,
     vendorId: row.vendor_id || baseData.vendorId,
     vendorName: baseData.vendorName || row.vendor_name || '—',
-    quantity: Number(row.quantity ?? baseData.quantity ?? 0),
-    unit: row.unit || baseData.unit,
-    amount: Number(row.amount ?? baseData.amount ?? 0),
+    quantity: rawQty,
+    unit: rawUnit,
+    amount: finalAmount,
     dateRaised: row.date_raised || baseData.dateRaised,
     expectedDelivery: row.expected_delivery || baseData.expectedDelivery,
     stage: row.stage || baseData.stage,
@@ -186,9 +210,15 @@ router.get('/', async (req, res) => {
     }
     if (siteId) {
       const filtered = orders.filter((o) => String(o.siteId).trim().toLowerCase() === String(siteId).trim().toLowerCase())
-      return res.json(filtered)
+      return res.json(filtered.map((o) => {
+        const amt = Number(o.amount) > 0 && Number(o.amount) !== 250000 ? Number(o.amount) : calculateBackendAmount(o.item, o.quantity, o.unit)
+        return { ...o, amount: amt }
+      }))
     }
-    return res.json(orders)
+    return res.json(orders.map((o) => {
+      const amt = Number(o.amount) > 0 && Number(o.amount) !== 250000 ? Number(o.amount) : calculateBackendAmount(o.item, o.quantity, o.unit)
+      return { ...o, amount: amt }
+    }))
   } catch (err) {
     console.error('Error in GET /api/procurement:', err)
     return res.status(500).json({ error: 'Failed to retrieve procurement orders' })
@@ -214,13 +244,17 @@ router.get('/:id', async (req, res) => {
 
     const order = findById('procurementOrders', id) || findById('procurement', id)
     if (order) {
-      return res.json(order)
+      const amt = Number(order.amount) > 0 && Number(order.amount) !== 250000 ? Number(order.amount) : calculateBackendAmount(order.item, order.quantity, order.unit)
+      return res.json({ ...order, amount: amt })
     }
 
     const orders = getCollection('procurementOrders') || getCollection('procurement') || []
     const siteOrders = orders.filter((o) => o.siteId === id)
     if (siteOrders.length > 0) {
-      return res.json(siteOrders)
+      return res.json(siteOrders.map((o) => {
+        const amt = Number(o.amount) > 0 && Number(o.amount) !== 250000 ? Number(o.amount) : calculateBackendAmount(o.item, o.quantity, o.unit)
+        return { ...o, amount: amt }
+      }))
     }
 
     return res.status(404).json({ error: `Purchase order or site '${id}' not found` })
@@ -254,6 +288,7 @@ router.post('/', async (req, res) => {
     const id = `PO-${Math.floor(2050 + Math.random() * 500)}`
     const dateRaised = now.toISOString().slice(0, 10)
     const targetDelivery = expectedDelivery || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+    const calculatedAmount = Number(amount) > 0 ? Number(amount) : calculateBackendAmount(item, quantity, unit)
 
     const initialHistory = [
       {
@@ -273,7 +308,7 @@ router.post('/', async (req, res) => {
       vendorName,
       quantity: Number(quantity) || 1,
       unit,
-      amount: Number(amount) || 0,
+      amount: calculatedAmount,
       dateRaised,
       expectedDelivery: targetDelivery,
       stage,
@@ -381,6 +416,10 @@ router.patch('/:id', async (req, res) => {
       ...currentOrder,
       ...updateFields,
       history: mergedHistory,
+    }
+
+    if (!merged.amount || merged.amount === 250000) {
+      merged.amount = calculateBackendAmount(merged.item, merged.quantity, merged.unit)
     }
 
     if (pool) {

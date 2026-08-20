@@ -1,9 +1,10 @@
 import Badge from '../common/Badge'
 
 function toneFor(status) {
-  const s = status.toLowerCase()
-  if (s.includes('delayed')) return 'red'
-  if (s.includes('completed')) return 'green'
+  if (!status) return 'neutral'
+  const s = String(status).toLowerCase()
+  if (s.includes('rejected') || s.includes('disapproved') || s.includes('delayed')) return 'red'
+  if (s.includes('completed') || s.includes('delivered') || s.includes('inventory updated')) return 'green'
   if (s.includes('approved')) return 'blue'
   if (s.includes('pending') || s.includes('awaiting')) return 'amber'
   return 'neutral'
