@@ -45,8 +45,8 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
             <Building2 size={20} strokeWidth={2.25} />
           </div>
           <div>
-            <p className="text-base font-bold leading-none text-white tracking-tight">SiteSync</p>
-            <p className="mt-1.5 text-xs font-semibold leading-none text-teal-400/90">AI Construction Ops</p>
+            <p className="text-base font-bold leading-none text-white tracking-tight font-public">SiteSync</p>
+            <p className="mt-1.5 text-2xs font-semibold leading-none text-slate-400 font-ibm uppercase tracking-wider">Enterprise OS</p>
           </div>
         </div>
         {/* Mobile close button */}
