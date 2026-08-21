@@ -3,6 +3,22 @@ import { translateDOMElement } from '../lib/translations'
 
 const LanguageContext = createContext()
 
+function setGoogleTranslateCookie(lang) {
+  const cookieVal = lang === 'hi' ? '/en/hi' : '/en/en'
+  const domain = window.location.hostname
+
+  document.cookie = `googtrans=${cookieVal}; path=/;`
+  document.cookie = `googtrans=${cookieVal}; path=/; domain=${domain};`
+  document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domain};`
+}
+
+function clearGoogleTranslateCookie() {
+  const domain = window.location.hostname
+  document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;'
+  document.cookie = `googtrans=; path=/; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`
+  document.cookie = `googtrans=; path=/; domain=.${domain}; expires=Thu, 01 Jan 1970 00:00:00 UTC;`
+}
+
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
     try {
@@ -14,20 +30,17 @@ export function LanguageProvider({ children }) {
 
   const observerRef = useRef(null)
 
-  // 1. Direct Instant Live DOM Translator + Mutation Observer
+  // 1. Direct Instant DOM Translation
   const applyDomTranslation = useCallback((lang) => {
     if (typeof document === 'undefined') return
 
-    // Run direct DOM translation on root
     translateDOMElement(document.body, lang)
 
-    // Disconnect any existing observer
     if (observerRef.current) {
       observerRef.current.disconnect()
       observerRef.current = null
     }
 
-    // If Hindi, observe DOM mutations (e.g. tab switches, dynamic tables, modals)
     if (lang === 'hi') {
       let timeout = null
       const observer = new MutationObserver((mutations) => {
@@ -40,7 +53,7 @@ export function LanguageProvider({ children }) {
               }
             })
           })
-        }, 30)
+        }, 20)
       })
 
       observer.observe(document.body, {
@@ -53,61 +66,71 @@ export function LanguageProvider({ children }) {
     }
   }, [])
 
-  // 2. Google Translate Cookie & Combo Trigger
-  const applyGoogleTranslate = useCallback((lang) => {
+  // 2. Google Translate Trigger
+  const triggerGoogleTranslate = useCallback((lang) => {
     try {
-      const domain = window.location.hostname
-      const cookieVal = lang === 'hi' ? '/en/hi' : '/en/en'
-
-      document.cookie = `googtrans=${cookieVal}; path=/;`
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=.${domain};`
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=${domain};`
+      setGoogleTranslateCookie(lang)
 
       const select = document.querySelector('.goog-te-combo')
       if (select) {
         select.value = lang
         select.dispatchEvent(new Event('change'))
-      } else {
-        setTimeout(() => {
-          const retrySelect = document.querySelector('.goog-te-combo')
-          if (retrySelect) {
-            retrySelect.value = lang
-            retrySelect.dispatchEvent(new Event('change'))
-          }
-        }, 500)
+        select.dispatchEvent(new Event('input'))
       }
     } catch (err) {
-      console.warn('[Google Translate Trigger]:', err.message)
+      console.warn('[Translate Trigger]:', err.message)
     }
   }, [])
 
   const setLanguage = (lang) => {
     const target = lang === 'hi' ? 'hi' : 'en'
     setLanguageState(target)
+
     try {
       localStorage.setItem('sitesync_language', target)
     } catch (_) {}
 
-    applyDomTranslation(target)
-    applyGoogleTranslate(target)
+    if (target === 'hi') {
+      setGoogleTranslateCookie('hi')
+      applyDomTranslation('hi')
+      triggerGoogleTranslate('hi')
+      // Quick reload to ensure 100% full-page translation on all React trees
+      setTimeout(() => {
+        window.location.reload()
+      }, 50)
+    } else {
+      clearGoogleTranslateCookie()
+      setGoogleTranslateCookie('en')
+      applyDomTranslation('en')
+      triggerGoogleTranslate('en')
+      // Quick reload to restore pure English state
+      setTimeout(() => {
+        window.location.reload()
+      }, 50)
+    }
   }
 
   const toggleLanguage = () => {
-    const nextLang = language === 'hi' ? 'en' : 'hi'
-    setLanguage(nextLang)
+    const next = language === 'hi' ? 'en' : 'hi'
+    setLanguage(next)
   }
 
-  // Initial & Route change effect
+  // Initial mount translation sync
   useEffect(() => {
-    applyDomTranslation(language)
-    applyGoogleTranslate(language)
+    if (language === 'hi') {
+      setGoogleTranslateCookie('hi')
+      applyDomTranslation('hi')
+      triggerGoogleTranslate('hi')
+    } else {
+      applyDomTranslation('en')
+    }
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
     }
-  }, [language, applyDomTranslation, applyGoogleTranslate])
+  }, [language, applyDomTranslation, triggerGoogleTranslate])
 
   return (
     <LanguageContext.Provider
