@@ -22,7 +22,7 @@ export const AGENT_TOOLS = [
     type: 'function',
     function: {
       name: 'get_sites',
-      description: 'Retrieve summary of all construction sites or a specific site by ID or name (Riverside Tower, Site B, Metro Heights, Greenfield).',
+      description: 'Retrieve summary of all construction sites or a specific site by ID or name (Riverside Tower, Warehouse Expansion, Metro Heights, Greenfield).',
       parameters: {
         type: 'object',
         properties: {

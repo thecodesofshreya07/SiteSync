@@ -19,7 +19,14 @@ export default function UserDetailsModal({ user, onClose }) {
   if (!user) return null
 
   const assignedSite = sites.find((s) => s.id === user.siteId)
-  const roleTone = user.role === 'Product Manager' ? 'teal' : 'amber'
+  const roleTone =
+    user.role === 'Project Manager'
+      ? 'teal'
+      : user.role === 'Admin'
+      ? 'navy'
+      : user.role === 'Accountant' || user.role === 'Finance'
+      ? 'green'
+      : 'amber'
   const statusTone = user.status === 'Active' ? 'green' : 'neutral'
 
   return (
@@ -41,8 +48,10 @@ export default function UserDetailsModal({ user, onClose }) {
           <Row label="Email Address" value={user.email} />
           <Row label="Phone Number" value={user.phone} />
           <Row label="Assigned Role" value={user.role} />
-          {user.role === 'Product Manager' ? (
+          {user.role === 'Project Manager' ? (
             <Row label="Assigned Project ID" value={user.projectId || 'NA'} />
+          ) : user.role === 'Admin' || user.role === 'Accountant' || user.role === 'Finance' ? (
+            <Row label="Scope" value="All Sites (Global Access)" />
           ) : (
             <Row label="Assigned Site" value={assignedSite ? `${assignedSite.name} (${assignedSite.location})` : (user.siteId || 'NA')} />
           )}

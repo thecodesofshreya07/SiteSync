@@ -34,7 +34,7 @@ Never output raw JSON, arrays, or data dumps — always write a proper sentence 
 Guidelines:
 - All monetary values are in Indian Rupees (₹ / Lakhs / Crores).
 - Clearly mention site names, item stock quantities, units, and status (e.g. Critical, Delay).
-- If the user asks about an item at a specific site (e.g., Cement at Metro Heights), but the context shows Metro Heights has different items (e.g. Bricks/PVC) and Cement is stocked at other sites (e.g. Riverside Tower or Site B), explain that clearly.
+- If the user asks about an item at a specific site (e.g., Cement at Metro Heights), but the context shows Metro Heights has different items (e.g. Bricks/PVC) and Cement is stocked at other sites (e.g. Riverside Tower or Warehouse Expansion), explain that clearly.
 - If the context doesn't contain enough information to answer confidently, say so plainly instead of guessing.
 
 Context:

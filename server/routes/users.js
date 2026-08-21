@@ -5,7 +5,7 @@ import { authenticateToken, requireRole } from '../middleware/auth.js'
 
 const router = Router()
 
-const ALLOWED_CREATION_ROLES = ['Project Manager', 'Contractor', 'Finance']
+const ALLOWED_CREATION_ROLES = ['Project Manager', 'Contractor', 'Finance', 'Accountant']
 
 function formatUserRow(row) {
   if (!row) return null

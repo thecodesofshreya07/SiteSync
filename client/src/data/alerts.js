@@ -4,10 +4,10 @@ export const initialAlerts = [
     id: 'ALT-009',
     siteId: 'SITE-002',
     severity: 'critical',
-    title: 'Cement stock at Site B is projected to become critical in 3.2 days.',
+    title: 'Cement stock at Warehouse Expansion is projected to become critical in 3.2 days.',
     timestamp: '2026-08-19T10:42:11',
     explanation:
-      'Current consumption is 55 bags/day against a remaining stock of 180 bags. The pending replenishment order is delayed by 4 days, which means the site will run out of cement roughly 2.4 days before the delayed delivery arrives — halting foundation reinforcement work at Site B.',
+      'Current consumption is 55 bags/day against a remaining stock of 180 bags. The pending replenishment order is delayed by 4 days, which means the site will run out of cement roughly 2.4 days before the delayed delivery arrives — halting foundation reinforcement work at Warehouse Expansion.',
     reasonPoints: [
       'Current consumption is 55 bags/day.',
       'Current stock is 180 bags.',
@@ -49,16 +49,16 @@ export const initialAlerts = [
     title: 'Site budget is trending 11.8% above planned spend.',
     timestamp: '2026-08-19T08:52:30',
     explanation:
-      'Site B actual spend of ₹3.47 Cr against a planned ₹3.10 Cr is being driven primarily by steel procurement, equipment rental, and additional labor charges. The steel overage traces back to an emergency alternate-vendor purchase made after the original delivery was delayed.',
+      'Warehouse Expansion actual spend of ₹3.47 Cr against a planned ₹3.10 Cr is being driven primarily by steel procurement, equipment rental, and additional labor charges. The steel overage traces back to an emergency alternate-vendor purchase made after the original delivery was delayed.',
     reasonPoints: [
       'Steel procurement is ₹8.4L above plan (PO-2045, alternate vendor surcharge).',
       'Equipment rental is ₹2.1L above plan due to CM-12 extended usage.',
       'Additional labor cost is ₹1.4L above plan from weekend shifts to recover schedule.',
     ],
-    recommendation: 'Flag PO-2045 for Finance review and lock remaining Site B discretionary procurement pending budget reconciliation.',
+    recommendation: 'Flag PO-2045 for Finance review and lock remaining Warehouse Expansion discretionary procurement pending budget reconciliation.',
     sources: [
       { type: 'procurement', id: 'PO-2045', label: 'Purchase Order PO-2045' },
-      { type: 'site', id: 'SITE-002', label: 'Site B Budget Record' },
+      { type: 'site', id: 'SITE-002', label: 'Warehouse Expansion Budget Record' },
       { type: 'vendor', id: 'VEN-022', label: 'Vendor History VEN-022' },
     ],
     status: 'pending',

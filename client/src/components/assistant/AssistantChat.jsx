@@ -8,7 +8,7 @@ import { API_BASE } from '../../lib/api'
 
 const SUGGESTED_PROMPTS = [
   'What is the stock of Fe-550D TMT Steel Rebar at Riverside Tower?',
-  'Why is Site B at risk and what is causing the shortage?',
+  'Why is Warehouse Expansion at risk and what is causing the shortage?',
   'Which equipment is currently idle or under maintenance?',
   'What are the delayed deliveries and procurement purchase orders?',
 ]

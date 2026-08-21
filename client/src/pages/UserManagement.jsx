@@ -85,10 +85,10 @@ export default function UserManagement() {
 
   const safeUsers = Array.isArray(users) && users.length > 0 ? users : getMockUsers
 
-  // Sort users so Product Managers appear first, Contractors second
+  // Sort users so Project Managers appear first, Contractors second
   const sortedUsers = [...safeUsers].sort((a, b) => {
-    if (a.role === 'Product Manager' && b.role !== 'Product Manager') return -1
-    if (a.role !== 'Product Manager' && b.role === 'Product Manager') return 1
+    if (a.role === 'Project Manager' && b.role !== 'Project Manager') return -1
+    if (a.role !== 'Project Manager' && b.role === 'Project Manager') return 1
     return 0
   })
 
@@ -108,7 +108,7 @@ export default function UserManagement() {
     return matchesSearch && matchesRole && matchesStatus
   })
 
-  const pmCount = safeUsers.filter((u) => u.role === 'Product Manager').length
+  const pmCount = safeUsers.filter((u) => u.role === 'Project Manager').length
   const contractorCount = safeUsers.filter((u) => u.role === 'Contractor').length
 
   const handleCreateUser = async (userPayload) => {
@@ -177,7 +177,7 @@ export default function UserManagement() {
           accent="navy"
         />
         <StatCard
-          label="Product Managers"
+          label="Project Managers"
           value={pmCount}
           sublabel="Site supervisors"
           icon={UserCheck}

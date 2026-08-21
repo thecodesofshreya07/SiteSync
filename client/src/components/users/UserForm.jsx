@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Button from '../common/Button'
 import { useSite } from '../../hooks/useSite'
 
-const ALLOWED_ROLES = ['Product Manager', 'Contractor', 'Accountant']
+const ALLOWED_ROLES = ['Project Manager', 'Contractor', 'Accountant']
 
 export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
   const { sites } = useSite()
@@ -10,7 +10,7 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [role, setRole] = useState('Product Manager')
+  const [role, setRole] = useState('Project Manager')
   const [projectId, setProjectId] = useState('PROJECT-001')
   const [siteId, setSiteId] = useState('SITE-002')
   const [status, setStatus] = useState('Active')
@@ -62,7 +62,7 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
         email: email.trim(),
         phone: phone.trim(),
         role,
-        projectId: role === 'Product Manager' ? (projectId.trim() || 'PROJECT-001') : 'NA',
+        projectId: role === 'Project Manager' ? (projectId.trim() || 'PROJECT-001') : 'NA',
         siteId: role === 'Contractor' ? (siteId.trim() || 'SITE-002') : 'NA',
         status: status || 'Active',
       })
@@ -152,7 +152,7 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
         </div>
 
         <div>
-          {role === 'Product Manager' ? (
+          {role === 'Project Manager' ? (
             <>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700 font-public">
                 Assigned Project UID

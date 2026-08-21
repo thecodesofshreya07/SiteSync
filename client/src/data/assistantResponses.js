@@ -1,5 +1,5 @@
 export const suggestedQuestions = [
-  'Why is Site B over budget?',
+  'Why is Warehouse Expansion over budget?',
   "What's currently low in stock?",
   'Which equipment is idle?',
   'What procurement deliveries are delayed?',
@@ -10,9 +10,9 @@ export const suggestedQuestions = [
 // Keyed by lowercase question text for simple matching; falls back to a
 // generic grounded-sounding response if nothing matches.
 export const assistantResponses = {
-  'why is site b over budget?': {
+  'why is warehouse expansion over budget?': {
     answer:
-      'Site B is currently 11.8% above planned spending.\n\nThe primary drivers are:\n\n1. Steel procurement — ₹8.4L above plan\n2. Equipment rental — ₹2.1L above plan\n3. Additional labor — ₹1.4L above plan\n\nThe steel increase is primarily associated with a delayed delivery that required an alternative vendor purchase.',
+      'Warehouse Expansion is currently 11.8% above planned spending.\n\nThe primary drivers are:\n\n1. Steel procurement — ₹8.4L above plan\n2. Equipment rental — ₹2.1L above plan\n3. Additional labor — ₹1.4L above plan\n\nThe steel increase is primarily associated with a delayed delivery that required an alternative vendor purchase.',
     sources: [
       { type: 'procurement', id: 'PO-2045', label: 'PO-2045' },
       { type: 'site', id: 'SITE-002', label: 'Budget Record' },
@@ -21,7 +21,7 @@ export const assistantResponses = {
   },
   "what's currently low in stock?": {
     answer:
-      "Three items are currently below their reorder threshold:\n\n1. Cement Portland Type I at Site B — 180 bags remaining, CRITICAL (3.2 days to stockout)\n2. Aggregate at Riverside Tower — 96 cu.m remaining, LOW\n3. Bricks at Site B — 6,200 units remaining, LOW\n\nCement at Site B is the most urgent — it's the subject of the current open critical alert.",
+      "Three items are currently below their reorder threshold:\n\n1. Cement Portland Type I at Warehouse Expansion — 180 bags remaining, CRITICAL (3.2 days to stockout)\n2. Aggregate at Riverside Tower — 96 cu.m remaining, LOW\n3. Bricks at Warehouse Expansion — 6,200 units remaining, LOW\n\nCement at Warehouse Expansion is the most urgent — it's the subject of the current open critical alert.",
     sources: [
       { type: 'inventory', id: 'INV-104', label: 'INV-104' },
       { type: 'inventory', id: 'INV-063', label: 'INV-063' },
@@ -38,7 +38,7 @@ export const assistantResponses = {
   },
   'what procurement deliveries are delayed?': {
     answer:
-      "One delivery is currently delayed:\n\nDEL-882, covering PO-2041 (500 bags of Cement Portland Type I for Site B), was expected on 17 Aug and is now revised to 21 Aug — a 4-day delay. BuildPro Materials cited a transport shortage.\n\nThis delay is the direct cause of the open critical cement shortage alert at Site B.",
+      "One delivery is currently delayed:\n\nDEL-882, covering PO-2041 (500 bags of Cement Portland Type I for Warehouse Expansion), was expected on 17 Aug and is now revised to 21 Aug — a 4-day delay. BuildPro Materials cited a transport shortage.\n\nThis delay is the direct cause of the open critical cement shortage alert at Warehouse Expansion.",
     sources: [
       { type: 'delivery', id: 'DEL-882', label: 'DEL-882' },
       { type: 'procurement', id: 'PO-2041', label: 'PO-2041' },
@@ -47,7 +47,7 @@ export const assistantResponses = {
   },
   'which tasks are at risk?': {
     answer:
-      "Foundation Reinforcement (TASK-031) at Site B is the main task at risk. It's 65% complete with a due date of 22 Aug, but depends on the remaining steel rebar delivery under PO-2045, which hasn't progressed past the Purchase Order stage yet.\n\nIf the order doesn't dispatch within 48 hours, the milestone will likely slip.",
+      "Foundation Reinforcement (TASK-031) at Warehouse Expansion is the main task at risk. It's 65% complete with a due date of 22 Aug, but depends on the remaining steel rebar delivery under PO-2045, which hasn't progressed past the Purchase Order stage yet.\n\nIf the order doesn't dispatch within 48 hours, the milestone will likely slip.",
     sources: [
       { type: 'task', id: 'TASK-031', label: 'TASK-031' },
       { type: 'procurement', id: 'PO-2045', label: 'PO-2045' },
@@ -55,7 +55,7 @@ export const assistantResponses = {
   },
   'what should we purchase next?': {
     answer:
-      'Based on current consumption and pending delivery delays, the top priority purchase is:\n\nCement Portland Type I — recommended order of 500 bags for Site B, driven by 55 bags/day consumption and a projected shortage in 3.2 days.\n\nSecondary priority: Bricks for Site B (6,200 units remaining against 900/day consumption).',
+      'Based on current consumption and pending delivery delays, the top priority purchase is:\n\nCement Portland Type I — recommended order of 500 bags for Warehouse Expansion, driven by 55 bags/day consumption and a projected shortage in 3.2 days.\n\nSecondary priority: Bricks for Warehouse Expansion (6,200 units remaining against 900/day consumption).',
     sources: [
       { type: 'inventory', id: 'INV-104', label: 'INV-104' },
       { type: 'inventory', id: 'INV-112', label: 'INV-112' },

@@ -12,7 +12,7 @@ export default function UserTable({ users, onViewUser }) {
       <EmptyState
         icon={UserX}
         title="No users found"
-        description="Click '+ Add User' to register a new Product Manager or Contractor account."
+        description="Click '+ Add User' to register a new Project Manager or Contractor account."
       />
     )
   }
@@ -34,12 +34,21 @@ export default function UserTable({ users, onViewUser }) {
           <tbody className="divide-y divide-surface-border font-ibm">
             {users.map((user) => {
               const site = sites.find((s) => s.id === user.siteId)
-              const roleTone = user.role === 'Product Manager' ? 'teal' : 'amber'
+              const roleTone =
+                user.role === 'Project Manager'
+                  ? 'teal'
+                  : user.role === 'Admin'
+                  ? 'navy'
+                  : user.role === 'Accountant' || user.role === 'Finance'
+                  ? 'green'
+                  : 'amber'
               const statusTone = user.status === 'Active' ? 'green' : 'neutral'
 
               const assignmentLabel =
-                user.role === 'Product Manager'
+                user.role === 'Project Manager'
                   ? `Project ID: ${user.projectId || 'NA'}`
+                  : user.role === 'Admin' || user.role === 'Accountant' || user.role === 'Finance'
+                  ? 'All Sites (Global)'
                   : site
                   ? site.name
                   : user.siteId || 'NA'

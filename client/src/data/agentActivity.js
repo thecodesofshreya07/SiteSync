@@ -4,7 +4,7 @@
 
 export const activityScripts = {
   'SITE-002': [
-    { type: 'checking', message: 'Monitoring Site B inventory...' },
+    { type: 'checking', message: 'Monitoring Warehouse Expansion inventory...' },
     { type: 'checking', message: 'Checking cement consumption (INV-104)...' },
     { type: 'checking', message: 'Checking pending delivery status (PO-2041)...' },
     { type: 'retrieving', message: 'Retrieving vendor history for VEN-017...' },

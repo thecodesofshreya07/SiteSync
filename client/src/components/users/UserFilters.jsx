@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
-const ROLE_FILTERS = ['ALL', 'Product Manager', 'Contractor']
+const ROLE_FILTERS = ['ALL', 'Project Manager', 'Contractor', 'Accountant']
 const STATUS_FILTERS = ['ALL', 'Active', 'Not Active']
 
 export default function UserFilters({
