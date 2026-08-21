@@ -333,18 +333,20 @@ export async function runMonitoringStream(siteId, res) {
         await insertAlertDirect(alert)
         console.log(`[DB] Alert inserted into PostgreSQL: ${alert.id}`)
 
-        // Send Brevo email to Project Manager (mirlubaib51005@gmail.com) on new alert
-        if (!matchedAlert) {
-          import('./emailService.js').then(({ sendPMAlertEmail }) => {
-            sendPMAlertEmail({
-              pmEmail: 'mirlubaib51005@gmail.com',
-              alert,
-              site: currentSite,
-              reasoningSummary: alert.explanation,
-              recommendation: alert.recommendation,
-            }).catch((e) => console.warn('PM Alert Email notice:', e.message))
-          })
-        }
+        // Send Brevo email to Project Manager (mirlubaib51005@gmail.com) on alert
+        import('./emailService.js').then(({ sendPMAlertEmail }) => {
+          sendPMAlertEmail({
+            pmEmail: 'mirlubaib51005@gmail.com',
+            alert,
+            site: currentSite,
+            reasoningSummary: alert.explanation,
+            recommendation: alert.recommendation,
+          }).then((res) => {
+            if (res?.success) {
+              console.log(`[AGENT EMAIL] Dispatched Brevo alert email to mirlubaib51005@gmail.com (ID: ${res.messageId})`)
+            }
+          }).catch((e) => console.warn('PM Alert Email notice:', e.message))
+        })
 
         // STEP B: Update subtask to resolved with parent alert link
         await updateSubtaskDirect(subtaskId, {

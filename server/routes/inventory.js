@@ -59,21 +59,6 @@ async function triggerShortageAlertIfNeeded(item) {
 
     if (!isCritical) return
 
-    const existingAlerts = await getCollectionDirect('alerts')
-    const activeAlert = existingAlerts.find((a) => {
-      if (a.siteId !== item.siteId) return false
-      if (a.inventoryItemId === item.id) return true
-      if (a.sources?.some((s) => s.id === item.id)) return true
-      const itemLower = item.item.toLowerCase()
-      return (
-        (a.title || '').toLowerCase().includes(itemLower) ||
-        (a.explanation || '').toLowerCase().includes(itemLower) ||
-        (a.transferDetails && a.transferDetails.item?.toLowerCase() === itemLower)
-      )
-    })
-
-    if (activeAlert) return // Alert already exists for this item
-
     const allInventory = await getCollectionDirect('inventory')
     const sites = await getCollectionDirect('sites')
     const currentSite = sites.find((s) => s.id === item.siteId) || { id: item.siteId, name: item.siteId }
@@ -133,16 +118,20 @@ async function triggerShortageAlertIfNeeded(item) {
     await insertAlertDirect(alert)
     console.log(`[DYNAMIC ALERT] Created dynamic shortage alert for ${item.item} at ${item.siteId} (ID: ${alertId})`)
 
-    // Phase 3: Non-blocking Brevo transactional notification to Project Manager
-    import('../services/emailService.js').then(({ sendPMAlertEmail }) => {
-      sendPMAlertEmail({
+    // Non-blocking Brevo transactional notification to Project Manager
+    try {
+      const { sendPMAlertEmail } = await import('../services/emailService.js')
+      await sendPMAlertEmail({
         pmEmail: 'mirlubaib51005@gmail.com',
         alert,
         site: currentSite,
         reasoningSummary: alert.explanation,
         recommendation: alert.recommendation,
-      }).catch((e) => console.warn('PM Alert Email dispatch notice:', e.message))
-    })
+      })
+      console.log(`[EMAIL] Shortage notification dispatched for ${item.item}`)
+    } catch (e) {
+      console.warn('PM Alert Email dispatch notice:', e.message)
+    }
   } catch (err) {
     console.warn('[DYNAMIC ALERT] Warning creating shortage alert:', err.message)
   }
@@ -497,6 +486,11 @@ router.post('/:id/transaction', async (req, res) => {
       lastUpdated,
       lastTransaction,
     })
+
+    // Dynamically trigger AI shortage alert and dispatch email if critical
+    triggerShortageAlertIfNeeded(updatedPayload).catch((e) =>
+      console.warn('[INVENTORY] Shortage trigger warning:', e.message)
+    )
 
     res.json(updatedPayload)
   } catch (err) {
