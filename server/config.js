@@ -17,5 +17,6 @@ export const config = {
   brevoApiKey: process.env.BREVO_API_KEY || '',
   brevoSenderEmail: process.env.BREVO_SENDER_EMAIL || 'devsupport007@gmail.com',
   brevoSenderName: process.env.BREVO_SENDER_NAME || 'SiteSync Construction Ops',
+  clientUrl: process.env.CLIENT_URL || 'https://site-sync-fawn.vercel.app',
 }
 

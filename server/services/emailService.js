@@ -3,6 +3,7 @@ import { config } from '../config.js'
 const fetchFn = typeof fetch !== 'undefined' ? fetch : global.fetch
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
+const CLIENT_APP_URL = (process.env.CLIENT_URL || config?.clientUrl || 'https://site-sync-fawn.vercel.app').replace(/\/+$/, '')
 
 /**
  * Send transactional email using Brevo SMTP API.
@@ -156,7 +157,7 @@ export async function sendPORejectionEmail({ financeEmail, po, site, reasoningSu
 
         <!-- CTA Button -->
         <div style="text-align: center; margin: 30px 0 16px 0;">
-          <a href="http://localhost:5173/procurement" style="background-color: #0d9488; color: #ffffff; padding: 14px 28px; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">
+          <a href="${CLIENT_APP_URL}/procurement" style="background-color: #0d9488; color: #ffffff; padding: 14px 28px; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">
             Review & Authorize in Finance Portal →
           </a>
         </div>
@@ -187,7 +188,7 @@ DETAILS:
 - Current Spend: ₹${actual.toLocaleString('en-IN')}
 - Projected Overrun: +${overrunPct}%
 
-Review and authorize at: http://localhost:5173/procurement
+Review and authorize at: ${CLIENT_APP_URL}/procurement
 `
 
   return await sendEmail({
@@ -269,7 +270,7 @@ export async function sendPMAlertEmail({ pmEmail, alert, site, reasoningSummary,
 
         <!-- CTA Button -->
         <div style="text-align: center; margin: 28px 0 14px 0;">
-          <a href="http://localhost:5173" style="background-color: #0f766e; color: #ffffff; padding: 14px 28px; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2);">
+          <a href="${CLIENT_APP_URL}/dashboard" style="background-color: #0f766e; color: #ffffff; padding: 14px 28px; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 8px; display: inline-block; box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2);">
             Open Project Manager Portal →
           </a>
         </div>
@@ -299,7 +300,7 @@ ${reasonPoints.map((p) => `• ${p}`).join('\n')}
 RECOMMENDED ACTION:
 ${recText}
 
-Review immediately in your dashboard: http://localhost:5173
+Review immediately in your dashboard: ${CLIENT_APP_URL}/dashboard
 `
 
   return await sendEmail({
