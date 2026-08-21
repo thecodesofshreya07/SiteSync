@@ -68,7 +68,6 @@ You MUST respond strictly in valid JSON format with the following schema:
       model: MODEL_NAME,
       messages,
       temperature: 0.2,
-      response_format: { type: 'json_object' },
     })
 
     const rawContent = (completion.choices?.[0]?.message?.content || '').trim()
