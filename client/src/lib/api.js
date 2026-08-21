@@ -1,4 +1,7 @@
-const API_BASE = (import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:4000/api')
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const API_BASE = rawApiUrl
+  ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`)
+  : 'http://localhost:4000/api'
 const API_FALLBACK = 'http://127.0.0.1:4000/api'
 
 export function getToken() {

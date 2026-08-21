@@ -1,8 +1,8 @@
 import { getCollectionDirect, insertSubtaskDirect } from '../db.js'
 
 const SITE_COORDINATES = {
-  'SITE-001': { lat: 19.0596, lng: 72.8295, locationName: 'Bandra East, Mumbai' },
-  'SITE-002': { lat: 19.2965, lng: 73.0631, locationName: 'Bhiwandi, Thane' },
+  'SITE-001': { lat: 19.0596, lng: 72.8295, locationName: 'Bandra West, Mumbai' },
+  'SITE-002': { lat: 19.0607, lng: 72.8530, locationName: 'Bandra East, Mumbai' },
   'SITE-003': { lat: 19.1176, lng: 72.9060, locationName: 'Powai, Mumbai' },
   'SITE-004': { lat: 18.5913, lng: 73.7389, locationName: 'Hinjewadi, Pune' },
 }

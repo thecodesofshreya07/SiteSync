@@ -17,7 +17,7 @@ export const sites = [
   {
     id: 'SITE-002',
     name: 'Warehouse Expansion',
-    location: 'Bhiwandi, Thane',
+    location: 'Bandra East, Mumbai',
     type: 'Industrial / Warehouse',
     status: 'At Risk',
     manager: 'Shreya Mishra',
