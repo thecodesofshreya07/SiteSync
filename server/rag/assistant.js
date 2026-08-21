@@ -117,7 +117,11 @@ You MUST respond strictly in valid JSON format with the following schema:
       answer = rawContent
     }
   } catch (err) {
-    console.error('Groq synthesis error in RAG Assistant:', err.message)
+    console.error('=== [GROQ ERROR IN RAG ASSISTANT] ===')
+    console.error('Error Message:', err.message)
+    console.error('Error Status:', err.status || err.statusCode)
+    console.error('Error Stack:', err.stack)
+    console.error('======================================')
 
     // Fallback if Groq API network/service fails completely
     const topDoc = retrievedChunks[0]
@@ -127,6 +131,13 @@ You MUST respond strictly in valid JSON format with the following schema:
     } else {
       answer = 'No matching operational records were found in the database for your query.'
       sources = []
+    }
+
+    return {
+      answer,
+      sources,
+      error: `[Groq LLM Error: ${err.message}]`,
+      retrievedCount: retrievedChunks.length,
     }
   }
 

@@ -40,10 +40,13 @@ async function handleChat(req, res) {
       conversationHistory,
     })
 
-    // Guaranteed { answer: string, sources: Array<{ type, id, label }> }
+    console.log(`[Assistant Query: "${query}"] ${result.error ? 'ERROR: ' + result.error : 'SUCCESS'}`)
+
+    // Guaranteed { answer: string, sources: Array<{ type, id, label }>, error }
     return res.json({
       answer: result.answer,
       sources: result.sources || [],
+      error: result.error || null,
     })
   } catch (err) {
     console.error('Assistant route error:', err.message)

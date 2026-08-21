@@ -119,6 +119,11 @@ export default function AssistantChat() {
       })
 
       const data = await res.json()
+      console.log('🤖 [ASSISTANT RESPONSE]:', data)
+      if (data.error) {
+        console.error('❌ [AI BACKEND ERROR]:', data.error)
+      }
+
       if (!res.ok) {
         throw new Error(data.message || data.error || `Server returned ${res.status}`)
       }
@@ -133,7 +138,7 @@ export default function AssistantChat() {
         },
       ])
     } catch (err) {
-      console.error('Backend assistant error:', err.message)
+      console.error('❌ [BACKEND ASSISTANT ERROR]:', err.message)
       setMessages((prev) => [
         ...prev,
         {
