@@ -2,19 +2,62 @@ import { groq } from '../groqClient.js'
 import { config } from '../config.js'
 import { retrieve } from './retrieve.js'
 
-const PRIMARY_MODEL = config.groqModel || 'llama-3.1-8b-instant'
-const FALLBACK_MODELS = [
-  PRIMARY_MODEL,
-  'llama-3.1-8b-instant',
-  'gemma2-9b-it',
-  'mixtral-8x7b-32768',
-  'llama-3.3-70b-versatile',
-]
+let cachedModelList = null
+let lastModelFetch = 0
+
+async function resolveAvailableModels() {
+  const now = Date.now()
+  if (cachedModelList && now - lastModelFetch < 300000) {
+    return cachedModelList
+  }
+
+  try {
+    const list = await groq.models.list()
+    const availableIds = (list.data || []).map((m) => m.id)
+    console.log('[Groq Account Available Models]:', availableIds)
+
+    const priorityPreference = [
+      config.groqModel,
+      'llama-3.1-8b-instant',
+      'llama-3.3-70b-versatile',
+      'llama3-8b-8192',
+      'llama3-70b-8192',
+      'gemma2-9b-it',
+      'mixtral-8x7b-32768',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+    ].filter(Boolean)
+
+    const resolved = []
+    for (const p of priorityPreference) {
+      if (availableIds.includes(p) && !resolved.includes(p)) {
+        resolved.push(p)
+      }
+    }
+
+    // Add any remaining text models
+    for (const id of availableIds) {
+      if (!id.includes('whisper') && !resolved.includes(id)) {
+        resolved.push(id)
+      }
+    }
+
+    if (resolved.length > 0) {
+      cachedModelList = resolved
+      lastModelFetch = now
+      return resolved
+    }
+  } catch (err) {
+    console.warn('[Groq Dynamic Model Discovery Notice]:', err.message)
+  }
+
+  return ['llama-3.1-8b-instant', 'gemma2-9b-it', 'mixtral-8x7b-32768']
+}
 
 /**
  * Execute RAG Assistant Query:
  * 1. Retrieve top-K relevant records with typo tolerance across all PostgreSQL tables.
- * 2. Synthesize a natural language grounded answer with Groq (llama-3.1-8b-instant / gemma2-9b-it).
+ * 2. Synthesize a natural language grounded answer with Groq.
  * 3. Enforce strict { answer, sources } JSON schema so raw arrays/JSON are never returned.
  */
 export async function runRagAssistant({ message, question, siteId, conversationHistory = [] }) {
@@ -71,11 +114,12 @@ You MUST respond strictly in valid JSON format with the following schema:
   let sources = []
 
   try {
+    const candidateModels = await resolveAvailableModels()
     let completion = null
     let lastModelErr = null
-    const uniqueModels = Array.from(new Set(FALLBACK_MODELS))
+    let usedModel = candidateModels[0]
 
-    for (const modelCandidate of uniqueModels) {
+    for (const modelCandidate of candidateModels) {
       try {
         completion = await groq.chat.completions.create({
           model: modelCandidate,
@@ -83,6 +127,7 @@ You MUST respond strictly in valid JSON format with the following schema:
           temperature: 0.2,
         })
         if (completion?.choices?.[0]?.message?.content) {
+          usedModel = modelCandidate
           break
         }
       } catch (mErr) {
@@ -94,6 +139,8 @@ You MUST respond strictly in valid JSON format with the following schema:
     if (!completion && lastModelErr) {
       throw lastModelErr
     }
+
+    console.log(`[Assistant] Successfully synthesized answer using Groq model: "${usedModel}"`)
 
     const rawContent = (completion.choices?.[0]?.message?.content || '').trim()
 
