@@ -5,8 +5,7 @@ import { cn, formatTime } from '../../lib/utils'
 import { useAlerts } from '../../hooks/useAlerts'
 import Badge from '../common/Badge'
 import SourceRecordModal from '../common/SourceRecordModal'
-
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../../lib/api'
 
 function getCachedLogs(siteId) {
   try {

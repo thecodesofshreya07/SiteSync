@@ -3,7 +3,7 @@
     {
       "id": "SITE-001",
       "name": "Riverside Tower",
-      "location": "Bandra East, Mumbai",
+      "location": "Bandra, Mumbai",
       "type": "Residential High-Rise",
       "status": "On Track",
       "manager": "Shreya Mishra",
@@ -12,12 +12,12 @@
       "progress": 58,
       "startDate": "2025-11-04",
       "targetDate": "2027-02-28",
-      "lastScan": "2026-08-21T03:35:00"
+      "lastScan": "2026-08-20T21:40:00.000Z"
     },
     {
       "id": "SITE-002",
       "name": "Site B — Warehouse Expansion",
-      "location": "Bandra East, Mumbai",
+      "location": "Bhiwandi, Thane",
       "type": "Industrial / Warehouse",
       "status": "At Risk",
       "manager": "Shreya Mishra",

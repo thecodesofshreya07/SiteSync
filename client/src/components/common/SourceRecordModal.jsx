@@ -6,8 +6,7 @@ import Badge from './Badge'
 import LoadingState from './LoadingState'
 import Button from './Button'
 import { formatDate, formatFullINR } from '../../lib/utils'
-
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../../lib/api'
 
 function Row({ label, value }) {
   if (value === undefined || value === null || value === '') return null

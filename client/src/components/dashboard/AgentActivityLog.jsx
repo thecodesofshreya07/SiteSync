@@ -3,8 +3,7 @@ import { Radio, AlertTriangle, RotateCw } from 'lucide-react'
 import { AGENT_EVENT_STYLES } from '../../lib/constants'
 import { cn } from '../../lib/utils'
 import { useAlerts } from '../../hooks/useAlerts'
-
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../../lib/api'
 
 function getCachedLogs(siteId) {
   try {

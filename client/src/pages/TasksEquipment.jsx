@@ -9,9 +9,9 @@ import LoadingState from '../components/common/LoadingState'
 import WeatherStrip from '../components/weather/WeatherStrip'
 import { useSite } from '../hooks/useSite'
 import { cn } from '../lib/utils'
+import { API_BASE } from '../lib/api'
 
 const TABS = ['Tasks', 'Gantt Timeline', 'Equipment']
-const API_BASE = 'http://localhost:4000/api'
 
 export default function TasksEquipment() {
   const { selectedSite } = useSite()

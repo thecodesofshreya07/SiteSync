@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useState } from 'react'
 
 export const AlertsContext = createContext(null)
 
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../lib/api'
 
 export function AlertsProvider({ children }) {
   const [alerts, setAlerts] = useState([])

@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { Building, ShieldCheck, Clock, TrendingUp, IndianRupee, ArrowUpDown, Award, CheckCircle2, Phone } from 'lucide-react'
 import { formatINR } from '../../lib/utils'
 import Badge from '../common/Badge'
-
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../../lib/api'
 
 export default function VendorIntelligence() {
   const [vendors, setVendors] = useState([])

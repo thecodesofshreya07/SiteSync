@@ -7,8 +7,8 @@ import { useAlerts } from '../../hooks/useAlerts'
 import { ROLES, SEVERITY_STYLES } from '../../lib/constants'
 import { cn, formatTime } from '../../lib/utils'
 import Badge from '../common/Badge'
+import { API_BASE } from '../../lib/api'
 
-const API_BASE = 'http://localhost:4000/api'
 const ALLOWED_SITE_PATHS = ['/', '/inventory', '/procurement', '/tasks-equipment']
 
 function DataSourceBadge() {

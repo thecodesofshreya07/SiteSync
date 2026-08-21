@@ -4,6 +4,7 @@ import ChatMessage from './ChatMessage'
 import SuggestedQuestions from './SuggestedQuestions'
 import SourceRecordModal from '../common/SourceRecordModal'
 import { cn } from '../../lib/utils'
+import { API_BASE } from '../../lib/api'
 
 const SUGGESTED_PROMPTS = [
   'What is the stock of Fe-550D TMT Steel Rebar at Riverside Tower?',
@@ -111,7 +112,7 @@ export default function AssistantChat() {
     setThinking(true)
 
     try {
-      const res = await fetch('http://localhost:4000/api/assistant/chat', {
+      const res = await fetch(`${API_BASE}/assistant/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: q }),

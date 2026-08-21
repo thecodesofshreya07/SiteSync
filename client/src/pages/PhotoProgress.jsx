@@ -6,8 +6,7 @@ import { formatDate, formatTime, cn } from '../lib/utils'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
 import Badge from '../components/common/Badge'
-
-const API_BASE = 'http://localhost:4000/api'
+import { API_BASE } from '../lib/api'
 
 export default function PhotoProgress() {
   const { selectedSite, sites } = useSite()

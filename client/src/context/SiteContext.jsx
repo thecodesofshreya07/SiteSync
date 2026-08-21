@@ -2,15 +2,14 @@ import { createContext, useEffect, useState } from 'react'
 import { sites as mockSites } from '../data/sites'
 import { useAuth } from '../hooks/useAuth'
 
-export const SiteContext = createContext(null)
+import { API_BASE } from '../lib/api'
 
-const API_BASE_4000 = 'http://127.0.0.1:4000/api'
-const API_BASE_5000 = 'http://127.0.0.1:5000/api'
+export const SiteContext = createContext(null)
 
 export function SiteProvider({ children }) {
   const { user } = useAuth()
   const [sites, setSites] = useState(mockSites)
-  const [selectedSiteId, setSelectedSiteId] = useState('SITE-002')
+  const [selectedSiteId, setSelectedSiteId] = useState('SITE-001')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -18,10 +17,7 @@ export function SiteProvider({ children }) {
 
     async function loadSites() {
       try {
-        let res = await fetch(`${API_BASE_4000}/sites`).catch(() => null)
-        if (!res || !res.ok) {
-          res = await fetch(`${API_BASE_5000}/sites`).catch(() => null)
-        }
+        const res = await fetch(`${API_BASE}/sites`).catch(() => null)
 
         if (res && res.ok) {
           const data = await res.json()

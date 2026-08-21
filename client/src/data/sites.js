@@ -2,7 +2,7 @@ export const sites = [
   {
     id: 'SITE-001',
     name: 'Riverside Tower',
-    location: 'Bandra East, Mumbai',
+    location: 'Bandra, Mumbai',
     type: 'Residential High-Rise',
     status: 'On Track',
     manager: 'Shreya Mishra',
@@ -17,7 +17,7 @@ export const sites = [
   {
     id: 'SITE-002',
     name: 'Warehouse Expansion',
-    location: 'Bandra East, Mumbai',
+    location: 'Bhiwandi, Thane',
     type: 'Industrial / Warehouse',
     status: 'At Risk',
     manager: 'Shreya Mishra',

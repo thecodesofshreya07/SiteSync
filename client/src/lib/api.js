@@ -1,8 +1,9 @@
-const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
-const API_BASE = rawApiUrl
+const envUrl = (import.meta.env.VITE_API_URL || '').split('||')[0].trim()
+const rawApiUrl = envUrl.replace(/\/+$/, '')
+export const API_BASE = rawApiUrl
   ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`)
   : 'http://localhost:4000/api'
-const API_FALLBACK = 'http://127.0.0.1:4000/api'
+export const API_FALLBACK = 'http://127.0.0.1:4000/api'
 
 export function getToken() {
   return localStorage.getItem('sitesync_token') || ''
