@@ -67,28 +67,60 @@ You MUST respond strictly in valid JSON format with the following schema:
     const completion = await groq.chat.completions.create({
       model: MODEL_NAME,
       messages,
-      temperature: 0.1,
+      temperature: 0.2,
       response_format: { type: 'json_object' },
     })
 
-    const rawContent = completion.choices?.[0]?.message?.content || '{}'
-    const parsed = JSON.parse(rawContent)
+    const rawContent = (completion.choices?.[0]?.message?.content || '').trim()
 
-    if (parsed.answer && typeof parsed.answer === 'string') {
-      answer = parsed.answer
-    } else if (typeof parsed === 'string') {
-      answer = parsed
-    } else {
-      answer = JSON.stringify(parsed)
+    let parsed = null
+
+    // 1. Try direct JSON parse
+    try {
+      parsed = JSON.parse(rawContent)
+    } catch (_) {}
+
+    // 2. Try stripping markdown code fences
+    if (!parsed) {
+      const match = rawContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+      if (match) {
+        try {
+          parsed = JSON.parse(match[1].trim())
+        } catch (_) {}
+      }
     }
 
-    if (Array.isArray(parsed.sources)) {
-      sources = parsed.sources
+    // 3. Try finding substring bounded by { and }
+    if (!parsed) {
+      const firstBrace = rawContent.indexOf('{')
+      const lastBrace = rawContent.lastIndexOf('}')
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        try {
+          parsed = JSON.parse(rawContent.slice(firstBrace, lastBrace + 1))
+        } catch (_) {}
+      }
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      if (typeof parsed.answer === 'string') {
+        answer = parsed.answer
+      } else if (typeof parsed.text === 'string') {
+        answer = parsed.text
+      } else {
+        answer = JSON.stringify(parsed)
+      }
+
+      if (Array.isArray(parsed.sources)) {
+        sources = parsed.sources
+      }
+    } else if (rawContent) {
+      // If LLM returned direct natural language text without JSON envelope, use it directly!
+      answer = rawContent
     }
   } catch (err) {
     console.error('Groq synthesis error in RAG Assistant:', err.message)
 
-    // Robust fallback synthesis if Groq fails or rate limits
+    // Fallback if Groq API network/service fails completely
     const topDoc = retrievedChunks[0]
     if (topDoc) {
       answer = `Based on current operational records: ${topDoc.text}`
