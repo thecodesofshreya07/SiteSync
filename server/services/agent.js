@@ -2,7 +2,7 @@ import groq from '../groqClient.js'
 import { config } from '../config.js'
 import { AGENT_TOOLS, executeTool } from './tools.js'
 
-const MODEL_NAME = 'openai/gpt-oss-120b'
+const MODEL_NAME = config.groqModel || 'llama-3.3-70b-versatile'
 const MAX_AGENT_STEPS = 6
 
 const SYSTEM_PROMPT = `You are SiteSync AI Operations Agent, an intelligent construction management and operations assistant.
@@ -75,7 +75,7 @@ function extractSourceCitations(text, toolOutputs, accumulatedSources) {
 }
 
 /**
- * Main SiteSync Agent execution loop using Groq openai/gpt-oss-120b
+ * Main SiteSync Agent execution loop using Groq llama-3.3-70b-versatile
  */
 export async function runAgent({ message, siteId, conversationHistory = [] }) {
   const apiKey = process.env.GROQ_API_KEY || config.groqApiKey

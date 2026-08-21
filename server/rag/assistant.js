@@ -2,12 +2,12 @@ import { groq } from '../groqClient.js'
 import { config } from '../config.js'
 import { retrieve } from './retrieve.js'
 
-const MODEL_NAME = config.groqModel || 'openai/gpt-oss-120b'
+const MODEL_NAME = config.groqModel || 'llama-3.3-70b-versatile'
 
 /**
  * Execute RAG Assistant Query:
  * 1. Retrieve top-K relevant records with typo tolerance across all PostgreSQL tables.
- * 2. Synthesize a natural language grounded answer with Groq (gpt-oss-120b).
+ * 2. Synthesize a natural language grounded answer with Groq (llama-3.3-70b-versatile).
  * 3. Enforce strict { answer, sources } JSON schema so raw arrays/JSON are never returned.
  */
 export async function runRagAssistant({ message, question, siteId, conversationHistory = [] }) {

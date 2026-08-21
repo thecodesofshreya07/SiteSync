@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { getCollectionDirect, setCollection, getPool } from '../db.js'
 import { groq } from '../groqClient.js'
+import { config } from '../config.js'
 
 const router = Router()
 
@@ -80,7 +81,7 @@ Rules:
 3. Start directly with "Next 3 Days: ..."`
 
     const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-120b',
+      model: config.groqModel || 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
       max_tokens: 250,
