@@ -430,19 +430,45 @@ router.patch('/:id', async (req, res) => {
   }
 })
 
-// DELETE /api/alerts - Clear alerts table for testing
-router.delete('/', async (req, res) => {
+// POST /api/alerts/test-email - Test live Brevo email dispatch
+router.post('/test-email', async (req, res) => {
   try {
-    const pool = getPool()
-    if (pool) {
-      await pool.query('DELETE FROM alerts')
+    const { to = 'mirlubaib51005@gmail.com', type = 'pm' } = req.body || {}
+    const { sendPMAlertEmail, sendPORejectionEmail } = await import('../services/emailService.js')
+
+    if (type === 'finance') {
+      const result = await sendPORejectionEmail({
+        financeEmail: to,
+        po: { id: 'PO-TEST-001', item: 'Structural Steel Fe-550D', quantity: 200, unit: 'MT', amount: 850000 },
+        site: { id: 'SITE-001', name: 'Riverside Tower', budgetPlanned: 62000000, budgetActual: 61800000 },
+        reasoningSummary: 'Automated AI test budget overrun dispatch from SiteSync live production cloud.',
+      })
+      return res.json({ result, target: to, type: 'Finance Manager Budget Alert' })
     }
-    setCollection('alerts', [])
-    console.log('[ALERT] Cleared all alerts from PostgreSQL')
-    return res.json({ status: 'ok', message: 'All alerts cleared from PostgreSQL' })
+
+    const result = await sendPMAlertEmail({
+      pmEmail: to,
+      alert: {
+        id: 'ALT-TEST',
+        siteId: 'SITE-001',
+        title: 'CRITICAL: Live System Test Alert',
+        severity: 'critical',
+        timestamp: new Date().toISOString(),
+        reasonPoints: [
+          'Live Brevo transactional mail relay verified.',
+          'PostgreSQL live telemetry stream connected.',
+          'Autonomous agent active.',
+        ],
+      },
+      site: { id: 'SITE-001', name: 'Riverside Tower' },
+      reasoningSummary: 'Brevo production SMTP dispatch test for SiteSync autonomous operations.',
+      recommendation: 'Verify inbox delivery and confirm message headers.',
+    })
+
+    return res.json({ result, target: to, type: 'Project Manager Shortage Alert' })
   } catch (err) {
-    console.error('Error clearing alerts:', err)
-    return res.status(500).json({ error: 'Failed to clear alerts from database' })
+    console.error('[EMAIL TEST] Error:', err)
+    return res.status(500).json({ error: err.message })
   }
 })
 

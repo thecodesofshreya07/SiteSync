@@ -14,5 +14,8 @@ export const config = {
   groqApiKey: process.env.GROQ_API_KEY || '',
   dbPath: path.join(__dirname, 'data/db.json'),
   databaseUrl: process.env.DATABASE_URL || '',
+  brevoApiKey: process.env.BREVO_API_KEY || '',
+  brevoSenderEmail: process.env.BREVO_SENDER_EMAIL || 'devsupport007@gmail.com',
+  brevoSenderName: process.env.BREVO_SENDER_NAME || 'SiteSync Construction Ops',
 }
 

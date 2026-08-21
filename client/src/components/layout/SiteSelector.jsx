@@ -75,15 +75,10 @@ export default function SiteSelector() {
                 )}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-navy-900">{site.name}</p>
-                  <p className="truncate text-2xs text-navy-500">{site.location}</p>
+                  <p className="truncate text-sm font-semibold text-navy-900 font-public">{site.name}</p>
+                  <p className="truncate text-xs text-navy-500 font-ibm mt-0.5">{site.location}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
-                  <span className={cn('text-2xs font-semibold', STATUS_TONE[site.status] || 'text-navy-500')}>
-                    {site.status}
-                  </span>
-                  {isSelected && <Check size={13} className="text-teal-600 shrink-0" />}
-                </div>
+                {isSelected && <Check size={16} className="text-teal-600 shrink-0 mt-1" />}
               </button>
             )
           })}
