@@ -7,6 +7,7 @@ import { useAlerts } from '../../hooks/useAlerts'
 import { ROLES, SEVERITY_STYLES } from '../../lib/constants'
 import { cn, formatTime } from '../../lib/utils'
 import Badge from '../common/Badge'
+import LanguageToggle from '../common/LanguageToggle'
 
 const ALLOWED_SITE_PATHS = [
   '/',
@@ -132,6 +133,7 @@ export default function Topbar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <LanguageToggle />
         <UserIdentityBadge />
         {canViewAIAlerts && <NotificationBell />}
       </div>

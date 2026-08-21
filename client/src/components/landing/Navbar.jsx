@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Menu, X } from 'lucide-react'
+import LanguageToggle from '../common/LanguageToggle'
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -48,6 +49,7 @@ export default function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 font-public">
+            <LanguageToggle variant="dark" />
             <Link
               to="/login"
               className="rounded-xl border border-white/20 bg-slate-800/40 px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-white/10 transition-all backdrop-blur-xs"
@@ -65,6 +67,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Toggle Button */}
           <div className="flex md:hidden items-center gap-2">
+            <LanguageToggle variant="dark" />
             <Link
               to="/login"
               className="sm:hidden rounded-lg border border-white/20 bg-slate-800/40 px-3 py-1.5 text-xs font-semibold text-white"

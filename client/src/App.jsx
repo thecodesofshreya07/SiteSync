@@ -16,14 +16,16 @@ import { AuthProvider } from './context/AuthContext'
 import { SiteProvider } from './context/SiteContext'
 import { RoleProvider } from './context/RoleContext'
 import { AlertsProvider } from './context/AlertsContext'
+import { LanguageProvider } from './context/LanguageContext'
 import { ROLES } from './lib/constants'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SiteProvider>
-        <RoleProvider>
-          <AlertsProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <SiteProvider>
+          <RoleProvider>
+            <AlertsProvider>
             <BrowserRouter>
               <Routes>
                 {/* Public Marketing & Auth Routes */}
@@ -73,5 +75,6 @@ export default function App() {
         </RoleProvider>
       </SiteProvider>
     </AuthProvider>
+    </LanguageProvider>
   )
 }
