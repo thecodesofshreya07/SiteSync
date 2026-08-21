@@ -2,7 +2,7 @@ import groq from '../groqClient.js'
 import { config } from '../config.js'
 import { AGENT_TOOLS, executeTool } from './tools.js'
 
-const MODEL_NAME = config.groqModel || 'llama-3.3-70b-versatile'
+const MODEL_NAME = config.groqModel || 'llama-3.1-8b-instant'
 const MAX_AGENT_STEPS = 6
 
 const SYSTEM_PROMPT = `You are SiteSync AI Operations Agent, an intelligent construction management and operations assistant.

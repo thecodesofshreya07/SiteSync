@@ -10,7 +10,7 @@ router.get('/status', (req, res) => {
   res.json({
     status: 'ok',
     provider: 'Groq',
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
     configured: hasKey,
   })
 })

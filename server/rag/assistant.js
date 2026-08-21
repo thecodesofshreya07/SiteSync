@@ -2,12 +2,19 @@ import { groq } from '../groqClient.js'
 import { config } from '../config.js'
 import { retrieve } from './retrieve.js'
 
-const MODEL_NAME = config.groqModel || 'llama-3.3-70b-versatile'
+const PRIMARY_MODEL = config.groqModel || 'llama-3.1-8b-instant'
+const FALLBACK_MODELS = [
+  PRIMARY_MODEL,
+  'llama-3.1-8b-instant',
+  'gemma2-9b-it',
+  'mixtral-8x7b-32768',
+  'llama-3.3-70b-versatile',
+]
 
 /**
  * Execute RAG Assistant Query:
  * 1. Retrieve top-K relevant records with typo tolerance across all PostgreSQL tables.
- * 2. Synthesize a natural language grounded answer with Groq (llama-3.3-70b-versatile).
+ * 2. Synthesize a natural language grounded answer with Groq (llama-3.1-8b-instant / gemma2-9b-it).
  * 3. Enforce strict { answer, sources } JSON schema so raw arrays/JSON are never returned.
  */
 export async function runRagAssistant({ message, question, siteId, conversationHistory = [] }) {
@@ -64,11 +71,29 @@ You MUST respond strictly in valid JSON format with the following schema:
   let sources = []
 
   try {
-    const completion = await groq.chat.completions.create({
-      model: MODEL_NAME,
-      messages,
-      temperature: 0.2,
-    })
+    let completion = null
+    let lastModelErr = null
+    const uniqueModels = Array.from(new Set(FALLBACK_MODELS))
+
+    for (const modelCandidate of uniqueModels) {
+      try {
+        completion = await groq.chat.completions.create({
+          model: modelCandidate,
+          messages,
+          temperature: 0.2,
+        })
+        if (completion?.choices?.[0]?.message?.content) {
+          break
+        }
+      } catch (mErr) {
+        lastModelErr = mErr
+        console.warn(`[Groq Model Fallback] Model ${modelCandidate} failed (${mErr.message}), trying next...`)
+      }
+    }
+
+    if (!completion && lastModelErr) {
+      throw lastModelErr
+    }
 
     const rawContent = (completion.choices?.[0]?.message?.content || '').trim()
 

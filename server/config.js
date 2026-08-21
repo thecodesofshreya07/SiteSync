@@ -12,7 +12,7 @@ export const config = {
   port: process.env.PORT || 4000,
   geminiApiKey: process.env.GEMINI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
-  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  groqModel: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
   dbPath: path.join(__dirname, 'data/db.json'),
   databaseUrl: process.env.DATABASE_URL || '',
   brevoApiKey: process.env.BREVO_API_KEY || '',
