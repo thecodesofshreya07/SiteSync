@@ -11,8 +11,7 @@ export default function InventoryFilters({ search, onSearchChange, status, onSta
         <input
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search items..."
-          className="w-full rounded-lg border border-surface-border bg-white py-1.5 pl-8 pr-3 text-sm text-navy-800 placeholder:text-navy-400 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          className="w-full rounded-lg border border-surface-border bg-white py-1.5 pl-8 pr-3 text-sm text-navy-800 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
         />
       </div>
       <div className="flex flex-wrap items-center gap-1 rounded-lg border border-surface-border bg-white p-1">

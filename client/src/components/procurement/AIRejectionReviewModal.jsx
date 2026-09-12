@@ -76,7 +76,6 @@ export default function AIRejectionReviewModal({ open, onClose, order, onAction 
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. Budget variance approved under contingency fund line item #4."
             rows={2}
             className="w-full rounded-lg border border-slate-300 p-2.5 text-xs focus:border-teal-500 focus:outline-none font-ibm"
           />

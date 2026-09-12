@@ -84,7 +84,6 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
             required
             value={item}
             onChange={(e) => setItem(e.target.value)}
-            placeholder="e.g. Portland Cement Type I"
             className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
@@ -115,7 +114,6 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
               required
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="e.g. 100"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
@@ -145,7 +143,6 @@ export default function CreatePOModal({ open, onClose, siteId, siteName, onCreat
               required
               value={customUnit}
               onChange={(e) => setCustomUnit(e.target.value)}
-              placeholder="e.g. drums, rolls, pallets"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>

@@ -37,7 +37,7 @@ export default function AlertList({ siteId }) {
             onClick={() => setTab('active')}
             className={cn(
               'rounded-md px-3 py-1 transition-colors',
-              tab === 'active' ? 'bg-white text-orange-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              tab === 'active' ? 'bg-white text-[#146b3a] shadow-sm' : 'text-slate-500 hover:text-slate-800'
             )}
           >
             Active ({activeAlerts.length})

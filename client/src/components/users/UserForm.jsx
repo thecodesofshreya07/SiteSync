@@ -92,7 +92,6 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
             setName(e.target.value)
             if (errors.name) setErrors((prev) => ({ ...prev, name: '' }))
           }}
-          placeholder="e.g. Rahul Sharma"
           className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
         />
         {errors.name && <p className="mt-1 text-xs font-semibold text-red-600">{errors.name}</p>}
@@ -109,7 +108,6 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
             setEmail(e.target.value)
             if (errors.email) setErrors((prev) => ({ ...prev, email: '' }))
           }}
-          placeholder="rahul@example.com"
           className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
         />
         {errors.email && <p className="mt-1 text-xs font-semibold text-red-600">{errors.email}</p>}
@@ -126,7 +124,6 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
             setPhone(e.target.value)
             if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }))
           }}
-          placeholder="+91 98765 43210"
           className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
         />
         {errors.phone && <p className="mt-1 text-xs font-semibold text-red-600">{errors.phone}</p>}
@@ -161,7 +158,6 @@ export default function UserForm({ onSubmit, onClose, existingUsers = [] }) {
                 type="text"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                placeholder="e.g. PROJECT-001"
                 className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
               />
             </>

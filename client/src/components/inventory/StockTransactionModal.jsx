@@ -67,7 +67,6 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
             min="0"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            placeholder={`e.g. 50`}
             className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
           />
           <p className="mt-1 text-2xs text-navy-400">Current stock: {item.quantity} {item.unit}</p>
@@ -79,7 +78,6 @@ export default function StockTransactionModal({ open, onClose, item, onSubmit })
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            placeholder="e.g. Received from BuildPro Materials"
             className="w-full resize-none rounded-lg border border-surface-border px-3 py-2 text-sm focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
           />
         </div>

@@ -319,7 +319,6 @@ export default function PhotoProgress() {
             </div>
             <input
               type="url"
-              placeholder="https://images.unsplash.com/..."
               value={formFileUrl.startsWith('data:') ? '' : formFileUrl}
               onChange={(e) => {
                 setFileName('')
@@ -367,11 +366,10 @@ export default function PhotoProgress() {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 font-public mb-1">
-              Location / Tag (e.g. Tower B - 5th Floor)
+              Location / Tag
             </label>
             <input
               type="text"
-              placeholder="e.g. South Core Shear Wall · Level 3"
               value={formLocationTag}
               onChange={(e) => setFormLocationTag(e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-800 font-ibm focus:border-teal-500 focus:outline-none"
@@ -384,7 +382,6 @@ export default function PhotoProgress() {
             </label>
             <textarea
               rows={2}
-              placeholder="Describe work completed, inspection sign-off, or material placement..."
               value={formCaption}
               onChange={(e) => setFormCaption(e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-800 font-ibm focus:border-teal-500 focus:outline-none"

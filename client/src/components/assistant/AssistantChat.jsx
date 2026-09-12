@@ -181,9 +181,8 @@ export default function AssistantChat() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={listening ? 'Listening to your voice...' : 'Ask about sites, budgets, inventory, procurement...'}
             className={cn(
-              'flex-1 rounded-lg border border-surface-border bg-white px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm transition-all',
+              'flex-1 rounded-lg border border-surface-border bg-white px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm transition-all',
               listening && 'border-red-400 ring-2 ring-red-400/30 bg-red-50/30'
             )}
           />

@@ -211,7 +211,6 @@ export default function PMValidationModal({ open, po, onClose, onApprove, onReje
                 rows={2}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="State why this material request is disapproved..."
                 className="w-full rounded-lg border border-red-300 p-2 text-xs text-slate-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
             </div>

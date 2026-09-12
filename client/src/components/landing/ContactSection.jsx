@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Send, CheckCircle2, Building, ShieldCheck } from 'lucide-react'
+import { Mail, MapPin, CheckCircle2, ShieldCheck } from 'lucide-react'
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false)
@@ -14,72 +14,72 @@ export default function ContactSection() {
   }
 
   return (
-    <section id="contact" className="py-24 bg-slate-900 text-slate-100 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section id="contact" className="py-20 sm:py-28 bg-gradient-to-b from-[#f4f9f6] via-[#ecf6f1]/60 to-[#e6f2eb]/70 text-slate-900 relative overflow-hidden">
+      {/* Ambient soft green aura for a seamless fluid transition */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-80 bg-emerald-200/30 rounded-full blur-3xl pointer-events-none -z-0" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Left Column Info */}
-          <div className="lg:col-span-5 space-y-6">
-            <span className="inline-block text-xs font-bold uppercase tracking-wider text-teal-400 font-ibm">
-              Enterprise Deployment
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white font-public tracking-tight">
+          <div className="lg:col-span-6 space-y-5">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 font-public tracking-tight leading-tight">
               Ready to Upgrade Your Site Operations?
             </h2>
-            <p className="text-sm text-slate-400 font-ibm leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-700 font-medium font-ibm leading-relaxed">
               Connect with our construction solutions engineers to setup live multi-site telemetry, configure Brevo alert relays, or migrate your project inventory data.
             </p>
 
-            <div className="space-y-4 pt-4 text-xs font-ibm text-slate-300">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
-                  <Mail size={16} />
+            <div className="space-y-3.5 pt-2 text-xs sm:text-sm font-ibm text-slate-800">
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200 shrink-0">
+                  <Mail size={18} />
                 </div>
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Direct Inquiries</p>
-                  <p className="font-semibold text-white">devsupport007@gmail.com</p>
+                  <p className="text-slate-600 text-[10px] uppercase font-bold tracking-wider">Direct Inquiries</p>
+                  <p className="font-bold text-slate-900">devsupport007@gmail.com</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
-                  <MapPin size={16} />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 text-[#146b3a] flex items-center justify-center border border-emerald-200 shrink-0">
+                  <MapPin size={18} />
                 </div>
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Engineering HQ</p>
-                  <p className="font-semibold text-white">Bandra East, Mumbai, Maharashtra 400051</p>
+                  <p className="text-slate-600 text-[10px] uppercase font-bold tracking-wider">Engineering HQ</p>
+                  <p className="font-bold text-slate-900">Bandra East, Mumbai, Maharashtra 400051</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                  <ShieldCheck size={16} />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                <div className="h-10 w-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200 shrink-0">
+                  <ShieldCheck size={18} />
                 </div>
                 <div>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold">Data Security</p>
-                  <p className="font-semibold text-white">PostgreSQL Multi-Tenant Isolation & Role Scoping</p>
+                  <p className="text-slate-600 text-[10px] uppercase font-bold tracking-wider">Data Security</p>
+                  <p className="font-bold text-slate-900">PostgreSQL Multi-Tenant Isolation & Role Scoping</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column Form */}
-          <div className="lg:col-span-7">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-8 shadow-2xl space-y-6">
+          {/* Right Column Form - Compact breadth */}
+          <div className="lg:col-span-6 flex justify-center lg:justify-end">
+            <div className="w-full max-w-lg rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-lg space-y-5">
               {submitted ? (
-                <div className="py-12 text-center space-y-3">
-                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                    <CheckCircle2 size={30} strokeWidth={2.5} />
+                <div className="py-10 text-center space-y-3">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <CheckCircle2 size={26} strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xl font-bold text-white font-public">Inquiry Dispatched Successfully!</h3>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto font-ibm">
+                  <h3 className="text-lg font-bold text-slate-900 font-public">Inquiry Dispatched Successfully!</h3>
+                  <p className="text-xs text-slate-700 font-medium max-w-sm mx-auto font-ibm">
                     Our technical deployment team will reach out to <strong>{email}</strong> within 24 business hours.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4 font-ibm">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-public">
+                      <label className="block text-xs font-bold text-slate-800 mb-1.5 font-public">
                         Your Name
                       </label>
                       <input
@@ -87,12 +87,11 @@ export default function ContactSection() {
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Arvind Mishra"
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 px-3.5 text-xs text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 focus:border-[#146b3a] focus:bg-white focus:outline-none transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-public">
+                      <label className="block text-xs font-bold text-slate-800 mb-1.5 font-public">
                         Work Email
                       </label>
                       <input
@@ -100,20 +99,19 @@ export default function ContactSection() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="arvind@infracon.com"
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 px-3.5 text-xs text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 focus:border-[#146b3a] focus:bg-white focus:outline-none transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-public">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 font-public">
                       Number of Construction Sites
                     </label>
                     <select
                       value={projectSize}
                       onChange={(e) => setProjectSize(e.target.value)}
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 px-3.5 text-xs text-slate-100 focus:border-teal-500 focus:outline-none cursor-pointer"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 focus:border-[#146b3a] focus:bg-white focus:outline-none cursor-pointer transition-all"
                     >
                       <option value="1-3 Sites">1 – 3 Active Sites (Standard Package)</option>
                       <option value="4-10 Sites">4 – 10 Active Sites (Mid-Tier Enterprise)</option>
@@ -122,28 +120,36 @@ export default function ContactSection() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-public">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 font-public">
                       Project Notes / Specific Operational Needs
                     </label>
                     <textarea
                       rows={3}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Tell us about your current procurement challenges or ERP integration requirements..."
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900 py-2.5 px-3.5 text-xs text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3.5 text-xs sm:text-sm text-slate-900 focus:border-[#146b3a] focus:bg-white focus:outline-none transition-all"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-3 text-xs font-bold text-slate-950 hover:from-teal-400 hover:to-emerald-400 active:scale-[0.99] transition-all font-public cursor-pointer shadow-lg shadow-teal-500/20"
+                    className="w-full flex items-center justify-center rounded-full bg-[#146b3a] hover:bg-[#188045] py-3 text-xs sm:text-sm font-bold text-white transition-all font-public cursor-pointer shadow-md shadow-[#146b3a]/20 active:scale-95"
                   >
-                    <Send size={15} />
                     <span>Submit Deployment Request</span>
                   </button>
                 </form>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Bottom Footer Credits */}
+        <div className="mt-16 pt-8 border-t border-slate-300/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-700 font-semibold font-ibm gap-4">
+          <p>© {new Date().getFullYear()} SiteSync. Precision Built Multi-Site Construction Intelligence.</p>
+          <div className="flex items-center gap-6">
+            <a href="#home" className="hover:text-[#146b3a] transition-colors">Home</a>
+            <a href="#about" className="hover:text-[#146b3a] transition-colors">About</a>
+            <a href="#contact" className="hover:text-[#146b3a] transition-colors">Contact</a>
           </div>
         </div>
       </div>

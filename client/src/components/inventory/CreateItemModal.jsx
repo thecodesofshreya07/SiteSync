@@ -68,7 +68,6 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
             required
             value={item}
             onChange={(e) => setItem(e.target.value)}
-            placeholder="e.g. UltraTech Cement 53 Grade"
             className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
@@ -98,7 +97,6 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
               step="any"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="0"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
@@ -114,7 +112,6 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
               required
               value={customUnit}
               onChange={(e) => setCustomUnit(e.target.value)}
-              placeholder="e.g. drums, rolls, pallets"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
@@ -131,7 +128,6 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
               step="any"
               value={reorderThreshold}
               onChange={(e) => setReorderThreshold(e.target.value)}
-              placeholder="e.g. 100"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>
@@ -145,7 +141,6 @@ export default function CreateItemModal({ open, onClose, siteId, siteName, onCre
               step="any"
               value={consumptionPerDay}
               onChange={(e) => setConsumptionPerDay(e.target.value)}
-              placeholder="e.g. 15"
               className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
           </div>

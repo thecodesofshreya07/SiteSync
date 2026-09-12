@@ -21,8 +21,7 @@ export default function UserFilters({
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name, email, phone..."
-          className="w-full rounded-lg border border-surface-border bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
+          className="w-full rounded-lg border border-surface-border bg-white py-2 pl-9 pr-3 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 font-ibm"
         />
       </div>
 
