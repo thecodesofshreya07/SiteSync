@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Menu, Database, Cpu, UserCheck } from 'lucide-react'
+import { Bell, Menu } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import SiteSelector from './SiteSelector'
 import { useAuth } from '../../hooks/useAuth'
 import { useAlerts } from '../../hooks/useAlerts'
 import { ROLES, SEVERITY_STYLES } from '../../lib/constants'
-import { cn, formatTime } from '../../lib/utils'
+import { formatTime } from '../../lib/utils'
 import Badge from '../common/Badge'
 import LanguageToggle from '../common/LanguageToggle'
 
@@ -20,22 +20,6 @@ const ALLOWED_SITE_PATHS = [
   '/settings',
 ]
 
-function UserIdentityBadge() {
-  const { user } = useAuth()
-  return (
-    <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-surface-border bg-slate-50/80 hover:bg-slate-100/80 p-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-navy-800 transition-colors shadow-2xs font-public">
-      <div className="flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-lg sm:rounded-full bg-teal-600 text-2xs font-bold text-white uppercase shadow-xs">
-        {(user?.name || user?.email || 'U').slice(0, 2)}
-      </div>
-      <span className="hidden md:inline truncate max-w-[90px] lg:max-w-[150px] font-semibold text-slate-800 font-public">
-        {user?.name || user?.email?.split('@')[0] || 'User'}
-      </span>
-      <Badge tone="teal" className="hidden lg:inline-flex text-2xs py-0.5 px-2 uppercase font-bold tracking-wide font-ibm">
-        {user?.role || 'Portal'}
-      </Badge>
-    </div>
-  )
-}
 
 function NotificationBell() {
   const { alerts } = useAlerts()
@@ -134,7 +118,6 @@ export default function Topbar({ onMenuClick }) {
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <LanguageToggle />
-        <UserIdentityBadge />
         {canViewAIAlerts && <NotificationBell />}
       </div>
     </header>
