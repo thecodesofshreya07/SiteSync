@@ -17,7 +17,7 @@ export default function LanguageToggle({ variant = 'light', className = '' }) {
       onClick={toggleLanguage}
       title={isHindi ? 'Switch to English' : 'हिन्दी में अनुवाद करें (Switch to Hindi)'}
       aria-label="Toggle language between English and Hindi"
-      className={`relative inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer shadow-2xs select-none ${
+      className={`relative inline-flex items-center gap-1 sm:gap-1.5 rounded-lg sm:rounded-xl px-1.5 py-1 sm:px-2.5 sm:py-1.5 text-[11px] sm:text-xs font-semibold transition-all duration-200 cursor-pointer shadow-2xs select-none ${
         isDark
           ? 'border border-white/20 bg-slate-900/60 text-white hover:bg-slate-800/80 backdrop-blur-md'
           : isHindi
@@ -25,16 +25,16 @@ export default function LanguageToggle({ variant = 'light', className = '' }) {
           : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900'
       } ${className}`}
     >
-      <Languages size={15} className={isHindi ? 'text-[#146b3a]' : 'text-slate-500'} />
+      <Languages className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isHindi ? 'text-[#146b3a]' : 'text-slate-500'}`} />
 
       {/* Sliding Pill Indicator */}
       <div
-        className={`flex items-center gap-1 rounded-lg p-0.5 text-2xs font-bold transition-all ${
+        className={`flex items-center gap-0.5 sm:gap-1 rounded-md sm:rounded-lg p-0.5 text-[10px] sm:text-2xs font-bold transition-all ${
           isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100/90 text-slate-600'
         }`}
       >
         <span
-          className={`rounded-md px-1.5 py-0.5 transition-all ${
+          className={`rounded px-1 py-0.5 sm:px-1.5 sm:py-0.5 transition-all ${
             !isHindi
               ? isDark
                 ? 'bg-white/20 text-white shadow-xs'
@@ -45,7 +45,7 @@ export default function LanguageToggle({ variant = 'light', className = '' }) {
           EN
         </span>
         <span
-          className={`rounded-md px-1.5 py-0.5 transition-all ${
+          className={`rounded px-1 py-0.5 sm:px-1.5 sm:py-0.5 transition-all ${
             isHindi
               ? 'bg-[#146b3a] text-white shadow-xs font-bold'
               : 'opacity-60 text-slate-500 font-medium'

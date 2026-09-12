@@ -40,7 +40,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     <>
       <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white p-1 border border-white/10 shadow-sm shrink-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white p-1 border border-white/10 shadow-sm shrink-0">
             <img
               src="/sitesync_logo.png"
               alt="SiteSync Logo"
@@ -48,10 +48,9 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
             />
           </div>
           <div>
-            <p className="text-base font-bold leading-none text-white tracking-tight font-public">
+            <p className="text-2xl font-black leading-none text-white tracking-tight font-public">
               <span className="text-emerald-400">Site</span>Sync
             </p>
-            <p className="mt-1.5 text-2xs font-semibold leading-none text-slate-400 font-ibm uppercase tracking-wider">Enterprise OS</p>
           </div>
         </div>
         {/* Mobile close button */}
