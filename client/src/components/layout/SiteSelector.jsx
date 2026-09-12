@@ -30,8 +30,8 @@ export default function SiteSelector() {
 
   if (isContractor) {
     return (
-      <div className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-slate-50 px-2.5 sm:px-3 py-1.5 text-left max-w-[200px] sm:max-w-xs shadow-xs">
-        <MapPin size={15} className="shrink-0 text-teal-600" />
+      <div className="flex items-center gap-1.5 rounded-xl border border-surface-border bg-slate-50 px-2 sm:px-3 py-1.5 text-left max-w-[130px] sm:max-w-[200px] md:max-w-xs shadow-xs">
+        <MapPin size={14} className="shrink-0 text-teal-600" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs sm:text-sm font-semibold leading-tight text-navy-900">
             {selectedSite?.name || 'Assigned Site'}
@@ -46,15 +46,15 @@ export default function SiteSelector() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-white px-2.5 sm:px-3 py-1.5 text-left hover:border-navy-600/30 max-w-[200px] sm:max-w-xs cursor-pointer shadow-xs"
+        className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-surface-border bg-white px-2 sm:px-3 py-1.5 text-left hover:border-navy-600/30 max-w-[125px] xs:max-w-[160px] sm:max-w-[200px] md:max-w-xs cursor-pointer shadow-xs transition-colors"
       >
-        <MapPin size={15} className="shrink-0 text-teal-600" />
+        <MapPin size={14} className="shrink-0 text-teal-600" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs sm:text-sm font-semibold leading-tight text-navy-900">
             {selectedSite?.name || 'Select Site'}
           </p>
         </div>
-        <ChevronDown size={14} className={cn('shrink-0 text-navy-400 transition-transform', open && 'rotate-180')} />
+        <ChevronDown size={13} className={cn('shrink-0 text-navy-400 transition-transform', open && 'rotate-180')} />
       </button>
 
       {open && (

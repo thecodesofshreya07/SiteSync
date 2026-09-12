@@ -23,14 +23,14 @@ const ALLOWED_SITE_PATHS = [
 function UserIdentityBadge() {
   const { user } = useAuth()
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-surface-border bg-slate-50/80 hover:bg-slate-100/80 px-3 py-1.5 text-xs sm:text-sm font-medium text-navy-800 transition-colors shadow-2xs font-public">
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-600 text-2xs font-bold text-white uppercase">
+    <div className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-surface-border bg-slate-50/80 hover:bg-slate-100/80 p-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-navy-800 transition-colors shadow-2xs font-public">
+      <div className="flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-lg sm:rounded-full bg-teal-600 text-2xs font-bold text-white uppercase shadow-xs">
         {(user?.name || user?.email || 'U').slice(0, 2)}
       </div>
-      <span className="truncate max-w-[110px] sm:max-w-[160px] font-semibold text-slate-800 font-public">
+      <span className="hidden md:inline truncate max-w-[90px] lg:max-w-[150px] font-semibold text-slate-800 font-public">
         {user?.name || user?.email?.split('@')[0] || 'User'}
       </span>
-      <Badge tone="teal" className="text-2xs py-0.5 px-2 uppercase font-bold tracking-wide font-ibm">
+      <Badge tone="teal" className="hidden lg:inline-flex text-2xs py-0.5 px-2 uppercase font-bold tracking-wide font-ibm">
         {user?.role || 'Portal'}
       </Badge>
     </div>
@@ -56,10 +56,10 @@ function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-surface-border bg-white text-navy-700 hover:bg-surface-bg cursor-pointer shadow-2xs transition-all"
+        className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-surface-border bg-white text-navy-700 hover:bg-surface-bg cursor-pointer shadow-2xs transition-all"
         aria-label="Notifications"
       >
-        <Bell size={17} className="text-slate-600" />
+        <Bell size={16} className="text-slate-600" />
         {pending.length > 0 && (
           <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-2xs font-bold text-white shadow-xs">
             {pending.length}
@@ -68,7 +68,7 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 sm:w-96 rounded-2xl border border-surface-border bg-white p-3 shadow-2xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 sm:w-96 rounded-2xl border border-surface-border bg-white p-3 shadow-2xl">
           <div className="flex items-center justify-between border-b border-surface-border pb-2.5">
             <p className="text-sm font-bold text-navy-900 font-public">Operational Alerts</p>
             <span className="text-xs font-semibold text-teal-600 font-ibm">{pending.length} pending</span>
@@ -116,15 +116,15 @@ export default function Topbar({ onMenuClick }) {
   const canViewAIAlerts = user?.role === ROLES.ADMIN || user?.role === ROLES.PROJECT_MANAGER
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-surface-border bg-white px-3 sm:px-6">
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+    <header className="flex h-14 sm:h-16 shrink-0 items-center justify-between gap-2 sm:gap-3 border-b border-surface-border bg-white px-2.5 sm:px-6">
+      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 max-w-[50%] sm:max-w-none">
         <button
           type="button"
           onClick={onMenuClick}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-surface-border bg-white text-navy-700 hover:bg-surface-bg md:hidden cursor-pointer"
+          className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl border border-surface-border bg-white text-navy-700 hover:bg-surface-bg md:hidden cursor-pointer"
           aria-label="Open menu"
         >
-          <Menu size={18} />
+          <Menu size={16} />
         </button>
 
         <div className="min-w-0 flex-1">
@@ -132,7 +132,7 @@ export default function Topbar({ onMenuClick }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <LanguageToggle />
         <UserIdentityBadge />
         {canViewAIAlerts && <NotificationBell />}

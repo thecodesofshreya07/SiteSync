@@ -40,10 +40,17 @@ export default function HeroSection() {
     >
       {/* Scenic Construction Vector Background (Full screen edge-to-edge) */}
       <div className="absolute inset-0 z-0 pointer-events-none">
+        {/* Desktop Landscape Background */}
         <img
           src="/construction_vector_hero.jpg"
           alt="SiteSync Construction Landscape"
-          className="w-full h-full object-cover object-bottom brightness-[0.93] contrast-[1.06]"
+          className="hidden sm:block w-full h-full object-cover object-bottom brightness-[0.93] contrast-[1.06]"
+        />
+        {/* Mobile Vertical 9:16 Tailored Background */}
+        <img
+          src="/construction_vector_hero_mobile.jpg"
+          alt="SiteSync Construction Landscape Mobile"
+          className="block sm:hidden w-full h-full object-cover object-bottom brightness-[0.95] contrast-[1.05]"
         />
         {/* Balanced vertical gradient ensuring illustration is clearly visible while text stays razor-sharp */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/75 via-white/40 via-35% to-transparent" />
@@ -51,7 +58,7 @@ export default function HeroSection() {
         <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#f4f9f6] via-[#f4f9f6]/70 via-40% to-transparent" />
       </div>
 
-      {/* Floating Side Next Carousel Button (Only on wide screens to prevent text overlap) */}
+      {/* Floating Side Next Carousel Button (Only on wide screens) */}
       <button
         type="button"
         onClick={handleNext}
@@ -104,8 +111,8 @@ export default function HeroSection() {
           </Link>
         </div>
 
-        {/* Carousel Pagination Dots */}
-        <div className="flex items-center justify-center gap-2 pt-2">
+        {/* Carousel Pagination Dots (Desktop / Tablet only) */}
+        <div className="hidden sm:flex items-center justify-center gap-2 pt-2">
           {HERO_HIGHLIGHTS.map((_, idx) => (
             <button
               key={idx}
