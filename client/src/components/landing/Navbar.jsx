@@ -36,11 +36,11 @@ export default function Navbar() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 sm:py-4 transition-all">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 px-3.5 sm:px-8 py-3 sm:py-4 transition-all">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-3.5 shrink-0 group">
-          <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white p-1 border border-slate-200/90 shadow-sm group-hover:scale-105 transition-transform shrink-0">
+        <Link to="/" className="flex items-center gap-2 sm:gap-3.5 shrink-0 group">
+          <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-white p-1 border border-slate-200/90 shadow-sm group-hover:scale-105 transition-transform shrink-0">
             <img
               src="/sitesync_logo.png"
               alt="SiteSync Logo"
@@ -50,7 +50,7 @@ export default function Navbar() {
               }}
             />
           </div>
-          <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 font-public">
+          <span className="text-xl sm:text-3xl font-black tracking-tight text-slate-900 font-public">
             <span className="text-[#146b3a]">Site</span>Sync
           </span>
         </Link>
@@ -97,20 +97,20 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Toggle Button */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0">
           <LanguageToggle variant="light" />
           <Link
             to="/login"
-            className="sm:hidden rounded-full border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-800 bg-white shadow-sm"
+            className="sm:hidden rounded-full border border-slate-300 px-2.5 py-1 text-[11px] font-bold text-slate-800 bg-white shadow-sm"
           >
             Login
           </Link>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="rounded-lg p-1.5 text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+            className="rounded-lg p-1 text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
