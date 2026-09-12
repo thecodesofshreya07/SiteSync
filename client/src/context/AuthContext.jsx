@@ -54,6 +54,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const signup = async (userData) => {
+    try {
+      const data = await apiRequest('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      })
+
+      if (data && data.token && data.user) {
+        setToken(data.token)
+        setUser(data.user)
+        return data.user
+      }
+      throw new Error(data?.error || 'Registration failed')
+    } catch (err) {
+      throw err
+    }
+  }
+
   const logout = () => {
     setToken('')
     setUser(null)
@@ -67,6 +85,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     loading,
     login,
+    signup,
     logout,
   }
 
