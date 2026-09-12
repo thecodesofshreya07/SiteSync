@@ -46,16 +46,16 @@ export default function HeroSection() {
           alt="SiteSync Construction Landscape"
           className="hidden sm:block w-full h-full object-cover object-bottom brightness-[0.93] contrast-[1.06]"
         />
-        {/* Mobile Vertical 9:16 Tailored Background - Darker for phone UI */}
+        {/* Mobile Vertical 9:16 Background */}
         <img
           src="/construction_vector_hero_mobile.jpg"
           alt="SiteSync Construction Landscape Mobile"
-          className="block sm:hidden w-full h-full object-cover object-bottom brightness-[0.72] contrast-[1.18] saturate-[1.12]"
+          className="block sm:hidden w-full h-full object-cover object-bottom brightness-[0.94] contrast-[1.06]"
         />
-        {/* Balanced vertical gradient ensuring illustration is clearly visible while text stays razor-sharp */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-white/85 via-42% to-transparent sm:from-white/75 sm:via-white/40 sm:via-35% sm:to-transparent" />
-        {/* Smooth bottom transition fade matching #f4f9f6 */}
-        <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#f4f9f6] via-[#f4f9f6]/70 via-40% to-transparent" />
+        {/* Desktop top gradient overlay */}
+        <div className="hidden sm:block absolute inset-0 bg-gradient-to-b from-white/75 via-white/40 via-35% to-transparent" />
+        {/* Universal smooth bottom transition into the About section background (#f4f9f6) */}
+        <div className="absolute bottom-0 inset-x-0 h-24 sm:h-36 bg-gradient-to-t from-[#f4f9f6] via-[#f4f9f6]/60 via-40% to-transparent" />
       </div>
 
       {/* Floating Side Next Carousel Button (Only on wide screens) */}
