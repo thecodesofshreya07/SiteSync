@@ -1,5 +1,15 @@
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '0.0.0.0')
+
 const envUrl = (import.meta.env.VITE_API_URL || '').split('||')[0].trim()
-const rawApiUrl = envUrl.replace(/\/+$/, '')
+const targetUrl = (isLocalhost && (!envUrl || envUrl.includes('render.com')))
+  ? 'http://localhost:4000'
+  : (envUrl || 'http://localhost:4000')
+
+const rawApiUrl = targetUrl.replace(/\/+$/, '')
 export const API_BASE = rawApiUrl
   ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`)
   : 'http://localhost:4000/api'

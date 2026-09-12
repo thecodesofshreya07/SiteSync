@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { getCollection, getPool } from '../db.js'
+import { getCollection, setCollection, getPool } from '../db.js'
 import { JWT_SECRET, authenticateToken } from '../middleware/auth.js'
 import { initialUsers } from '../../client/src/data/users.js'
 
@@ -184,11 +184,11 @@ router.post('/signup', async (req, res) => {
     // 2. Check local memory collection & initialUsers
     if (!existingUser) {
       const users = getCollection('users') || []
-      existingUser = users.find((u) => String(u.email).trim().toLowerCase() === cleanEmail)
+      existingUser = users.find((u) => u && String(u.email || '').trim().toLowerCase() === cleanEmail)
     }
 
     if (!existingUser) {
-      existingUser = initialUsers.find((u) => String(u.email).trim().toLowerCase() === cleanEmail)
+      existingUser = (initialUsers || []).find((u) => u && String(u.email || '').trim().toLowerCase() === cleanEmail)
     }
 
     if (existingUser) {
@@ -271,7 +271,7 @@ router.post('/signup', async (req, res) => {
     })
   } catch (err) {
     console.error('Error in POST /api/auth/signup:', err)
-    return res.status(500).json({ error: 'Failed to create user account. Please try again.' })
+    return res.status(500).json({ error: err.message || 'Failed to create user account. Please try again.' })
   }
 })
 

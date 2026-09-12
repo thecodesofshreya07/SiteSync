@@ -112,6 +112,8 @@ export async function initDbFromPostgres() {
           `ALTER TABLE agent_subtasks ADD COLUMN IF NOT EXISTS linked_alert_id TEXT`,
           `ALTER TABLE alerts ADD COLUMN IF NOT EXISTS source_subtask_id TEXT`,
           `ALTER TABLE alerts ADD COLUMN IF NOT EXISTS source_record_id TEXT`,
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS project_id TEXT`,
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS site_id TEXT`,
           `UPDATE alerts SET source_record_id = COALESCE(source_record_id, data->>'source_record_id', data->>'inventoryItemId', 'INV-104') WHERE source_record_id IS NULL`,
         ]
 
@@ -292,6 +294,33 @@ async function syncTableToPostgres(tableName, items) {
             item.budgetActual,
             item.progress,
             item.lastScan,
+            JSON.stringify(item),
+          ]
+        )
+      } else if (tableName === 'users') {
+        await client.query(
+          `INSERT INTO users (id, name, email, phone, role, site_id, project_id, status, created_at, data)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           ON CONFLICT (id) DO UPDATE SET
+             name = $2,
+             email = $3,
+             phone = $4,
+             role = $5,
+             site_id = $6,
+             project_id = $7,
+             status = $8,
+             created_at = $9,
+             data = $10`,
+          [
+            item.id,
+            item.name || 'User',
+            item.email || `${item.id}@sitesync.com`,
+            item.phone || '',
+            item.role || 'Contractor',
+            item.siteId || item.site_id || 'NA',
+            item.projectId || item.project_id || 'NA',
+            item.status || 'Active',
+            item.createdAt || item.created_at || new Date().toISOString(),
             JSON.stringify(item),
           ]
         )

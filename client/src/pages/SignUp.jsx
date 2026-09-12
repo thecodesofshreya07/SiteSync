@@ -32,7 +32,8 @@ const ROLES_INFO = [
 ]
 
 export default function SignUp() {
-  const { register } = useAuth()
+  const { signup, register } = useAuth()
+  const signupFn = signup || register
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
@@ -66,7 +67,7 @@ export default function SignUp() {
         siteId: role === 'Contractor' ? siteId : undefined,
       }
 
-      await register(payload)
+      await signupFn(payload)
       setSuccess(true)
 
       // Auto login / redirect to workspace
